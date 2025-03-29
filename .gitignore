@@ -1,0 +1,13 @@
+# Python cache files
+../__pycache__/
+*.py[cod]
+*$py.class
+
+# Model files
+# **/model/
+*.h5
+*.pkl
+*.pth
+*.onnx
+*.pb
+*.tflite
