@@ -1,22 +1,27 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const searchBtn = document.getElementById('search-btn');
+document.addEventListener('DOMContentLoaded', async () => {
+    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-    searchBtn.addEventListener('click', async () => {
-        const confName = document.getElementById('conf-name-input').value.trim();
-        console.log(`User entered: ${confName}`);
-
-        if (!confName) {
-            alert('Please enter a conference name');
-            return;
+    // Trigger the fetch when the Enter key is pressed
+    document.getElementById('conf-name-input').addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            await fetchRank();
         }
-
-        console.log(`Searching for: ${confName}`);
-        const rank = await getConferenceRank(confName);
-        console.log(`Rank found: ${rank}`);
-
-        document.getElementById('conf-name').textContent = `Conference name: ${confName}`;
-        document.getElementById('conf-rank').innerHTML = rank || 'Rank info not found';
     });
+
+    // Trigger the fetch when the button is clicked
+    document.getElementById('fetch-rank-btn').addEventListener('click', async () => {
+        await fetchRank();
+    });
+
+    async function fetchRank() {
+        const conferenceName = document.getElementById('conf-name-input').value;
+        document.getElementById('conf-name').textContent = conferenceName || 'Not found';
+
+        if (conferenceName) {
+            const rank = await getConferenceRank(conferenceName);
+            document.getElementById('conf-rank').innerHTML = rank || 'Rank info not found';            
+        }
+    }
 });
 
 // Function to get the conference rank from the CORE portal

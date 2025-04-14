@@ -15,13 +15,17 @@
 </head>
 
 <body>
-    <h3>Conference Rank Finder</h3>
-    <input type="text" id="conf-name-input" placeholder="Enter conference name" />
-    <button id="search-btn">Search</button>
+    <div id="popup-container">
+        <h3>Conference Rank Finder</h3>
+        <input id="conf-name-input" type="text" placeholder="Enter Conference Name" />
+        <button id="fetch-rank-btn">Fetch Rank</button>
 
-    <div id="results">
-        <p id="conf-name">Conference name: Not found</p>
-        <p id="conf-rank">Rank: Not found</p>
+        <div>
+            <strong id="conf-name">Name: </strong><span id="conf-name-value"></span>
+        </div>
+        <div>
+            <strong id="conf-rank">Rank: </strong><span id="conf-rank-value"></span>
+        </div>
     </div>
 
     <script src="popup.js"></script>

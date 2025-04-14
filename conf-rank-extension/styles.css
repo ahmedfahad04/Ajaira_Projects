@@ -19,3 +19,13 @@ body {
 #conf-rank {
     color: #333;
 }
+
+/* Increase the width of the container */
+#popup-container {
+    width: 400px;
+    /* Adjust as needed */
+    padding: 15px;
+    background-color: #f8f8f8;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
