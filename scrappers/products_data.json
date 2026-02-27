@@ -1,0 +1,457 @@
+{
+  "url": "https://chaldal.com/fresh-vegetable",
+  "timestamp": "2026-02-27T19:21:39.734931",
+  "total_products": 50,
+  "products": [
+    {
+      "name": "Fulkopi (Cauliflower)",
+      "discounted_price": "৳ 49",
+      "original_price": "৳ 59",
+      "price": "৳ 49",
+      "quantity": "each",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/fulkopi-cauliflower-1-pcs?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D46971&q=best&v=1&m=400&m=400"
+    },
+    {
+      "name": "Flat Bean (Sheem)",
+      "price": "৳ 29",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/flat-bean-sheem-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D71001&q=best&v=1&m=400"
+    },
+    {
+      "name": "Badhakopi (Cabbage)",
+      "discounted_price": "৳ 45",
+      "original_price": "৳ 50",
+      "price": "৳ 45",
+      "quantity": "each",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/badhakopi-cabbage-1-pcs?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D5740&q=best&v=1&m=400"
+    },
+    {
+      "name": "Onion Flower",
+      "price": "৳ 19",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "250 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/onion-flower-250-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D131568&q=best&v=1&m=400"
+    },
+    {
+      "name": "Broccoli",
+      "discounted_price": "৳ 65",
+      "original_price": "৳ 99",
+      "price": "৳ 65",
+      "quantity": "each",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/broccoli-1-pcs?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D98102&q=best&v=1&m=400"
+    },
+    {
+      "name": "Potato Regular (± 50 gm) (Combo)",
+      "discounted_price": "৳ 80",
+      "original_price": "৳ 125",
+      "price": "৳ 80",
+      "quantity": "5 kg",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/potato-regular-50-gm-combo-5-kg?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D164094&q=best&v=1&m=400"
+    },
+    {
+      "name": "Potato Regular (± 50 gm)",
+      "discounted_price": "৳ 19",
+      "original_price": "৳ 25",
+      "price": "৳ 19",
+      "quantity": "1 kg",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/potato-regular-50-gm-1-kg?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D164304&q=best&v=1&m=400"
+    },
+    {
+      "name": "Coriander Leaves (Dhonia Pata) ± 10 gm",
+      "discounted_price": "৳ 15",
+      "original_price": "৳ 20",
+      "price": "৳ 15",
+      "quantity": "100 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/coriander-leaves-dhonia-pata-10-gm-100-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28562&q=low&v=1&m=400"
+    },
+    {
+      "name": "Red Tomato ± 25 gm",
+      "discounted_price": "৳ 35",
+      "original_price": "৳ 40",
+      "price": "৳ 35",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/red-tomato-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D64361&q=best&v=1&m=400"
+    },
+    {
+      "name": "Roshun (Garlic Imported) ± 25 gm",
+      "price": "৳ 109",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/roshun-garlic-imported-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D89993&q=best&v=1&m=400"
+    },
+    {
+      "name": "Lal Alu (Red Potato Cardinal) ± 50 gm",
+      "discounted_price": "৳ 22",
+      "original_price": "৳ 30",
+      "price": "৳ 22",
+      "quantity": "1 kg",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/lal-alu-red-potato-cardinal-50-gm-1-kg?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D76922&q=low&v=1&m=400"
+    },
+    {
+      "name": "Kacha Morich (Green Chilli) ±12 gm",
+      "discounted_price": "৳ 39",
+      "original_price": "৳ 50",
+      "price": "৳ 39",
+      "quantity": "250 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/kacha-morich-green-chilli-12-gm-250-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28576&q=low&v=1&m=400"
+    },
+    {
+      "name": "Deshi Gajor (Local Carrot) ± 25 gm",
+      "price": "৳ 29",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/deshi-gajor-local-carrot-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D64363&q=best&v=1&m=400"
+    },
+    {
+      "name": "Ada (Imported Ginger) ± 25 gm",
+      "price": "৳ 99",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/ada-imported-ginger-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D163275&q=low&v=1&m=400"
+    },
+    {
+      "name": "Lal Shak (Red Spinach)",
+      "discounted_price": "৳ 19",
+      "original_price": "৳ 25",
+      "price": "৳ 19",
+      "quantity": "1 bundle",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/lal-shak-red-spinach-1-bundle?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D7226&q=low&v=1&m=400"
+    },
+    {
+      "name": "Kacha Morich (Green Chilli) ± 12 gm",
+      "price": "৳ 19",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "100 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/kacha-morich-green-chilli-12-gm-100-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D183023&q=low&v=1&m=400"
+    },
+    {
+      "name": "Deshi Shosha (Local Cucumber) ± 25 gm",
+      "discounted_price": "৳ 65",
+      "original_price": "৳ 75",
+      "price": "৳ 65",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/deshi-shosha-local-cucumber-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D64359&q=best&v=1&m=400"
+    },
+    {
+      "name": "Lomba Lebu (Long Lemon)",
+      "discounted_price": "৳ 59",
+      "original_price": "৳ 99",
+      "price": "৳ 59",
+      "quantity": "4 pcs",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/lomba-lebu-long-lemon-4-pcs?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D64362&q=low&v=1&m=400"
+    },
+    {
+      "name": "Palong Shak (Palong Spinach)",
+      "discounted_price": "৳ 19",
+      "original_price": "৳ 25",
+      "price": "৳ 19",
+      "quantity": "1 bundle",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/palong-shak-palong-spinach-1-bundle?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28579&q=low&v=1&m=400"
+    },
+    {
+      "name": "Kacha Pepe (Green Papaya) ± 70 gm",
+      "discounted_price": "৳ 65",
+      "original_price": "৳ 75",
+      "price": "৳ 65",
+      "quantity": "1.4 kg",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/kacha-pepe-green-papaya-70-gm-14-kg?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D69930&q=low&v=1&m=400"
+    },
+    {
+      "name": "Deshi Roshun (Garlic Local) ±25 gm",
+      "price": "৳ 69",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/deshi-roshun-garlic-local-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D89990&q=best&v=1&m=400"
+    },
+    {
+      "name": "Misti Kumra Fali (Sweet Pumpkin Slice) ± 40 gm",
+      "discounted_price": "৳ 45",
+      "original_price": "৳ 55",
+      "price": "৳ 45",
+      "quantity": "1 kg",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/misti-kumra-fali-sweet-pumpkin-slice-40-gm-1-kg?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28900&q=low&v=1&m=400"
+    },
+    {
+      "name": "Deshi Ada (Local Ginger) ± 25 gm",
+      "discounted_price": "৳ 79",
+      "original_price": "৳ 99",
+      "price": "৳ 79",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/deshi-ada-local-ginger-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D163274&q=best&v=1&m=400"
+    },
+    {
+      "name": "Shosha (Cucumber) ± 25 gm",
+      "price": "৳ 49",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/shosha-cucumber-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D64357&q=best&v=1&m=400"
+    },
+    {
+      "name": "Kolmi Shak (Water Spinach)",
+      "discounted_price": "৳ 15",
+      "original_price": "৳ 19",
+      "price": "৳ 15",
+      "quantity": "1 bundle",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/kolmi-shak-water-spinach-1-bundle?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28561&q=low&v=1&m=400&m=400"
+    },
+    {
+      "name": "Gol Lebu (Round Lemon)",
+      "discounted_price": "৳ 65",
+      "original_price": "৳ 100",
+      "price": "৳ 65",
+      "quantity": "4 pcs",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/gol-lebu-round-lemon-4-pcs?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D54834&q=low&v=1&m=400"
+    },
+    {
+      "name": "Green Capsicum ± 15 gm",
+      "discounted_price": "৳ 45",
+      "original_price": "৳ 65",
+      "price": "৳ 45",
+      "quantity": "300 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/green-capsicum-15-gm-300-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28574&q=low&v=1&m=400"
+    },
+    {
+      "name": "Misti Alu (Sweet Potato) ± 25 gm",
+      "discounted_price": "৳ 39",
+      "original_price": "৳ 45",
+      "price": "৳ 39",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/misti-alu-sweet-potato-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D54835&q=best&v=1&m=400"
+    },
+    {
+      "name": "Mula (Radish) ± 25 gm",
+      "price": "৳ 29",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/mula-radish-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D120817&q=best&v=1&m=400"
+    },
+    {
+      "name": "Lau (Bottle Gourd)",
+      "discounted_price": "৳ 75",
+      "original_price": "৳ 85",
+      "price": "৳ 75",
+      "quantity": "each",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/lau-bottle-gourd-1-pcs?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28573&q=low&v=1&m=400"
+    },
+    {
+      "name": "Beetroot ±25 gm",
+      "price": "৳ 45",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/beetroot-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D35682&q=low&v=1&m=400"
+    },
+    {
+      "name": "Lomba Kalo Begun (Long Brinjal Black) ± 25 gm",
+      "discounted_price": "৳ 65",
+      "original_price": "৳ 70",
+      "price": "৳ 65",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/lomba-kalo-begun-long-brinjal-black-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D43558&q=low&v=1&m=400"
+    },
+    {
+      "name": "Borboti (Long Bean) ± 25 gm",
+      "price": "৳ 69",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/borboti-long-bean-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D22410&q=low&v=1&m=400&m=400"
+    },
+    {
+      "name": "Chichinga (Snake Gourd) ± 25 gm",
+      "discounted_price": "৳ 55",
+      "original_price": "৳ 60",
+      "price": "৳ 55",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/chichinga-snake-gourd-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28583&q=low&v=1&m=400"
+    },
+    {
+      "name": "Lal Alu (Red Potato) ± 25 gm",
+      "discounted_price": "৳ 19",
+      "original_price": "৳ 25",
+      "price": "৳ 19",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/lal-alu-red-potato-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D93643&q=best&v=1&m=400"
+    },
+    {
+      "name": "Kochur Mukhi (Taro Roots) ± 25 gm",
+      "price": "৳ 45",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/kochur-mukhi-taro-roots-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28965&q=low&v=1&m=400"
+    },
+    {
+      "name": "Potato Regular (± 25 gm)",
+      "price": "৳ 13",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "600 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/potato-regular-25-gm-600-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D164303&q=best&v=1&m=400"
+    },
+    {
+      "name": "Sobuj Gol Begun (Round Brinjals Green) ±35 gm",
+      "price": "৳ 75",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "700 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/sobuj-gol-begun-round-brinjals-green-35-gm-700-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28795&q=low&v=1&m=400"
+    },
+    {
+      "name": "Ada (Imported Ginger) ± 25 gm",
+      "price": "৳ 55",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "250 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/ada-imported-ginger-25-gm-250-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D163146&q=best&v=1&m=400"
+    },
+    {
+      "name": "Thankuni Pata (Pennywort Leaves)",
+      "discounted_price": "৳ 9",
+      "original_price": "৳ 15",
+      "price": "৳ 9",
+      "quantity": "1 bundle",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/thankuni-pata-pennywort-leaves-1-bundle?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D28578&q=low&v=1&m=400"
+    },
+    {
+      "name": "Kacha Kola (Banana Green)",
+      "discounted_price": "৳ 49",
+      "original_price": "৳ 65",
+      "price": "৳ 49",
+      "quantity": "4 pcs",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/kacha-kola-banana-green-4-pcs?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D183804&q=low&v=1&m=400"
+    },
+    {
+      "name": "Korola (Bitter Gourd) ± 25 gm",
+      "price": "৳ 119",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/korola-bitter-gourd-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D22416&q=low&v=1&m=400"
+    },
+    {
+      "name": "Peyaj Pata (Spring Onion) ± 12 gm",
+      "discounted_price": "৳ 55",
+      "original_price": "৳ 65",
+      "price": "৳ 55",
+      "quantity": "250 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/peyaj-pata-spring-onion-12-gm-250-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D18770&q=low&v=1&m=400"
+    },
+    {
+      "name": "Roshun (Garlic Imported) ± 25 gm",
+      "price": "৳ 55",
+      "discounted_price": "N/A",
+      "original_price": "N/A",
+      "quantity": "250 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/roshun-garlic-imported-25-gm-250-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D163966&q=best&v=1&m=400"
+    },
+    {
+      "name": "Mula Shak (Radish Spinach)",
+      "discounted_price": "৳ 19",
+      "original_price": "৳ 25",
+      "price": "৳ 19",
+      "quantity": "1 bundle",
+      "delivery_time": "Next Day",
+      "image_url": "https://chaldn.com/_mpimage/mula-shak-radish-spinach-1-bundle?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D88134&q=best&v=1&m=400&m=400"
+    },
+    {
+      "name": "Kalo Gol Begun (Round Brinjals Black) ±35 gm",
+      "discounted_price": "৳ 79",
+      "original_price": "৳ 100",
+      "price": "৳ 79",
+      "quantity": "800 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/kalo-gol-begun-round-brinjals-black-35-gm-800-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D7893&q=best&v=1&m=400"
+    },
+    {
+      "name": "Uchche (Local Bitter Gourd) ± 25 gm",
+      "discounted_price": "৳ 79",
+      "original_price": "৳ 85",
+      "price": "৳ 79",
+      "quantity": "500 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/uchche-local-bitter-gourd-25-gm-500-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D15396&q=low&v=1&m=400"
+    },
+    {
+      "name": "Pui Shak (Pui Spinach)",
+      "discounted_price": "৳ 45",
+      "original_price": "৳ 50",
+      "price": "৳ 45",
+      "quantity": "1 bundle",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/pui-shak-pui-spinach-1-bundle?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D7071&q=low&v=1&m=400&m=400"
+    },
+    {
+      "name": "Deshi Ada (Local Ginger) ± 25 gm",
+      "discounted_price": "৳ 45",
+      "original_price": "৳ 55",
+      "price": "৳ 45",
+      "quantity": "250 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/deshi-ada-local-ginger-25-gm-250-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D163145&q=best&v=1&m=400"
+    },
+    {
+      "name": "Pudina Pata (Mint Leaves) ± 10 gm",
+      "discounted_price": "৳ 29",
+      "original_price": "৳ 45",
+      "price": "৳ 29",
+      "quantity": "100 gm",
+      "delivery_time": "1 hr",
+      "image_url": "https://chaldn.com/_mpimage/pudina-pata-mint-leaves-10-gm-100-gm?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D7827&q=low&v=1&m=400"
+    }
+  ]
+}
