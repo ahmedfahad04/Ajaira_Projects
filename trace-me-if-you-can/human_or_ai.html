@@ -149,6 +149,7 @@
         const storageKey = `human_or_ai_comments_${sessionId}`;
         let commentsStore = loadCommentsStore();
         let hasDownloaded = false;
+        const pendingReloadDownloadKey = `human_or_ai_pending_reload_download_${sessionId}`;
 
         function loadCommentsStore() {
             try {
@@ -261,6 +262,12 @@
                 lines.push('');
             }
             return lines.join('\n');
+        }
+
+        function hasAnyNonEmptyComment() {
+            return Object.values(commentsStore.entries).some(
+                (entry) => entry.comment && entry.comment.trim().length > 0
+            );
         }
 
         function setGuessButtonsDisabled(disabled) {
@@ -432,13 +439,29 @@
         function finishSession() {
             saveCurrentComment();
             downloadMarkdown();
+            commentsStore = { entries: {} };
+            localStorage.removeItem(storageKey);
+            sessionStorage.removeItem(pendingReloadDownloadKey);
+            document.getElementById('reason-box').value = '';
+            hasDownloaded = false;
         }
 
         document.getElementById('reason-box').addEventListener('input', saveCurrentComment);
         window.addEventListener('beforeunload', () => {
             saveCurrentComment();
-            downloadMarkdown();
+            if (hasAnyNonEmptyComment()) {
+                sessionStorage.setItem(pendingReloadDownloadKey, '1');
+            } else {
+                sessionStorage.removeItem(pendingReloadDownloadKey);
+            }
         });
+
+        const navEntry = performance.getEntriesByType('navigation')[0];
+        const isReload = navEntry && navEntry.type === 'reload';
+        if (isReload && sessionStorage.getItem(pendingReloadDownloadKey) === '1') {
+            downloadMarkdown();
+            sessionStorage.removeItem(pendingReloadDownloadKey);
+        }
 
         nextCode();
     </script>
