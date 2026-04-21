@@ -1,4 +1,3 @@
-# Variant 5: Exception-based validation with try-catch pattern
 import math
 
 def calculate_triangle_area(a, b, c):

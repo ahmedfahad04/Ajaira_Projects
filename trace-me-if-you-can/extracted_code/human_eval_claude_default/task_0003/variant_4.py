@@ -1,4 +1,3 @@
-# Variant 4: Using enumerate with break simulation via exception
 def check_negative_balance(operations):
     try:
         balance = 0

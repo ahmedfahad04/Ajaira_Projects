@@ -1,4 +1,3 @@
-# Variant 1: Recursive approach with memoization
 def power_mod(n, p, memo={}):
     if n == 0:
         return 1

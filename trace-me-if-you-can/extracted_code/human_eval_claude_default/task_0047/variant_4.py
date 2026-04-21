@@ -1,4 +1,3 @@
-# Variant 4: Using bisect for insertion-based sorting approach
 import bisect
 sorted_l = []
 for item in l:

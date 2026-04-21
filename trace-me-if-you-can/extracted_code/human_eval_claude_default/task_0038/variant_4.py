@@ -1,4 +1,3 @@
-# Variant 4: Using function composition with a helper
 def compose_functions(f, g):
     return lambda x: f(g(x))
 

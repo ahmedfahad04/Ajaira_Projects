@@ -1,4 +1,3 @@
-# Variant 5: Recursive approach
 def count_mismatches(arr, start=0):
     if start >= len(arr) // 2:
         return 0

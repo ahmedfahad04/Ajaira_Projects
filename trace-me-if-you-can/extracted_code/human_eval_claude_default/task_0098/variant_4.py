@@ -1,4 +1,3 @@
-# Variant 4: While loop with manual indexing
 count = 0
 i = 0
 while i < len(s):

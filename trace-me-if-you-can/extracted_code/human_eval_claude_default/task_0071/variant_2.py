@@ -1,4 +1,3 @@
-# Variant 2: Using math.sqrt and storing intermediate calculations
 import math
 
 def calculate_triangle_area(a, b, c):

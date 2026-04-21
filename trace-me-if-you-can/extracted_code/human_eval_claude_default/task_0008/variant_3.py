@@ -1,4 +1,3 @@
-# Variant 3: While loop with iterator approach
 iterator = iter(numbers)
 sum_value = 0
 prod_value = 1

@@ -1,4 +1,3 @@
-# Variant 5: Recursive approach with tail call optimization pattern
 def find_root_recursive(xs, left=-1., right=1., tolerance=1e-10):
     # Base case: check if we need to expand the interval
     if poly(xs, left) * poly(xs, right) > 0:

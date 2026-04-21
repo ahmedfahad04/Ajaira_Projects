@@ -1,4 +1,3 @@
-# Variant 3: Functional approach with lambda and all() function
 def calculate_triangle_area(a, b, c):
     sides = [(a, b, c), (a, c, b), (b, c, a)]
     

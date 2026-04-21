@@ -1,4 +1,3 @@
-# Variant 4: While loop with mathematical approach
 def count_sevens_v4(n):
     result = 0
     i = 0

@@ -1,4 +1,3 @@
-# Variant 3: Recursive approach
 def count_chars(s, index=0):
     try:
         s[index]

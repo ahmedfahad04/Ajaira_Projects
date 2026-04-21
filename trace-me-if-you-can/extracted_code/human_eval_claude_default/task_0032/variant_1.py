@@ -1,4 +1,3 @@
-# Variant 1: Using iterative expansion with explicit sign checking
 left, right = -1., 1.
 poly_left, poly_right = poly(xs, left), poly(xs, right)
 

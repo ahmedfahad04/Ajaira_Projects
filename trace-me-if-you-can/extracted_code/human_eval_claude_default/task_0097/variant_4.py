@@ -1,4 +1,3 @@
-# Variant 4: Bitwise and iterative approach
 def extract_last_digit(num):
     num = abs(num)
     while num >= 10:

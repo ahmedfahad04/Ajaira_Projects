@@ -1,4 +1,3 @@
-# Variant 2: Recursive digit extraction
 def extract_digits(n):
     if n == 0:
         return 0

@@ -1,4 +1,3 @@
-# Variant 4: Object-oriented approach with state encapsulation
 class BisectionSolver:
     def __init__(self, tolerance=1e-10):
         self.tolerance = tolerance

@@ -1,4 +1,3 @@
-# Variant 2: Functional approach with helper functions
 def find_bracket_bounds(xs, initial_left=-1., initial_right=1.):
     left, right = initial_left, initial_right
     while poly(xs, left) * poly(xs, right) > 0:

@@ -1,4 +1,3 @@
-# Variant 5: Functional approach with reduce
 from functools import reduce
 from collections import Counter
 

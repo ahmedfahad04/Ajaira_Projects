@@ -1,4 +1,3 @@
-# Variant 4: While loop with index tracking
 def check_valid(s):
     if len(s) < 3:
         return False

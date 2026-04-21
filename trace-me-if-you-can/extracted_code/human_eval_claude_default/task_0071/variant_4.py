@@ -1,4 +1,3 @@
-# Variant 4: Using min/max functions for triangle validation
 def calculate_triangle_area(a, b, c):
     perimeter = a + b + c
     max_side = max(a, b, c)

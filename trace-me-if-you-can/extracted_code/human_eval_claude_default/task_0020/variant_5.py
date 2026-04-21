@@ -1,4 +1,3 @@
-# Variant 5: Generator-based approach with early termination optimization
 def find_closest_pair(numbers):
     if len(numbers) < 2:
         return None

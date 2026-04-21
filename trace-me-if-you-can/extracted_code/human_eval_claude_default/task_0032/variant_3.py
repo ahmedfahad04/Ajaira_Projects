@@ -1,4 +1,3 @@
-# Variant 3: Generator-based approach with lazy evaluation
 def bracket_expander():
     scale = 1.0
     while True:

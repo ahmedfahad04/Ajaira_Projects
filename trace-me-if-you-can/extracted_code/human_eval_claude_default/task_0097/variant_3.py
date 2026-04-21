@@ -1,4 +1,3 @@
-# Variant 3: Mathematical approach using floor division
 def get_last_digit(n):
     n = abs(n)
     return n - (n // 10) * 10

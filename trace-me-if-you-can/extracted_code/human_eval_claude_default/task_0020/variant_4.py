@@ -1,4 +1,3 @@
-# Variant 4: Using heap to maintain closest pairs
 import heapq
 
 def find_closest_pair(numbers):

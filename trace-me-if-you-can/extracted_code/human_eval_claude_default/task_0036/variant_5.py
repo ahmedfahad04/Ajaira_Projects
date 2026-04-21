@@ -1,4 +1,3 @@
-# Variant 5: Dictionary-based caching with string manipulation
 def count_sevens_v5(n):
     valid_indices = {}
     

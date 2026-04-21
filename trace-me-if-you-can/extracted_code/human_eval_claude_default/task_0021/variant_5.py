@@ -1,4 +1,3 @@
-# Variant 5: Reduce-based approach with tuple unpacking
 from functools import reduce
 
 def normalize(numbers):

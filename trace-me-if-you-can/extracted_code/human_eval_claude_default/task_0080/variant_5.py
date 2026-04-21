@@ -1,4 +1,3 @@
-# Variant 5: Recursive approach with slicing
 def check_valid(s):
     if len(s) < 3:
         return True

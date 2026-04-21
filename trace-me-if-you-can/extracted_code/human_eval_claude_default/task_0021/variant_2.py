@@ -1,4 +1,3 @@
-# Variant 2: Functional approach with map and lambda
 def normalize(numbers):
     if not numbers:
         return []

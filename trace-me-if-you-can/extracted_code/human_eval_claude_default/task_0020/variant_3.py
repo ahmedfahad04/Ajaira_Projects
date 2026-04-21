@@ -1,4 +1,3 @@
-# Variant 3: Divide and conquer approach with sorted array
 def find_closest_pair(numbers):
     if len(numbers) < 2:
         return None

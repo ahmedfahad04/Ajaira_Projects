@@ -1,4 +1,3 @@
-# Variant 5: List comprehension with manual binary conversion
 digit_sum = sum([int(digit) for digit in str(N)])
 binary_digits = []
 if digit_sum == 0:

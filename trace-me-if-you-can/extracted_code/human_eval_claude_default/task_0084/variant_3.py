@@ -1,4 +1,3 @@
-# Variant 3: Using divmod for digit extraction
 total = 0
 num = N
 while num:

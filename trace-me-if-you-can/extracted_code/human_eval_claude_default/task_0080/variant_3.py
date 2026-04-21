@@ -1,4 +1,3 @@
-# Variant 3: Set-based uniqueness check for triplets
 def check_valid(s):
     if len(s) < 3:
         return False

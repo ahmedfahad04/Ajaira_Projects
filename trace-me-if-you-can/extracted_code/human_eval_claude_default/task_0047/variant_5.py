@@ -1,4 +1,3 @@
-# Variant 5: Using heapq with nlargest/nsmallest approach
 import heapq
 n = len(l)
 if n % 2 == 1:

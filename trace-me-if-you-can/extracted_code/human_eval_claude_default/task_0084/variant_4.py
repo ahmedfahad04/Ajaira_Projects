@@ -1,4 +1,3 @@
-# Variant 4: Functional approach with map and reduce
 from functools import reduce
 import operator
 

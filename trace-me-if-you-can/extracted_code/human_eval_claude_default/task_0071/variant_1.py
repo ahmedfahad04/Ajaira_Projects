@@ -1,4 +1,3 @@
-# Variant 1: Early validation with explicit triangle inequality checks
 def calculate_triangle_area(a, b, c):
     # Check triangle inequality theorem
     if not (a + b > c and a + c > b and b + c > a):

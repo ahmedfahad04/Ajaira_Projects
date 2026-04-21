@@ -1,4 +1,3 @@
-# Variant 2: Using min() with key function for functional approach
 def find_closest_pair(numbers):
     if len(numbers) < 2:
         return None

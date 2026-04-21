@@ -1,4 +1,3 @@
-# Variant 1: Using built-in functions with functional approach
 from functools import reduce
 import operator
 

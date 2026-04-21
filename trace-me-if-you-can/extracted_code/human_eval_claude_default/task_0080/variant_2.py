@@ -1,4 +1,3 @@
-# Variant 2: Generator expression with any() function
 def check_valid(s):
     if len(s) < 3:
         return False

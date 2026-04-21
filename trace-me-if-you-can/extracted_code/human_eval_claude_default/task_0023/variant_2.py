@@ -1,4 +1,3 @@
-# Variant 2: Manual counting with while loop
 count = 0
 index = 0
 try:

@@ -1,4 +1,3 @@
-# Variant 1: Using numpy-style operations with explicit loop
 def normalize(numbers):
     if not numbers:
         return []

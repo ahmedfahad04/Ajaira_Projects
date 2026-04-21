@@ -1,4 +1,3 @@
-# Variant 3: Two-pointer approach
 left, right = 0, len(arr) - 1
 mismatches = 0
 while left < right:

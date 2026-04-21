@@ -1,4 +1,3 @@
-# Variant 1: Dictionary-based approach with reverse iteration
 from collections import defaultdict
 
 frq = defaultdict(int)

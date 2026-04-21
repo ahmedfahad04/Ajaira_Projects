@@ -1,4 +1,3 @@
-# Variant 4: Index-based iteration approach
 def normalize(numbers):
     if not numbers:
         return []

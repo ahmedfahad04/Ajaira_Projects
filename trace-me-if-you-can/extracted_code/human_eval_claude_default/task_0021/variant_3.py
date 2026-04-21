@@ -1,4 +1,3 @@
-# Variant 3: Generator-based approach with deferred computation
 def normalize(numbers):
     if not numbers:
         return []

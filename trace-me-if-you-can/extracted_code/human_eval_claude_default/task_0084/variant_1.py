@@ -1,4 +1,3 @@
-# Variant 1: Iterative approach with explicit loop
 digit_sum = 0
 temp = N
 while temp > 0:

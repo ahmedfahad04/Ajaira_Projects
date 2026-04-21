@@ -1,4 +1,3 @@
-# Variant 2: Counter with sorted keys approach
 from collections import Counter
 
 counter = Counter(lst)

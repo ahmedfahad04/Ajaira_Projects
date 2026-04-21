@@ -1,4 +1,3 @@
-# Variant 3: Set-based approach with union of multiples
 def count_sevens_v3(n):
     multiples_11 = set(range(0, n, 11))
     multiples_13 = set(range(0, n, 13))

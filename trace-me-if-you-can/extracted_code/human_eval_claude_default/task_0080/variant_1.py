@@ -1,4 +1,3 @@
-# Variant 1: Early return with enumerate and zip-based approach
 def check_valid(s):
     if len(s) < 3:
         return False

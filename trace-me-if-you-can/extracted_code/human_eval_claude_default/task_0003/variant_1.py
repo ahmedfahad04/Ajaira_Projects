@@ -1,4 +1,3 @@
-# Variant 1: Early termination with running sum
 def check_negative_balance(operations):
     running_sum = 0
     for operation in operations:

@@ -1,4 +1,3 @@
-# Variant 3: Using bit manipulation and accumulation
 ret = 1
 remaining = n
 power_of_two = 2 % p

@@ -1,4 +1,3 @@
-# Variant 2: Binary exponentiation (iterative)
 base = 2
 exponent = n
 result = 1

@@ -1,4 +1,3 @@
-# Variant 4: Generator-based approach with all()
 if sum(q) > w:
     return False
 

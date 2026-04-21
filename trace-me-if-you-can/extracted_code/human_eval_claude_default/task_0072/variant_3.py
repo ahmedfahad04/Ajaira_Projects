@@ -1,4 +1,3 @@
-# Variant 3: Using string comparison after weight check
 if sum(q) > w:
     return False
 

@@ -1,2 +1,1 @@
-# Variant 2: Functional approach using sum and generator expression
 return sum(1 for i in range(len(arr) // 2) if arr[i] != arr[~i])

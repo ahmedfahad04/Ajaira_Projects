@@ -1,2 +1,1 @@
-# Variant 1: List comprehension with enumeration
 return sum(1 for i, char in enumerate(s) if i % 2 == 0 and char in "AEIOU")

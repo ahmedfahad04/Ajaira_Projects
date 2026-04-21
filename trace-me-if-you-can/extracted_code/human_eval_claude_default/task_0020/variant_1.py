@@ -1,4 +1,3 @@
-# Variant 1: Using itertools.combinations to avoid duplicate comparisons
 from itertools import combinations
 
 def find_closest_pair(numbers):

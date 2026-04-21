@@ -1,4 +1,3 @@
-# Variant 3: Set-based filtering with max function
 frequency_map = {}
 for element in lst:
     frequency_map[element] = frequency_map.get(element, 0) + 1

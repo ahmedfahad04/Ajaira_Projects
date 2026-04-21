@@ -1,4 +1,3 @@
-# Variant 5: Stack-based validation approach
 if sum(q) > w:
     return False
 

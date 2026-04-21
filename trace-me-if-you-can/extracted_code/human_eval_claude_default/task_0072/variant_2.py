@@ -1,4 +1,3 @@
-# Variant 2: Recursive approach with slicing
 def is_palindrome_helper(arr):
     if len(arr) <= 1:
         return True

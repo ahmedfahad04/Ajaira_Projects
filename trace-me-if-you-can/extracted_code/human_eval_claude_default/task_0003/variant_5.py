@@ -1,4 +1,3 @@
-# Variant 5: Generator-based approach with next()
 def check_negative_balance(operations):
     def balance_generator():
         balance = 0

@@ -1,4 +1,3 @@
-# Variant 5: Recursive approach
 def count_vowels_at_even_positions(s, index=0):
     if index >= len(s):
         return 0

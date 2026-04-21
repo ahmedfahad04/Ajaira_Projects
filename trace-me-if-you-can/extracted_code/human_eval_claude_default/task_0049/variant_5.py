@@ -1,4 +1,3 @@
-# Variant 5: Unrolled loop with batching
 ret = 1
 full_iterations = n // 4
 remainder = n % 4

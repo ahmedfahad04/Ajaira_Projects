@@ -1,4 +1,3 @@
-# Variant 4: Single-pass with running maximum
 freq_dict = {}
 result = -1
 
