@@ -158,6 +158,10 @@
             max-height: 140px;
             overflow: auto;
             text-align: left;
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
         }
         .problem-desc h3 { 
             color: #58a6ff; 
@@ -650,6 +654,8 @@ async function showCode() {
                 problemText = `[${dataset}] Task: ${taskDir.name}\n\nSelect variants to compare from the dropdowns above.`;
             }
             document.getElementById('problemText').textContent = problemText;
+            // update the problemText font size
+            document.getElementById('problemText').style.fontSize = '20px';
             
             const leftCode = await loadCode(leftVar, currentTaskIndex);
             const rightCode = await loadCode(rightVar, currentTaskIndex);
