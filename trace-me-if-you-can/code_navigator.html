@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Variant Comparator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
+        
+        .header { 
+            background: #161b22; 
+            padding: 20px; 
+            border-bottom: 1px solid #30363d; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { 
+            font-size: 24px; 
+            color: #58a6ff; 
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .controls { 
+            display: flex; 
+            gap: 12px; 
+            flex-wrap: wrap; 
+            justify-content: center;
+            align-items: flex-end;
+            max-width: 1200px;
+        }
+        .control-group { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+        .control-group label { 
+            font-size: 11px; 
+            color: #8b949e; 
+            font-weight: 600; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 2px;
+        }
+        select, button { 
+            padding: 8px 12px; 
+            background: #21262d; 
+            border: 1px solid #30363d; 
+            color: #c9d1d9; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 13px; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 38px;
+            appearance: none;
+        }
+        .select-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .select-wrapper i {
+            position: absolute;
+            right: 12px;
+            pointer-events: none;
+            font-size: 10px;
+            color: #8b949e;
+        }
+        select {
+            padding-right: 30px;
+        }
+        select:hover, button:hover { 
+            border-color: #8b949e; 
+            background: #30363d;
+        }
+        button.nav-btn {
+            background: #238636;
+            border-color: rgba(240, 246, 252, 0.1);
+            color: #ffffff;
+        }
+        button.nav-btn:hover {
+            background: #2ea043;
+        }
+        select:focus, button:focus { 
+            outline: none; 
+            border-color: #58a6ff; 
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+        }
+        
+        .nav-buttons { display: flex; gap: 8px; align-self: flex-end; }
+        .nav-btn { font-weight: 600; min-width: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .nav-btn:active { transform: translateY(1px); }
+        
+        .toggle-container { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            padding: 0 12px; 
+            background: #21262d; 
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            height: 38px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .toggle-container i {
+            font-size: 14px;
+            color: #8b949e;
+        }
+        .toggle-container input[type="checkbox"]:checked ~ i {
+            color: #58a6ff;
+        }
+        .toggle-container:hover { border-color: #8b949e; }
+        .toggle-container input[type="checkbox"] { 
+            width: 34px; 
+            height: 18px; 
+            appearance: none; 
+            background: #30363d; 
+            border-radius: 9px; 
+            position: relative; 
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        .toggle-container input[type="checkbox"]::after { 
+            content: ''; 
+            position: absolute; 
+            width: 14px; 
+            height: 14px; 
+            background: #c9d1d9; 
+            border-radius: 50%; 
+            top: 2px; 
+            left: 2px; 
+            transition: 0.2s; 
+        }
+        .toggle-container input[type="checkbox"]:checked { background: #238636; }
+        .toggle-container input[type="checkbox"]:checked::after { left: 18px; }
+        .toggle-container span { font-size: 13px; font-weight: 500; }
+        
+        .main { 
+            padding: 20px; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+            height: calc(100vh - 160px); 
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .problem-desc { 
+            grid-column: 1 / -1; 
+            background: #161b22; 
+            border: 1px solid #30363d; 
+            border-radius: 8px; 
+            padding: 15px 20px; 
+            max-height: 140px;
+            overflow: auto;
+            text-align: left;
+        }
+        .problem-desc h3 { 
+            color: #58a6ff; 
+            margin-bottom: 8px; 
+            font-size: 16px; 
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+        }
+        .problem-desc h3 i {
+            font-size: 14px;
+            color: #8b949e;
+        }
+        .problem-desc h3 .badge { 
+            font-size: 11px; 
+            background: #30363d; 
+            padding: 2px 10px; 
+            border-radius: 12px; 
+            color: #8b949e; 
+            font-weight: 600;
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .problem-desc p { 
+            color: #e6edf3; 
+            line-height: 1.5; 
+            white-space: pre-wrap; 
+            font-size: 14px;
+        }
+        
+        .panel { 
+            display: flex; 
+            flex-direction: column; 
+            background: #161b22; 
+            border: 1px solid #30363d; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            transition: border-color 0.2s;
+        }
+        .panel:hover { border-color: #444c56; }
+        .panel-header { 
+            padding: 10px 16px; 
+            background: #21262d; 
+            border-bottom: 1px solid #30363d; 
+            font-weight: 600; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 12px; 
+        }
+        .panel-header .title-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-header .variant-name { color: #58a6ff; font-weight: 700; }
+        .panel-header .test-status { 
+            font-size: 10px; 
+            padding: 2px 8px; 
+            border-radius: 10px; 
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            letter-spacing: 0.5px;
+        }
+        .panel-header .test-status.pass { background: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid rgba(63, 185, 80, 0.3); }
+        .panel-header .test-status.fail { background: rgba(218, 54, 51, 0.2); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.3); }
+        .panel-header .file-path { color: #6e7681; font-size: 11px; font-family: 'Fira Code', monospace; }
+        .panel-body { flex: 1; overflow: auto; padding: 0; background: #0d1117; }
+        
+        .code-view { font-family: 'Fira Code', 'Consolas', 'Monaco', monospace; font-size: 12px; line-height: 1.6; }
+        .code-line { display: flex; min-height: 20px; }
+        .line-num { 
+            width: 45px; 
+            text-align: right; 
+            padding-right: 12px; 
+            color: #484f58; 
+            user-select: none; 
+            background: #161b22; 
+            border-right: 1px solid #30363d; 
+            font-size: 11px;
+        }
+        .line-content { flex: 1; padding-left: 12px; white-space: pre; }
+        
+        .diff-view { font-family: 'Fira Code', 'Consolas', 'Monaco', monospace; font-size: 12px; }
+        .diff-line { display: flex; min-height: 20px; }
+        .diff-line.added { background: rgba(46, 160, 67, 0.15); }
+        .diff-line.removed { background: rgba(248, 81, 73, 0.15); }
+        .diff-line.modified { background: rgba(210, 153, 34, 0.1); }
+        .diff-line .symbol { 
+            width: 25px; 
+            text-align: center; 
+            color: #6e7681; 
+            user-select: none; 
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .diff-line.added .symbol { color: #3fb950; }
+        .diff-line.removed .symbol { color: #f85149; }
+        .diff-line.modified .symbol { color: #d29922; }
+        .diff-line .line-content { padding-left: 8px; }
+        
+        .status { 
+            padding: 8px 20px; 
+            background: #161b22; 
+            border-top: 1px solid #30363d; 
+            font-size: 12px; 
+            color: #8b949e; 
+            display: flex; 
+            justify-content: space-between;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .status .keys { color: #6e7681; }
+        .status .keys kbd { 
+            background: #21262d; 
+            border: 1px solid #30363d; 
+            border-radius: 3px; 
+            padding: 1px 5px; 
+            font-family: inherit;
+            color: #c9d1d9;
+        }
+        
+        @media (max-width: 1100px) {
+            .controls { gap: 10px; }
+            .main { padding: 10px; gap: 10px; }
+        }
+
+        @media (max-width: 768px) {
+            .header { padding: 15px 10px; }
+            .header h1 { font-size: 20px; }
+            .controls { flex-direction: row; align-items: flex-end; justify-content: flex-start; overflow-x: auto; padding-bottom: 5px; width: 100%; }
+            .controls::-webkit-scrollbar { height: 4px; }
+            .controls::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+            .control-group { flex-shrink: 0; }
+            .nav-buttons { flex-shrink: 0; }
+            .main { grid-template-columns: 1fr; height: auto; padding-bottom: 50px; }
+            .panel { min-height: 400px; }
+            .problem-desc { max-height: 200px; }
+            .status { position: static; flex-direction: column; gap: 8px; align-items: center; text-align: center; }
+        }
+    </style>
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Code Variant Comparator</h1>
+        <div class="controls">
+            <div class="control-group">
+                <label><i class="fas fa-database"></i> Dataset</label>
+                <div class="select-wrapper">
+                    <select id="dataset" onchange="loadTasks()">
+                        <option value="human_eval">Human Eval</option>
+                        <option value="class_eval">Class Eval</option>
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="control-group">
+                <label><i class="fas fa-robot"></i> Model</label>
+                <div class="select-wrapper">
+                    <select id="model" onchange="loadTasks()">
+                        <option value="claude_default">Claude Default</option>
+                        <option value="qwen2_5-coder_7b">Qwen 2.5 Coder 7B</option>
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="control-group">
+                <label><i class="fas fa-list-check"></i> Task</label>
+                <div class="select-wrapper">
+                    <select id="task" onchange="showCode()">
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" onclick="prevTask()" title="Previous Task">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <button class="nav-btn" onclick="nextTask()" title="Next Task">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+            <div class="control-group">
+                <label><i class="fas fa-columns"></i> Left Panel</label>
+                <div class="select-wrapper">
+                    <select id="leftVariant" onchange="showCode()">
+                        <option value="base">Ground Truth</option>
+                        <option value="variant_1">Variant 1</option>
+                        <option value="variant_2">Variant 2</option>
+                        <option value="variant_3">Variant 3</option>
+                        <option value="variant_4">Variant 4</option>
+                        <option value="variant_5">Variant 5</option>
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="control-group">
+                <label><i class="fas fa-columns"></i> Right Panel</label>
+                <div class="select-wrapper">
+                    <select id="rightVariant" onchange="showCode()">
+                        <option value="variant_1">Variant 1</option>
+                        <option value="variant_2">Variant 2</option>
+                        <option value="variant_3">Variant 3</option>
+                        <option value="variant_4">Variant 4</option>
+                        <option value="variant_5">Variant 5</option>
+                        <option value="base">Ground Truth</option>
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="toggle-container">
+                <input type="checkbox" id="diffToggle" onchange="showCode()">
+                <i class="fas fa-code-compare"></i>
+                <span>Show Diff</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main">
+        <div class="problem-desc" id="problemDesc">
+            <h3>
+                <span id="problemTitle"><i class="fas fa-circle-question"></i> Problem Description</span>
+                <span class="badge" id="taskBadge"><i class="fas fa-tag"></i> task_0000</span>
+            </h3>
+            <p id="problemText">Loading...</p>
+        </div>
+        
+        <div class="panel">
+            <div class="panel-header">
+                <div class="title-group">
+                    <i class="fas fa-file-code"></i>
+                    <span class="variant-name" id="leftTitle">Ground Truth</span>
+                </div>
+                <span class="file-path" id="leftPath"></span>
+            </div>
+            <div class="panel-body" id="leftPanel"></div>
+        </div>
+        
+        <div class="panel">
+            <div class="panel-header">
+                <div class="title-group">
+                    <i class="fas fa-file-code"></i>
+                    <span class="variant-name" id="rightTitle">Variant 1</span>
+                </div>
+                <span class="file-path" id="rightPath"></span>
+            </div>
+            <div class="panel-body" id="rightPanel"></div>
+        </div>
+    </div>
+    
+    <div class="status">
+        <span id="statusText">Ready</span>
+        <div class="keys">
+            <span><kbd>←</kbd> <kbd>→</kbd> Navigate</span>
+            <span><kbd>D</kbd> Toggle Diff</span>
+        </div>
+    </div>
+
+    <script>
+        const FOLDER_MAP = {
+            'human_eval_claude_default': 'human_eval_claude_default',
+            'human_eval_qwen2_5-coder_7b': 'human_eval_qwen2_5-coder_7b',
+            'class_eval_claude_default': 'class_eval_claude_default',
+            'class_eval_qwen2_5-coder_7b': 'class_eval_qwen2_5-coder_7b'
+        };
+        
+        const problemDescriptions = {
+            0: "Check if any two numbers in a list have a difference less than a given threshold.",
+            1: "Parse a string of parentheses and extract balanced groups.",
+            2: "Extract the decimal part of a number.",
+            3: "Check if bank account operations ever go negative.",
+            4: "Calculate the mean absolute deviation of a list of numbers.",
+            5: "Insert a delimiter between elements of a list.",
+            6: "Calculate maximum nesting depth of parenthesized groups.",
+            7: "Filter strings that contain a given substring.",
+            8: "Calculate sum and product of a list of numbers.",
+            9: "Calculate running maximum of a list.",
+            10: "Find shortest palindrome suffix to append to make the string a palindrome.",
+            11: "XOR two binary strings.",
+            12: "Find the longest string in a list.",
+            13: "Calculate GCD of two numbers.",
+            14: "Generate all prefixes of a string.",
+            15: "Generate space-separated string of numbers 0 to n.",
+            16: "Count unique characters in a string (case-insensitive).",
+            17: "Parse a music notation string to note values.",
+            18: "Count substring occurrences in a string.",
+            19: "Sort number words in a string.",
+            20: "Find the closest pair of numbers.",
+            21: "Normalize a list of numbers to 0-1 range.",
+            22: "Filter integers from a mixed list.",
+            23: "Count characters in a string.",
+            24: "Find largest proper divisor of n.",
+            25: "Find prime factors of n.",
+            26: "Filter elements that appear exactly once.",
+            27: "Swap case of a string.",
+            28: "Concatenate a list of strings.",
+            29: "Filter strings that start with a prefix.",
+            30: "Filter positive numbers from a list.",
+            31: "Check if a number is prime.",
+            32: "Find root of polynomial using bisection method.",
+            33: "Sort every 3rd element of a list.",
+            34: "Remove duplicates and sort.",
+            35: "Find maximum element in a list.",
+            36: "Count sevens in numbers divisible by 11 or 13."
+        };
+        
+        let taskDirs = [];
+        let currentTaskIndex = 0;
+        let codeCache = {};
+        let testResults = {};
+        
+        async function loadTestResults() {
+            const dataset = document.getElementById('dataset').value;
+            const model = document.getElementById('model').value;
+            const csvFile = `${dataset}_${model}_results.csv`;
+            
+            try {
+                const response = await fetch(csvFile);
+                const text = await response.text();
+                const lines = text.split('\n').filter(l => l.trim());
+                const headers = lines[0].split(',');
+                
+                testResults = {};
+                for (let i = 1; i < lines.length; i++) {
+                    const values = parseCSVLine(lines[i]);
+                    if (values.length > 1) {
+                        const taskId = parseInt(values[0]);
+                        testResults[taskId] = {};
+                        for (let j = 1; j < values.length; j++) {
+                            const variant = headers[j];
+                            testResults[taskId][variant] = values[j];
+                        }
+                    }
+                }
+                console.log(`Loaded test results for ${Object.keys(testResults).length} tasks`);
+            } catch (e) {
+                console.log('Could not load test results:', e.message);
+            }
+        }
+        
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+        
+        function getTestStatus(variant, taskId) {
+            const result = testResults[taskId]?.[variant];
+            if (result === 'Yes') return { pass: true, text: 'PASS' };
+            if (result === undefined || result === '') return { pass: null, text: 'N/A' };
+            const isPass = result && result.startsWith('Yes');
+            return { pass: isPass, text: isPass ? 'PASS' : 'FAIL' };
+        }
+        
+        async function loadTasks() {
+            const dataset = document.getElementById('dataset').value;
+            const model = document.getElementById('model').value;
+            const folder = `${dataset}_${model}`;
+            const folderPath = `extracted_code/${FOLDER_MAP[folder]}`;
+            
+            document.getElementById('statusText').textContent = `Loading ${folder}...`;
+            document.getElementById('leftPanel').innerHTML = '';
+            document.getElementById('rightPanel').innerHTML = '';
+            
+            await loadTestResults();
+            
+            try {
+                const response = await fetch(folderPath);
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const links = doc.querySelectorAll('a');
+                
+                taskDirs = [];
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && href.startsWith('task_')) {
+                        taskDirs.push({ name: href.replace('/', ''), path: `${folderPath}/${href}` });
+                    }
+                });
+                
+                taskDirs.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+                
+                const taskSelect = document.getElementById('task');
+                taskSelect.innerHTML = '';
+                taskDirs.forEach((dir, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = idx;
+                    opt.textContent = dir.name;
+                    taskSelect.appendChild(opt);
+                });
+                
+                currentTaskIndex = 0;
+                codeCache = {};
+                showCode();
+                document.getElementById('statusText').textContent = `Loaded ${taskDirs.length} tasks from ${folder}`;
+            } catch (e) {
+                document.getElementById('statusText').textContent = `Error: ${e.message}`;
+                document.getElementById('problemText').textContent = `Failed to load: ${e.message}`;
+            }
+        }
+        
+        async function loadCode(variant, taskIdx) {
+            const key = `${taskIdx}_${variant}`;
+            if (codeCache[key]) return codeCache[key];
+            
+            const taskDir = taskDirs[taskIdx];
+            const filename = variant === 'base' ? 'base.py' : `${variant}.py`;
+            const filePath = `${taskDir.path}${filename}`;
+            
+            try {
+                const response = await fetch(filePath);
+                const code = await response.text();
+                codeCache[key] = code;
+                return code;
+            } catch (e) {
+                return `Error loading: ${filePath}`;
+            }
+        }
+        
+async function showCode() {
+            if (!taskDirs.length) return;
+            
+            const taskDir = taskDirs[currentTaskIndex];
+            const taskNum = parseInt(taskDir.name.replace('task_', ''));
+            
+            const leftVar = document.getElementById('leftVariant').value;
+            const rightVar = document.getElementById('rightVariant').value;
+            const showDiff = document.getElementById('diffToggle').checked;
+            
+            document.getElementById('leftTitle').textContent = leftVar === 'base' ? 'Ground Truth' : leftVar;
+            document.getElementById('rightTitle').textContent = rightVar === 'base' ? 'Ground Truth' : rightVar;
+            
+            // Add test status to panel headers
+            const leftStatus = getTestStatus(leftVar, taskNum);
+            const rightStatus = getTestStatus(rightVar, taskNum);
+            
+            const leftStatusHtml = leftStatus.text !== 'N/A' ? 
+                `<span class="test-status ${leftStatus.pass ? 'pass' : 'fail'}">${leftStatus.pass ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-circle-xmark"></i>'} ${leftStatus.text}</span>` : '';
+            const rightStatusHtml = rightStatus.text !== 'N/A' ? 
+                `<span class="test-status ${rightStatus.pass ? 'pass' : 'fail'}">${rightStatus.pass ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-circle-xmark"></i>'} ${rightStatus.text}</span>` : '';
+
+            document.getElementById('leftTitle').innerHTML = `
+                <div class="title-group">
+                    <i class="fas fa-file-code"></i>
+                    <span class="variant-name">${leftVar === 'base' ? 'Ground Truth' : leftVar}</span>
+                    ${leftStatusHtml}
+                </div>`;
+            document.getElementById('rightTitle').innerHTML = `
+                <div class="title-group">
+                    <i class="fas fa-file-code"></i>
+                    <span class="variant-name">${rightVar === 'base' ? 'Ground Truth' : rightVar}</span>
+                    ${rightStatusHtml}
+                </div>`;
+            
+            document.getElementById('leftPath').textContent = `${taskDir.name}/${leftVar === 'base' ? 'base.py' : leftVar + '.py'}`;
+            document.getElementById('rightPath').textContent = `${taskDir.name}/${rightVar === 'base' ? 'base.py' : rightVar + '.py'}`;
+            
+            document.getElementById('taskBadge').textContent = taskDir.name;
+            
+            const dataset = document.getElementById('dataset').value;
+            
+            let problemText = '';
+            if (dataset === 'human_eval' && problemDescriptions[taskNum]) {
+                problemText = problemDescriptions[taskNum];
+            } else {
+                problemText = `[${dataset}] Task: ${taskDir.name}\n\nSelect variants to compare from the dropdowns above.`;
+            }
+            document.getElementById('problemText').textContent = problemText;
+            
+            const leftCode = await loadCode(leftVar, currentTaskIndex);
+            const rightCode = await loadCode(rightVar, currentTaskIndex);
+            
+            if (showDiff) {
+                showDiffView(leftCode, rightCode);
+            } else {
+                showSideBySide(leftCode, rightCode);
+            }
+        }
+        
+        function showSideBySide(leftCode, rightCode) {
+            const leftLines = leftCode.split('\n');
+            const rightLines = rightCode.split('\n');
+            
+            let leftHtml = '';
+            leftLines.forEach((line, i) => {
+                leftHtml += `<div class="code-line"><span class="line-num">${i+1}</span><span class="line-content">${escapeHtml(line)}</span></div>`;
+            });
+            
+            let rightHtml = '';
+            rightLines.forEach((line, i) => {
+                rightHtml += `<div class="code-line"><span class="line-num">${i+1}</span><span class="line-content">${escapeHtml(line)}</span></div>`;
+            });
+            
+            document.getElementById('leftPanel').innerHTML = `<div class="code-view"><pre>${leftHtml}</pre></div>`;
+            document.getElementById('rightPanel').innerHTML = `<div class="code-view"><pre>${rightHtml}</pre></div>`;
+        }
+        
+        function showDiffView(leftCode, rightCode) {
+            const leftLines = leftCode.split('\n');
+            const rightLines = rightCode.split('\n');
+            
+            const maxLines = Math.max(leftLines.length, rightLines.length);
+            let leftHtml = '';
+            let rightHtml = '';
+            
+            for (let i = 0; i < maxLines; i++) {
+                const leftLine = i < leftLines.length ? leftLines[i] : null;
+                const rightLine = i < rightLines.length ? rightLines[i] : null;
+                
+                if (leftLine === rightLine) {
+                    const content = escapeHtml(leftLine || '');
+                    leftHtml += `<div class="diff-line"><span class="symbol"></span><span class="line-content">${content}</span></div>`;
+                    rightHtml += `<div class="diff-line"><span class="symbol"></span><span class="line-content">${content}</span></div>`;
+                } else if (leftLine === null) {
+                    const content = escapeHtml(rightLine || '');
+                    rightHtml += `<div class="diff-line added"><span class="symbol">+</span><span class="line-content">${content}</span></div>`;
+                } else if (rightLine === null) {
+                    const content = escapeHtml(leftLine || '');
+                    leftHtml += `<div class="diff-line removed"><span class="symbol">−</span><span class="line-content">${content}</span></div>`;
+                } else {
+                    const leftContent = escapeHtml(leftLine || '');
+                    const rightContent = escapeHtml(rightLine || '');
+                    leftHtml += `<div class="diff-line removed"><span class="symbol">−</span><span class="line-content">${leftContent}</span></div>`;
+                    rightHtml += `<div class="diff-line added"><span class="symbol">+</span><span class="line-content">${rightContent}</span></div>`;
+                }
+            }
+            
+            document.getElementById('leftPanel').innerHTML = `<div class="diff-view"><pre>${leftHtml}</pre></div>`;
+            document.getElementById('rightPanel').innerHTML = `<div class="diff-view"><pre>${rightHtml}</pre></div>`;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function prevTask() {
+            if (currentTaskIndex > 0) {
+                currentTaskIndex--;
+                document.getElementById('task').value = currentTaskIndex;
+                showCode();
+            }
+        }
+        
+        function nextTask() {
+            if (currentTaskIndex < taskDirs.length - 1) {
+                currentTaskIndex++;
+                document.getElementById('task').value = currentTaskIndex;
+                showCode();
+            }
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.target.matches('select')) return;
+            if (e.key === 'ArrowLeft') prevTask();
+            if (e.key === 'ArrowRight') nextTask();
+            if (e.key === 'd' || e.key === 'D') {
+                document.getElementById('diffToggle').checked = !document.getElementById('diffToggle').checked;
+                showCode();
+            }
+        });
+        
+        loadTasks();
+    </script>
+</body>
+</html>
