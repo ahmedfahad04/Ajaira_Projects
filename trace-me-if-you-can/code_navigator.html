@@ -552,21 +552,17 @@
             await loadTestResults();
             
             try {
-                const response = await fetch(folderPath);
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const links = doc.querySelectorAll('a');
-                
+                // GitHub Pages doesn't support directory listing.
+                // Since our task folders follow a predictable 'task_XXXX' pattern,
+                // we'll try to load tasks 0 to 99 sequentially.
                 taskDirs = [];
-                links.forEach(link => {
-                    const href = link.getAttribute('href');
-                    if (href && href.startsWith('task_')) {
-                        taskDirs.push({ name: href.replace('/', ''), path: `${folderPath}/${href}` });
-                    }
-                });
-                
-                taskDirs.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+                for (let i = 0; i <= 99; i++) {
+                    const taskName = `task_${String(i).padStart(4, '0')}`;
+                    taskDirs.push({ 
+                        name: taskName, 
+                        path: `${folderPath}/${taskName}/` 
+                    });
+                }
                 
                 const taskSelect = document.getElementById('task');
                 taskSelect.innerHTML = '';
