@@ -3,7 +3,7 @@
 '''
 Usage:
     # Ollama (default - llama3.1:8b or qwen2.5-coder:7b recommended for best results)
-    python generate_class_eval_variants.py --provider ollama --model llama3.1:8b 1 --verbose
+    python generate_class_eval_variants.py --provider ollama --model qwen2.5-coder:7b 1 --verbose
 
     # Claude
     python generate_class_eval_variants.py --provider claude 1
@@ -139,7 +139,7 @@ def parse_variants(response: str) -> list[dict]:
 def generate_labeled_variants(code: str, llm_call) -> list[dict]:
     # Step 1: Generate diverse variants with VS
     gen_prompt = create_vs_generation_prompt(code)
-    print("Generating variants with prompt:\n", gen_prompt)
+    # print("Generating variants with prompt:\n", gen_prompt)
     gen_response = llm_call(gen_prompt)
     variants = parse_variants(gen_response)
     
@@ -206,7 +206,7 @@ def extract_variants_from_response(response_text: str) -> List[Dict[str, str]]:
 
 def generate_variants(code: str, provider, test_code: str, task_id: str,
                       class_name: str = None, max_attempts: int = 5,
-                      verbose: bool = False) -> List[Dict]:
+                      model_name: str = "unknown", verbose: bool = False) -> List[Dict]:
     """
     Two-step VS pipeline:
       Step 1 – one LLM call to generate 5 probability-weighted code variants.
@@ -224,8 +224,12 @@ def generate_variants(code: str, provider, test_code: str, task_id: str,
 
     # ── Step 1: Generate variants ──────────────────────────────────────────
     gen_prompt = create_vs_generation_prompt(code)
-    print("Generating variants with prompt:\n", gen_prompt)
+    # print("Generating variants with prompt:\n", gen_prompt)
     raw_variants: list[dict] = []
+
+    safe_model_name = model_name.replace(':', '_').replace('/', '_')
+    raw_responses_dir = OUTPUT_PATH / "raw_llm_responses" / safe_model_name
+    raw_responses_dir.mkdir(parents=True, exist_ok=True)
 
     for attempt in range(max_attempts):
         vlog(f"Generation attempt {attempt+1}/{max_attempts}")
@@ -234,6 +238,9 @@ def generate_variants(code: str, provider, test_code: str, task_id: str,
             vlog(f"Response received ({len(raw)} chars)")
             if verbose:
                 print(f"  [VERBOSE] Raw response:\n{'─'*60}\n{raw}\n{'─'*60}", flush=True)
+
+            response_file = raw_responses_dir / f"{task_id}_gen_attempt{attempt+1}.txt"
+            response_file.write_text(raw)
 
             new_variants = parse_variants(raw)
             vlog(f"Parsed {len(new_variants)} variants")
@@ -259,8 +266,12 @@ def generate_variants(code: str, provider, test_code: str, task_id: str,
         vlog(f"Classifying variant {i+1}")
         try:
             cls_prompt = create_classification_prompt(code, variant_code)
-            labels = llm_call(cls_prompt).strip()
+            cls_raw = llm_call(cls_prompt)
+            labels = cls_raw.strip()
             vlog(f"  → Labels: {labels}")
+
+            cls_response_file = raw_responses_dir / f"{task_id}_variant{i+1}_classification.txt"
+            cls_response_file.write_text(f"{variant_code}\n\n# Classification response:\n# {cls_raw.replace(chr(10), chr(10) + '# ')}")
         except Exception as e:
             labels = "unknown"
             vlog(f"  → Classification failed: {e}")
@@ -347,7 +358,7 @@ def test_variant(variant_code: str, test_code: str, task_id: str, class_name: st
         return False, f"Exception: {str(e)[:100]}"
 
 
-def process_class_eval_dataset(provider, sample_size: str = "full",
+def process_class_eval_dataset(provider, model_name: str, sample_size: str = "full",
                                output_path: Path = None, verbose: bool = False):
     if output_path is None:
         output_path = OUTPUT_PATH
@@ -399,7 +410,7 @@ def process_class_eval_dataset(provider, sample_size: str = "full",
 
             variants = generate_variants(
                 base_code, provider, test_code, task_id, class_name,
-                verbose=verbose
+                model_name=model_name, verbose=verbose
             )
 
             base_passed, base_msg = test_variant(base_code, test_code, task_id, class_name)
@@ -434,14 +445,16 @@ def process_class_eval_dataset(provider, sample_size: str = "full",
             print(f"  ✗ Error: {e}", file=sys.stderr)
             continue
 
+    safe_model_name = model_name.replace(':', '_').replace('/', '_')
     provider_name = provider.__class__.__name__.replace("Provider", "").lower()
+    file_prefix = f"{provider_name}_{safe_model_name}"
 
     code_df = pd.DataFrame(code_results)
-    code_file = output_path / f"classEval_variants_code_{provider_name}.csv"
+    code_file = output_path / f"classEval_variants_code_{file_prefix}.csv"
     code_df.to_csv(code_file, index=False)
 
     label_df = pd.DataFrame(label_results)
-    label_file = output_path / f"classEval_variants_labels_{provider_name}.csv"
+    label_file = output_path / f"classEval_variants_labels_{file_prefix}.csv"
     label_df.to_csv(label_file, index=False)
 
     print(f"\n{'='*70}")
@@ -469,4 +482,4 @@ if __name__ == "__main__":
     print(f"Using provider: {args.provider}, model: {args.model}")
 
     out = Path(args.output_path) if args.output_path else OUTPUT_PATH
-    process_class_eval_dataset(provider, args.sample_size, out, verbose=args.verbose)
+    process_class_eval_dataset(provider, args.model, args.sample_size, out, verbose=args.verbose)

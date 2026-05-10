@@ -2,227 +2,121 @@
 
 import argparse
 import pandas as pd
-import ollama
 import re
 import sys
+import unittest
 import io
 import textwrap
 from pathlib import Path
 from typing import List, Dict, Tuple
+
+from llm_providers import LLMProviderFactory
 
 DATASET_PATH = Path(__file__).parent.parent / "dataset"
 OUTPUT_PATH = Path(__file__).parent.parent / "output"
 OUTPUT_PATH.mkdir(exist_ok=True)
 
 
-def create_refactoring_prompt(code: str) -> str:
+def create_vs_generation_prompt(code: str) -> str:
     return f"""<instructions>
-Generate 5 independent semantic-preserving refactored versions of the given code. Each variant should:
-- Be valid, executable code that passes ALL test cases
-- Keep the underlying problem isomorphic
-- Vary the solving paradigm
-- Avoid cosmetic changes
+You are generating a probability-weighted distribution of Python solutions.
 
-For each variant, output within <response> tags:
-1. <label>: Semicolon-separated refactoring method names
-2. <code>: The refactored code
+Given the original code below, generate 5 independent Python solutions to the same problem.
+Each solution must be correct and executable. Think about the full space of ways this problem could be solved.
 
-LABEL TAXONOMY (prefer existing labels):
+For each solution, assign a probability (0.0 to 1.0) representing how likely this 
+approach would appear across the full distribution of valid solutions to this problem.
+Probabilities do not need to sum to 1.0 across your 5 samples.
 
-Naming: variable renaming, function renaming, method renaming, class renaming, parameter renaming, constant renaming, string formatting change, literal rewrite, import reorganization, formatting only
+Output each variant within <response> tags containing:
+- <probability>: float between 0.0 and 1.0
+- <code>: complete, executable Python code only
 
-Control Flow: early return, guard clause, nested conditional, flattened conditional, combined condition, split condition, reversed condition, conditional expression, loop rewrite, for loop, while loop, enumerate loop, index-based loop, recursion, helper function extraction, helper function inlining, exception handling, try-except wrapper, branch reordering, sentinel flag
-
-Data Structure: accumulator list, accumulator string, accumulator dict, accumulator set, temporary variable, state variable, tuple unpacking, dictionary lookup, set conversion, list conversion, generator expression, list comprehension, dict comprehension, set comprehension, slicing, in-place mutation, copy before mutation
-
-Built-ins/Libraries: builtin function, standard library helper, itertools usage, functools reduce, map/filter usage, lambda expression, sort key, regex usage, membership test, any/all usage, zip usage, join/split usage, f-string
-
-Algorithmic: brute force, two pointer, sliding window, stack-based, queue-based, heap-based, greedy strategy, dynamic programming, memoization, recursion with base case, divide and conquer, mathematical formula, sorting-based approach, frequency counting, prefix/suffix computation, graph traversal, tree traversal, binary search
-
-Robustness: input validation, empty input handling, boundary case handling, type conversion, type check, default value handling, error suppression, behavior change
-
-LABEL RULES:
-- Pick labels at highest useful granularity
-- Use semicolons to separate multiple labels (e.g., "list comprehension; enumerate loop")
-- For approaches NOT in the taxonomy: write a new lowercase label (2-4 words, no verbs like "uses")
-- Prefer existing labels; only invent new ones when nothing fits
+Do not explain. Do not add comments describing what changed. Do not add any main function or test cases. 
+Output only the 5 <response> blocks.
 </instructions>
 
 Original Code:
-```
+```python
 {code}
 ```
 
-Generate 5 independent semantic-preserving refactored variants:
-"""
+Generate 5 probability-weighted independent solutions:"""
 
 
-def extract_variants_from_response(response_text: str) -> List[Dict]:
+def create_classification_prompt(original_code: str, variant_code: str) -> str:
+    return f"""<instructions>
+Analyze how this refactored code differs from the original. 
+Assign labels describing the transformation techniques used.
+
+LABEL TAXONOMY (prefer existing labels, invent new ones only when nothing fits):
+
+Naming:
+  variable renaming | function renaming | method renaming | class renaming
+  parameter renaming | constant renaming | string formatting change
+  literal rewrite | import reorganization | formatting only
+
+Control Flow:
+  early return | guard clause | nested conditional | flattened conditional
+  combined condition | split condition | reversed condition | conditional expression
+  loop rewrite | for loop | while loop | enumerate loop | index-based loop
+  recursion | helper function extraction | helper function inlining
+  exception handling | try-except wrapper | branch reordering | sentinel flag
+
+Data Structure:
+  accumulator list | accumulator string | accumulator dict | accumulator set
+  temporary variable | state variable | tuple unpacking | dictionary lookup
+  set conversion | list conversion | generator expression | list comprehension
+  dict comprehension | set comprehension | slicing | in-place mutation | copy before mutation
+
+Built-ins/Libraries:
+  builtin function | standard library helper | itertools usage | functools reduce
+  map/filter usage | lambda expression | sort key | regex usage
+  membership test | any/all usage | zip usage | join/split usage | f-string
+
+Algorithmic:
+  brute force | two pointer | sliding window | stack-based | queue-based
+  heap-based | greedy strategy | dynamic programming | memoization
+  recursion with base case | divide and conquer | mathematical formula
+  sorting-based approach | frequency counting | prefix/suffix computation
+  graph traversal | tree traversal | binary search
+
+Robustness:
+  input validation | empty input handling | boundary case handling
+  type conversion | type check | default value handling
+  error suppression | behavior change
+
+RULES:
+- Pick labels at highest useful granularity
+- Separate multiple labels with semicolons
+- Invent new lowercase labels (2-4 words, no verbs) only when nothing fits
+- Focus on WHAT changed algorithmically, not surface syntax
+</instructions>
+
+Original Code:
+```python
+{original_code}
+```
+
+Refactored Variant:
+```python
+{variant_code}
+```
+
+Output ONLY a single line of semicolon-separated labels. No explanation."""
+
+
+def parse_variants(response: str) -> list[dict]:
     variants = []
-
-    # Try XML <response>/<label>/<code> format first
-    response_blocks = re.findall(r'<response>(.*?)</response>', response_text, re.DOTALL)
-    for block in response_blocks:
-        label_match = re.search(r'<label>(.*?)</label>', block, re.DOTALL)
+    for block in re.findall(r'<response>(.*?)</response>', response, re.DOTALL):
+        prob_match = re.search(r'<probability>(.*?)</probability>', block, re.DOTALL)
         code_match = re.search(r'<code>(.*?)</code>', block, re.DOTALL)
-        if code_match:
-            code = code_match.group(1).strip()
-            if code.startswith('```'):
-                code = code[code.find('\n')+1:]
-            if code.endswith('```'):
-                code = code[:code.rfind('```')]
-            code = code.strip()
-            label = label_match.group(1).strip() if label_match else "unknown"
-            if code:
-                variants.append({'code': code, 'label': label})
-
-    if variants:
-        return variants[:5]
-
-    # Fallback: parse numbered markdown format produced by most local models
-    # Two sub-formats observed:
-    #   "1. **label:** foo; bar\n```python\ncode\n```"  (label after bold+colon)
-    #   "1. **early return; nested conditional**\n```python\ncode\n```"  (label IS the bold text)
-    blocks = re.split(r'\n(?=\d+\.\s)', '\n' + response_text)
-    for block in blocks:
-        if not block.strip():
-            continue
-        label = "unknown"
-        # Unified bold label parser covering two formats:
-        #   Format A: "**label:** foo; bar"  or  "**Label**: foo; bar"  → text after bold is label
-        #   Format B: "**early return; nested conditional**"            → text inside bold is label
-        bold_m = re.search(r'\*\*([^*]+)\*\*\s*:?\s*([^\n]*)', block)
-        if bold_m:
-            inside_bold = bold_m.group(1).strip().rstrip(':., ')
-            after_bold = bold_m.group(2).strip().rstrip('*:., ')
-            # Use after-bold text only when it's present and not a code fence
-            if after_bold and not after_bold.startswith('`'):
-                label = after_bold
-            else:
-                label = inside_bold
-        code_match = re.search(r'```(?:python)?\n(.*?)```', block, re.DOTALL)
-        if code_match:
-            code = code_match.group(1).strip()
-            if code:
-                variants.append({'code': code, 'label': label})
-
-    return variants[:5]
-
-
-def generate_variants(code: str, model: str, test_code: str, method_name: str,
-                     prompt_str: str = None, max_attempts: int = 5,
-                     verbose: bool = False) -> List[Dict]:
-    prompt = create_refactoring_prompt(code)
-    variants = []
-
-    def vlog(msg: str):
-        if verbose:
-            print(f"  [VERBOSE] {msg}", flush=True)
-
-    for attempt in range(max_attempts):
-        vlog(f"Sending request to {model} (attempt {attempt+1}/{max_attempts})")
-        try:
-            response = ollama.chat(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                stream=False
-            )
-            raw = response.message.content
-            vlog(f"Response received ({len(raw)} chars)")
-            if verbose:
-                print(f"  [VERBOSE] Raw response:\n{'─'*60}\n{raw}\n{'─'*60}", flush=True)
-
-            raw_variants = extract_variants_from_response(raw)
-            vlog(f"Parsed {len(raw_variants)} variants from response")
-
-            for i, var in enumerate(raw_variants):
-                if len(variants) >= 5:
-                    break
-
-                variant_code = var['code']
-                label = var['label']
-
-                vlog(f"Testing variant {i+1}: [{label}]")
-                passed, msg = test_variant(variant_code, test_code, method_name, prompt_str)
-                vlog(f"  → {'PASSED' if passed else 'FAILED'}: {msg}")
-
-                if passed:
-                    variants.append({
-                        'code': variant_code,
-                        'label': label,
-                        'test_passed': True,
-                        'test_msg': msg
-                    })
-                else:
-                    retry_success = False
-                    for retry in range(3):
-                        vlog(f"  Retry {retry+1}/3 for variant {i+1} (error: {msg[:80]})")
-                        retry_prompt = f"""{prompt}
-
-The previous variant failed the test with error: {msg}
-Please generate a corrected variant that passes all test cases.
-
-Output format:
-<response>
-<label>refactoring method names</label>
-<code>
-corrected code here
-</code>
-</response>"""
-                        try:
-                            retry_response = ollama.chat(
-                                model=model,
-                                messages=[{"role": "user", "content": retry_prompt}],
-                                stream=False
-                            )
-                            retry_raw = retry_response.message.content
-                            vlog(f"  Retry response ({len(retry_raw)} chars)")
-                            if verbose:
-                                print(f"  [VERBOSE] Retry raw:\n{'─'*40}\n{retry_raw[:500]}\n{'─'*40}", flush=True)
-
-                            retry_vars = extract_variants_from_response(retry_raw)
-                            if retry_vars:
-                                retry_code = retry_vars[0]['code']
-                                retry_label = retry_vars[0]['label']
-                                passed, msg = test_variant(retry_code, test_code, method_name, prompt_str)
-                                vlog(f"  → Retry {'PASSED' if passed else 'FAILED'}: {msg}")
-                                if passed:
-                                    variants.append({
-                                        'code': retry_code,
-                                        'label': retry_label,
-                                        'test_passed': True,
-                                        'test_msg': msg
-                                    })
-                                    retry_success = True
-                                    break
-                        except Exception:
-                            continue
-
-                    if not retry_success:
-                        variants.append({
-                            'code': variant_code,
-                            'label': label,
-                            'test_passed': False,
-                            'test_msg': msg
-                        })
-
-        except Exception as e:
-            print(f"  Generation attempt {attempt+1} failed: {e}", file=sys.stderr)
-            continue
-
-        if len(variants) >= 5:
-            break
-
-    # Pad with original code if needed
-    while len(variants) < 5:
-        variants.append({
-            'code': code,
-            'label': 'original',
-            'test_passed': True,
-            'test_msg': 'fallback'
-        })
-
-    return variants[:5]
+        if prob_match and code_match:
+            variants.append({
+                'probability': float(prob_match.group(1).strip()),
+                'code': code_match.group(1).strip()
+            })
+    return variants
 
 
 def extract_function_name_from_code(code: str) -> str:
@@ -242,6 +136,92 @@ def ensure_function_name_in_code(variant_code: str, expected_func_name: str) -> 
             flags=re.MULTILINE
         )
     return variant_code
+
+
+def generate_variants(code: str, provider, test_code: str, task_id: str,
+                      method_name: str = None, prompt_str: str = None,
+                      max_attempts: int = 5, model_name: str = "unknown",
+                      verbose: bool = False) -> List[Dict]:
+    def vlog(msg: str):
+        if verbose:
+            print(f"  [VERBOSE] {msg}", flush=True)
+
+    def llm_call(prompt: str) -> str:
+        response = provider.generate(prompt, max_tokens=4096)
+        return response.text
+
+    gen_prompt = create_vs_generation_prompt(code)
+    raw_variants: list[dict] = []
+
+    safe_model_name = model_name.replace(':', '_').replace('/', '_')
+    raw_responses_dir = OUTPUT_PATH / "raw_llm_responses" / safe_model_name
+    raw_responses_dir.mkdir(parents=True, exist_ok=True)
+
+    for attempt in range(max_attempts):
+        vlog(f"Generation attempt {attempt+1}/{max_attempts}")
+        try:
+            raw = llm_call(gen_prompt)
+            vlog(f"Response received ({len(raw)} chars)")
+            if verbose:
+                print(f"  [VERBOSE] Raw response:\n{'─'*60}\n{raw}\n{'─'*60}", flush=True)
+
+            response_file = raw_responses_dir / f"{task_id}_gen_attempt{attempt+1}.txt"
+            response_file.write_text(raw)
+
+            new_variants = parse_variants(raw)
+            vlog(f"Parsed {len(new_variants)} variants")
+            raw_variants.extend(new_variants)
+
+            if len(raw_variants) >= 5:
+                break
+
+        except Exception as e:
+            print(f"  Generation attempt {attempt+1} failed: {e}", file=sys.stderr)
+            continue
+
+    raw_variants = raw_variants[:5]
+
+    variants: List[Dict] = []
+
+    for i, var in enumerate(raw_variants[:5]):
+        variant_code = var['code']
+        probability = var.get('probability', 0.0)
+
+        vlog(f"Classifying variant {i+1}")
+        try:
+            cls_prompt = create_classification_prompt(code, variant_code)
+            cls_raw = llm_call(cls_prompt)
+            labels = cls_raw.strip()
+            vlog(f"  → Labels: {labels}")
+
+            cls_response_file = raw_responses_dir / f"{task_id}_variant{i+1}_classification.py"
+            cls_response_file.write_text(f"{variant_code}\n\n# Classification response:\n# {cls_raw.replace(chr(10), chr(10) + '# ')}")
+        except Exception as e:
+            labels = "unknown"
+            vlog(f"  → Classification failed: {e}")
+
+        passed, msg = test_variant(variant_code, test_code, task_id, method_name, prompt_str)
+        vlog(f"  → Test {'PASSED' if passed else 'FAILED'}: {msg}")
+
+        variants.append({
+            'code': variant_code,
+            'label': labels,
+            'probability': probability,
+            'test_passed': passed,
+            'test_msg': msg,
+        })
+
+    while len(variants) < 5:
+        vlog("Padding with original code (model returned fewer than 5 variants)")
+        variants.append({
+            'code': code,
+            'label': 'original',
+            'probability': 0.0,
+            'test_passed': True,
+            'test_msg': 'fallback',
+        })
+
+    return variants[:5]
 
 
 def extract_function_signature_and_body(prompt: str) -> Tuple[str, str]:
@@ -266,7 +246,7 @@ def extract_function_signature_and_body(prompt: str) -> Tuple[str, str]:
     return '', ''
 
 
-def test_variant(variant_code: str, test_code: str, method_name: str, prompt: str = None) -> Tuple[bool, str]:
+def test_variant(variant_code: str, test_code: str, task_id: str, method_name: str = None, prompt: str = None) -> Tuple[bool, str]:
     try:
         variant_code = textwrap.dedent(variant_code)
         test_code = textwrap.dedent(test_code)
@@ -310,10 +290,19 @@ def test_variant(variant_code: str, test_code: str, method_name: str, prompt: st
         namespace = {}
         exec(variant_code, namespace)
 
-        if method_name not in namespace:
+        if method_name and method_name not in namespace:
             return False, f"Function {method_name} not found in variant"
 
-        candidate = namespace[method_name]
+        candidate = namespace[method_name] if method_name else None
+
+        if not candidate and 'def ' in variant_code:
+            for name, obj in namespace.items():
+                if callable(obj) and not name.startswith('_'):
+                    candidate = obj
+                    break
+
+        if not candidate:
+            return False, "No callable function found in variant"
 
         test_namespace = {'candidate': candidate}
         exec(test_code, test_namespace)
@@ -334,7 +323,7 @@ def test_variant(variant_code: str, test_code: str, method_name: str, prompt: st
         return False, f"Execution error: {str(e)[:100]}"
 
 
-def process_human_eval_dataset(model: str, sample_size: str = "full",
+def process_human_eval_dataset(provider, model_name: str, sample_size: str = "full",
                                output_path: Path = None, verbose: bool = False):
     if output_path is None:
         output_path = OUTPUT_PATH
@@ -358,13 +347,15 @@ def process_human_eval_dataset(model: str, sample_size: str = "full",
     else:
         sample_info = " (full dataset)"
 
+    provider_name = provider.__class__.__name__.replace("Provider", "")
     print(f"\n{'='*70}")
-    print(f"Processing human_eval_164.csv with model: {model}{sample_info}")
+    print(f"Processing human_eval_164.csv with provider: {provider_name}{sample_info}")
     print(f"Total rows: {total}, Valid codes: {len(valid_codes)}")
     if verbose:
         print(f"Verbose mode: ON")
     print(f"{'='*70}\n")
 
+    processed = 0
     for idx, row in valid_codes.iterrows():
         task_id = row['task_id']
         base_code = str(row['solution_code'])
@@ -375,15 +366,16 @@ def process_human_eval_dataset(model: str, sample_size: str = "full",
         if not base_code or base_code == 'nan':
             continue
 
-        print(f"[{idx+1}/{len(valid_codes)}] Processing task {task_id}...")
+        processed += 1
+        print(f"[{processed}/{len(valid_codes)}] Processing task {task_id}...")
 
         try:
             variants = generate_variants(
-                base_code, model, test_code, method_name, prompt_str,
-                verbose=verbose
+                base_code, provider, test_code, task_id,
+                method_name, prompt_str, model_name=model_name, verbose=verbose
             )
 
-            base_passed, base_msg = test_variant(base_code, test_code, method_name, prompt_str)
+            base_passed, base_msg = test_variant(base_code, test_code, task_id, method_name, prompt_str)
 
             code_row = {
                 'task_id': task_id,
@@ -403,6 +395,7 @@ def process_human_eval_dataset(model: str, sample_size: str = "full",
                 code_row[f'variant_{i+1}_test_passed'] = variant_data['test_passed']
                 code_row[f'variant_{i+1}_test_msg'] = variant_data['test_msg']
                 label_row[f'variant_{i+1}_label'] = variant_data['label']
+                label_row[f'variant_{i+1}_probability'] = variant_data.get('probability', 0.0)
                 if variant_data['test_passed']:
                     passed_count += 1
 
@@ -414,14 +407,16 @@ def process_human_eval_dataset(model: str, sample_size: str = "full",
             print(f"  ✗ Error: {e}", file=sys.stderr)
             continue
 
-    model_name = model.replace(':', '_').replace('.', '_')
+    safe_model_name = model_name.replace(':', '_').replace('/', '_')
+    provider_name = provider.__class__.__name__.replace("Provider", "").lower()
+    file_prefix = f"{provider_name}_{safe_model_name}"
 
     code_df = pd.DataFrame(code_results)
-    code_file = output_path / f"human_eval_variants_code_{model_name}.csv"
+    code_file = output_path / f"human_eval_variants_code_{file_prefix}.csv"
     code_df.to_csv(code_file, index=False)
 
     label_df = pd.DataFrame(label_results)
-    label_file = output_path / f"human_eval_variants_labels_{model_name}.csv"
+    label_file = output_path / f"human_eval_variants_labels_{file_prefix}.csv"
     label_df.to_csv(label_file, index=False)
 
     print(f"\n{'='*70}")
@@ -433,7 +428,10 @@ def process_human_eval_dataset(model: str, sample_size: str = "full",
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate human_eval code variants")
-    parser.add_argument("model", help="Ollama model name (e.g. qwen2.5-coder:7b)")
+    parser.add_argument("--provider", default="ollama",
+                        help="LLM provider (ollama, claude, gemini, groq, cerebras, aisuite)")
+    parser.add_argument("--model", default="llama3",
+                        help="Model name (for ollama) or provider-specific model id")
     parser.add_argument("sample_size", nargs="?", default="full",
                         help="Number of samples or 'full' (default: full)")
     parser.add_argument("output_path", nargs="?", default=None,
@@ -442,5 +440,8 @@ if __name__ == "__main__":
                         help="Print detailed per-step logs (requests, responses, test results)")
     args = parser.parse_args()
 
+    provider = LLMProviderFactory.create(args.provider, model=args.model)
+    print(f"Using provider: {args.provider}, model: {args.model}")
+
     out = Path(args.output_path) if args.output_path else OUTPUT_PATH
-    process_human_eval_dataset(args.model, args.sample_size, out, verbose=args.verbose)
+    process_human_eval_dataset(provider, args.model, args.sample_size, out, verbose=args.verbose)

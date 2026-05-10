@@ -531,6 +531,74 @@ class AISuiteProvider(LLMProvider):
             return False
 
 
+class CopilotProvider(LLMProvider):
+    """Copilot API local server implementation."""
+    
+    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4.1", 
+                 base_url: str = "http://localhost:4141", api_type: str = "chat", **kwargs):
+        super().__init__(api_key)
+        self._model = model
+        self._base_url = base_url
+        self._api_type = api_type  # "chat" or "messages"
+        try:
+            import requests
+            self._requests = requests
+        except ImportError:
+            raise ImportError("Install: pip install requests")
+    
+    def generate(
+        self,
+        prompt: str,
+        system_prompt: str = "",
+        max_tokens: int = 2048,
+        temperature: float = 0.1,
+    ) -> LLMResponse:
+        if self._api_type == "messages":
+            url = f"{self._base_url}/v1/messages"
+            payload = {
+                "model": self._model,
+                "messages": [{"role": "user", "content": prompt}]
+            }
+            response = self._requests.post(
+                url, json=payload, headers={"Content-Type": "application/json"}
+            )
+            data = response.json()
+            text = data.get("content", [{}])[0].get("text", "")
+        else:
+            url = f"{self._base_url}/v1/chat/completions"
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
+            payload = {
+                "model": self._model,
+                "messages": messages,
+            }
+            response = self._requests.post(
+                url, json=payload, headers={"Content-Type": "application/json"}
+            )
+            data = response.json()
+            text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        
+        return LLMResponse(text=text, input_tokens=0, output_tokens=0)
+    
+    def count_tokens(self, text: str) -> int:
+        return len(text) // 4
+    
+    def validate_connection(self) -> bool:
+        try:
+            url = f"{self._base_url}/v1/chat/completions"
+            self._requests.post(
+                url, 
+                json={"model": self._model, "messages": [{"role": "user", "content": "test"}]},
+                headers={"Content-Type": "application/json"},
+                timeout=5
+            )
+            return True
+        except Exception:
+            return False
+
+
 class LLMProviderFactory:
     """Factory for creating LLM provider instances."""
     
@@ -541,6 +609,7 @@ class LLMProviderFactory:
         "cerebras": CerebrasProvider,
         "aisuite": AISuiteProvider,
         "ollama": OllamaProvider,
+        "copilot": CopilotProvider,
     }
     
     @classmethod
