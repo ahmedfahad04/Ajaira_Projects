@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+'''
+Usage:
+
+python generate_human_eval_variants.py --provider ollama --model qwen2.5-coder:7b 1 --verbose
+
+'''
+
 import argparse
 import pandas as pd
 import re
@@ -111,10 +118,25 @@ def parse_variants(response: str) -> list[dict]:
     for block in re.findall(r'<response>(.*?)</response>', response, re.DOTALL):
         prob_match = re.search(r'<probability>(.*?)</probability>', block, re.DOTALL)
         code_match = re.search(r'<code>(.*?)</code>', block, re.DOTALL)
+        
         if prob_match and code_match:
+            code = code_match.group(1).strip()
+        else:
+            code_match = re.search(r'```(?:python)?\n(.*?)```', block, re.DOTALL)
+            if code_match:
+                code = code_match.group(1).strip()
+            else:
+                continue
+        
+        if prob_match:
+            probability = float(prob_match.group(1).strip())
+        else:
+            probability = 0.0
+        
+        if code:
             variants.append({
-                'probability': float(prob_match.group(1).strip()),
-                'code': code_match.group(1).strip()
+                'probability': probability,
+                'code': code
             })
     return variants
 
@@ -147,7 +169,7 @@ def generate_variants(code: str, provider, test_code: str, task_id: str,
             print(f"  [VERBOSE] {msg}", flush=True)
 
     def llm_call(prompt: str) -> str:
-        response = provider.generate(prompt, max_tokens=4096)
+        response = provider.generate(prompt, max_tokens=8192, temperature=0.7)
         return response.text
 
     gen_prompt = create_vs_generation_prompt(code)

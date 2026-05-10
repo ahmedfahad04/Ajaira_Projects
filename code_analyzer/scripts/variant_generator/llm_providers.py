@@ -463,6 +463,11 @@ class OllamaProvider(LLMProvider):
             model=self._model,
             messages=messages,
             stream=False,
+            options={
+                "temperature": temperature,
+                "top_p": 0.95,
+                "num_ctx": 8192,
+            },
         )
         
         return LLMResponse(
