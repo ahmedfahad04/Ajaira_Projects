@@ -1,1 +1,3 @@
 .env
+scripts/output/variants/**
+scripts/output/raw_llm_responses/**
