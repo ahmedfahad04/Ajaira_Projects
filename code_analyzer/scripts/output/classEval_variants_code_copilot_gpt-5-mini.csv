@@ -1,0 +1,5095 @@
+task_id,base_code,base_code_test_passed,base_code_test_msg,variant_1,variant_1_test_passed,variant_1_test_msg,variant_2,variant_2_test_passed,variant_2_test_msg,variant_3,variant_3_test_passed,variant_3_test_msg,variant_4,variant_4_test_passed,variant_4_test_msg,variant_5,variant_5_test_passed,variant_5_test_msg
+46,"class Interpolation:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def interpolate_1d(x, y, x_interp):
+        y_interp = []
+        for xi in x_interp:
+            for i in range(len(x) - 1):
+                if x[i] <= xi <= x[i+1]:
+                    yi = y[i] + (y[i+1] - y[i]) * (xi - x[i]) / (x[i+1] - x[i])
+                    y_interp.append(yi)
+                    break
+        return y_interp
+    
+    @staticmethod
+    def interpolate_2d(x, y, z, x_interp, y_interp):
+        z_interp = []
+        for xi, yi in zip(x_interp, y_interp):
+            for i in range(len(x) - 1):
+                if x[i] <= xi <= x[i+1]:
+                    for j in range(len(y) - 1):
+                        if y[j] <= yi <= y[j+1]:
+                            z00 = z[i][j]
+                            z01 = z[i][j+1]
+                            z10 = z[i+1][j]
+                            z11 = z[i+1][j+1]
+                            zi = (z00 * (x[i+1] - xi) * (y[j+1] - yi) +
+                                  z10 * (xi - x[i]) * (y[j+1] - yi) +
+                                  z01 * (x[i+1] - xi) * (yi - y[j]) +
+                                  z11 * (xi - x[i]) * (yi - y[j])) / ((x[i+1] - x[i]) * (y[j+1] - y[j]))
+                            z_interp.append(zi)
+                            break
+                    break
+        return z_interp",True,"Tests: 13, Failures: 0, Errors: 0","class Interpolation:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def interpolate_1d(x, y, x_interp):
+        from bisect import bisect_right
+        y_interp = []
+        n = len(x)
+        for xi in x_interp:
+            if xi < x[0] or xi > x[-1]:
+                continue
+            i = bisect_right(x, xi) - 1
+            if i < 0:
+                i = 0
+            if i >= n - 1:
+                i = n - 2
+            dx = x[i+1] - x[i]
+            if dx == 0:
+                yi = y[i]
+            else:
+                yi = y[i] + (y[i+1] - y[i]) * (xi - x[i]) / dx
+            y_interp.append(yi)
+        return y_interp
+
+    @staticmethod
+    def interpolate_2d(x, y, z, x_interp, y_interp):
+        from bisect import bisect_right
+        z_interp = []
+        nx = len(x)
+        ny = len(y)
+        for xi, yi in zip(x_interp, y_interp):
+            if xi < x[0] or xi > x[-1] or yi < y[0] or yi > y[-1]:
+                continue
+            i = bisect_right(x, xi) - 1
+            j = bisect_right(y, yi) - 1
+            if i < 0:
+                i = 0
+            if j < 0:
+                j = 0
+            if i >= nx - 1:
+                i = nx - 2
+            if j >= ny - 1:
+                j = ny - 2
+            x0, x1 = x[i], x[i+1]
+            y0, y1 = y[j], y[j+1]
+            z00 = z[i][j]
+            z10 = z[i+1][j]
+            z01 = z[i][j+1]
+            z11 = z[i+1][j+1]
+            dx = x1 - x0
+            dy = y1 - y0
+            if dx == 0 and dy == 0:
+                zi = z00
+            elif dx == 0:
+                t = (yi - y0) / dy if dy != 0 else 0.0
+                zi = z00 + (z01 - z00) * t
+            elif dy == 0:
+                s = (xi - x0) / dx if dx != 0 else 0.0
+                zi = z00 + (z10 - z00) * s
+            else:
+                s = (xi - x0) / dx
+                t = (yi - y0) / dy
+                zi = (z00 * (1 - s) * (1 - t) +
+                      z10 * s * (1 - t) +
+                      z01 * (1 - s) * t +
+                      z11 * s * t)
+            z_interp.append(zi)
+        return z_interp",False,"Tests: 13, Failures: 0, Errors: 1","import numpy as np
+
+class Interpolation:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def interpolate_1d(x, y, x_interp):
+        xa = np.asarray(x, dtype=float)
+        ya = np.asarray(y, dtype=float)
+        xi = np.asarray(x_interp, dtype=float)
+        yi = np.interp(xi, xa, ya)
+        # preserve original behavior: drop values outside bounds (np.interp extrapolates)
+        mask = (xi >= xa[0]) & (xi <= xa[-1])
+        return yi[mask].tolist()
+
+    @staticmethod
+    def interpolate_2d(x, y, z, x_interp, y_interp):
+        xa = np.asarray(x, dtype=float)
+        ya = np.asarray(y, dtype=float)
+        za = np.asarray(z, dtype=float)
+        xi = np.asarray(x_interp, dtype=float)
+        yi = np.asarray(y_interp, dtype=float)
+        result = []
+        nx = len(xa)
+        ny = len(ya)
+        for xq, yq in zip(xi, yi):
+            if xq < xa[0] or xq > xa[-1] or yq < ya[0] or yq > ya[-1]:
+                continue
+            i = np.searchsorted(xa, xq) - 1
+            j = np.searchsorted(ya, yq) - 1
+            i = max(0, min(i, nx - 2))
+            j = max(0, min(j, ny - 2))
+            x0, x1 = xa[i], xa[i+1]
+            y0, y1 = ya[j], ya[j+1]
+            z00 = za[i, j]
+            z10 = za[i+1, j]
+            z01 = za[i, j+1]
+            z11 = za[i+1, j+1]
+            dx = x1 - x0
+            dy = y1 - y0
+            sx = 0.0 if dx == 0 else (xq - x0) / dx
+            sy = 0.0 if dy == 0 else (yq - y0) / dy
+            zi = (z00 * (1 - sx) * (1 - sy) +
+                  z10 * sx * (1 - sy) +
+                  z01 * (1 - sx) * sy +
+                  z11 * sx * sy)
+            result.append(float(zi))
+        return result",False,"Tests: 13, Failures: 0, Errors: 1","class Interpolation:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def _find_interval(arr, v):
+        n = len(arr)
+        if v < arr[0] or v > arr[-1]:
+            return None
+        for k in range(n - 1):
+            if arr[k] <= v <= arr[k+1]:
+                return k
+        return None
+
+    @staticmethod
+    def interpolate_1d(x, y, x_interp):
+        y_interp = []
+        for xv in x_interp:
+            idx = Interpolation._find_interval(x, xv)
+            if idx is None:
+                continue
+            x0, x1 = x[idx], x[idx+1]
+            y0, y1 = y[idx], y[idx+1]
+            if x1 == x0:
+                y_interp.append(y0)
+            else:
+                t = (xv - x0) / (x1 - x0)
+                y_interp.append(y0 + t * (y1 - y0))
+        return y_interp
+
+    @staticmethod
+    def interpolate_2d(x, y, z, x_interp, y_interp):
+        z_interp = []
+        for xv, yv in zip(x_interp, y_interp):
+            ix = Interpolation._find_interval(x, xv)
+            iy = Interpolation._find_interval(y, yv)
+            if ix is None or iy is None:
+                continue
+            x0, x1 = x[ix], x[ix+1]
+            y0, y1 = y[iy], y[iy+1]
+            z00 = z[ix][iy]
+            z10 = z[ix+1][iy]
+            z01 = z[ix][iy+1]
+            z11 = z[ix+1][iy+1]
+            dx = x1 - x0
+            dy = y1 - y0
+            if dx == 0 and dy == 0:
+                z_interp.append(z00)
+                continue
+            if dx == 0:
+                ty = (yv - y0) / dy if dy != 0 else 0.0
+                z_interp.append(z00 + ty * (z01 - z00))
+                continue
+            if dy == 0:
+                tx = (xv - x0) / dx if dx != 0 else 0.0
+                z_interp.append(z00 + tx * (z10 - z00))
+                continue
+            tx = (xv - x0) / dx
+            ty = (yv - y0) / dy
+            zi = (z00 * (1 - tx) * (1 - ty) +
+                  z10 * tx * (1 - ty) +
+                  z01 * (1 - tx) * ty +
+                  z11 * tx * ty)
+            z_interp.append(zi)
+        return z_interp",False,"Tests: 13, Failures: 1, Errors: 1","class Interpolation:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def interpolate_1d(x, y, x_interp):
+        n = len(x)
+        slopes = []
+        for i in range(n - 1):
+            dx = x[i+1] - x[i]
+            if dx == 0:
+                slopes.append(0.0)
+            else:
+                slopes.append((y[i+1] - y[i]) / dx)
+        out = []
+        for xv in x_interp:
+            if xv < x[0] or xv > x[-1]:
+                continue
+            # find interval with while
+            i = 0
+            while i < n - 1 and not (x[i] <= xv <= x[i+1]):
+                i += 1
+            dx = xv - x[i]
+            yi = y[i] + slopes[i] * dx
+            out.append(yi)
+        return out
+
+    @staticmethod
+    def interpolate_2d(x, y, z, x_interp, y_interp):
+        nx = len(x)
+        ny = len(y)
+        # helper to find index
+        def idx_search(arr, val):
+            if val < arr[0] or val > arr[-1]:
+                return None
+            i = 0
+            while i < len(arr) - 1 and not (arr[i] <= val <= arr[i+1]):
+                i += 1
+            return i
+        result = []
+        for xv, yv in zip(x_interp, y_interp):
+            ix = idx_search(x, xv)
+            iy = idx_search(y, yv)
+            if ix is None or iy is None:
+                continue
+            x0, x1 = x[ix], x[ix+1]
+            y0, y1 = y[iy], y[iy+1]
+            z00 = z[ix][iy]
+            z10 = z[ix+1][iy]
+            z01 = z[ix][iy+1]
+            z11 = z[ix+1][iy+1]
+            dx = x1 - x0
+            dy = y1 - y0
+            sx = 0.0 if dx == 0 else (xv - x0) / dx
+            sy = 0.0 if dy == 0 else (yv - y0) / dy
+            val = (z00 * (1 - sx) * (1 - sy) +
+                   z10 * sx * (1 - sy) +
+                   z01 * (1 - sx) * sy +
+                   z11 * sx * sy)
+            result.append(val)
+        return result",False,"Tests: 13, Failures: 0, Errors: 1","class Interpolation:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def interpolate_1d(x, y, x_interp):
+        # build segments
+        segments = []
+        for i in range(len(x) - 1):
+            x0, x1 = x[i], x[i+1]
+            y0, y1 = y[i], y[i+1]
+            dx = x1 - x0
+            if dx == 0:
+                m = 0.0
+            else:
+                m = (y1 - y0) / dx
+            segments.append((x0, x1, y0, m))
+        out = []
+        for xv in x_interp:
+            for x0, x1, y0, m in segments:
+                if x0 <= xv <= x1:
+                    out.append(y0 + m * (xv - x0))
+                    break
+        return out
+
+    @staticmethod
+    def interpolate_2d(x, y, z, x_interp, y_interp):
+        # for each query, perform bilinear via two linear interpolations in x then y
+        out = []
+        for xv, yv in zip(x_interp, y_interp):
+            # find i
+            i = None
+            for ii in range(len(x) - 1):
+                if x[ii] <= xv <= x[ii+1]:
+                    i = ii
+                    break
+            j = None
+            for jj in range(len(y) - 1):
+                if y[jj] <= yv <= y[jj+1]:
+                    j = jj
+                    break
+            if i is None or j is None:
+                continue
+            x0, x1 = x[i], x[i+1]
+            y0, y1 = y[j], y[j+1]
+            z00 = z[i][j]
+            z10 = z[i+1][j]
+            z01 = z[i][j+1]
+            z11 = z[i+1][j+1]
+            dx = x1 - x0
+            dy = y1 - y0
+            if dx == 0:
+                zx0 = z00
+                zx1 = z01
+            else:
+                t = (xv - x0) / dx
+                zx0 = z00 + t * (z10 - z00)
+                zx1 = z01 + t * (z11 - z01)
+            if dy == 0:
+                out.append(zx0)
+            else:
+                s = (yv - y0) / dy
+                out.append(zx0 + s * (zx1 - zx0))
+        return out",True,"Tests: 13, Failures: 0, Errors: 0"
+47,"class IPAddress:
+    def __init__(self, ip_address):
+        self.ip_address = ip_address
+
+    def is_valid(self):
+        octets = self.ip_address.split('.')
+        if len(octets) != 4:
+            return False
+        for octet in octets:
+            if not octet.isdigit() or int(octet) < 0 or int(octet) > 255:
+                return False
+        return True
+
+    def get_octets(self):
+        if self.is_valid():
+            return self.ip_address.split('.')
+        else:
+            return []
+
+    def get_binary(self):
+        if self.is_valid():
+            binary_octets = []
+            for octet in self.get_octets():
+                binary_octets.append(format(int(octet), '08b'))
+            return '.'.join(binary_octets)
+        else:
+            return ''",True,"Tests: 16, Failures: 0, Errors: 0","class IPAddress:
+    def __init__(self, ip_address):
+        self.ip_address = ip_address
+
+    def is_valid(self):
+        parts = self.ip_address.split('.')
+        if len(parts) != 4:
+            return False
+        for p in parts:
+            if p == '':
+                return False
+            try:
+                n = int(p)
+            except ValueError:
+                return False
+            if n < 0 or n > 255:
+                return False
+        return True
+
+    def get_octets(self):
+        return self.ip_address.split('.') if self.is_valid() else []
+
+    def get_binary(self):
+        if not self.is_valid():
+            return ''
+        return '.'.join(format(int(o), '08b') for o in self.get_octets())",True,"Tests: 16, Failures: 0, Errors: 0","import re
+
+class IPAddress:
+    _pattern = re.compile(r'^(?:25[0-5]|2[0-4]\d|1?\d{1,2})(?:\.(?:25[0-5]|2[0-4]\d|1?\d{1,2})){3}$')
+
+    def __init__(self, ip_address):
+        self.ip_address = ip_address
+
+    def is_valid(self):
+        return bool(self._pattern.fullmatch(self.ip_address))
+
+    def get_octets(self):
+        return self.ip_address.split('.') if self.is_valid() else []
+
+    def get_binary(self):
+        if not self.is_valid():
+            return ''
+        return '.'.join(f""{int(o):08b}"" for o in self.get_octets())",True,"Tests: 16, Failures: 0, Errors: 0","import ipaddress
+
+class IPAddress:
+    def __init__(self, ip_address):
+        self.ip_address = ip_address
+
+    def is_valid(self):
+        try:
+            addr = ipaddress.ip_address(self.ip_address)
+        except ValueError:
+            return False
+        return addr.version == 4
+
+    def get_octets(self):
+        if not self.is_valid():
+            return []
+        return self.ip_address.split('.')
+
+    def get_binary(self):
+        if not self.is_valid():
+            return ''
+        return '.'.join(bin(int(o))[2:].zfill(8) for o in self.get_octets())",True,"Tests: 16, Failures: 0, Errors: 0","from dataclasses import dataclass
+
+@dataclass
+class IPAddress:
+    ip_address: str
+
+    def is_valid(self) -> bool:
+        octets = self.ip_address.split('.')
+        if len(octets) != 4:
+            return False
+        return all(o.isdigit() and 0 <= int(o) <= 255 for o in octets)
+
+    def get_octets(self):
+        return self.ip_address.split('.') if self.is_valid() else []
+
+    def get_binary(self):
+        if not self.is_valid():
+            return ''
+        octs = self.get_octets()
+        return '.'.join(format(int(o), '08b') for o in octs)",True,"Tests: 16, Failures: 0, Errors: 0","class IPAddress:
+    def __init__(self, ip_address):
+        self.ip_address = ip_address
+
+    def is_valid(self):
+        parts = list(map(str.strip, self.ip_address.split('.')))
+        if len(parts) != 4:
+            return False
+        try:
+            nums = list(map(int, parts))
+        except ValueError:
+            return False
+        return all(0 <= n <= 255 for n in nums)
+
+    def get_octets(self):
+        return self.ip_address.split('.') if self.is_valid() else []
+
+    def get_binary(self):
+        if not self.is_valid():
+            return ''
+        return '.'.join(bin(int(x))[2:].rjust(8, '0') for x in self.get_octets())",True,"Tests: 16, Failures: 0, Errors: 0"
+48,"import socket
+
+
+class IpUtil:
+
+    @staticmethod
+    def is_valid_ipv4(ip_address):
+        try:
+            socket.inet_pton(socket.AF_INET, ip_address)
+            return True
+        except socket.error:
+            return False
+
+    @staticmethod
+    def is_valid_ipv6(ip_address):
+        try:
+            socket.inet_pton(socket.AF_INET6, ip_address)
+            return True
+        except socket.error:
+            return False
+
+    @staticmethod
+    def get_hostname(ip_address):
+        try:
+            hostname = socket.gethostbyaddr(ip_address)[0]
+            return hostname
+        except socket.herror:
+            return None",False,"Tests: 16, Failures: 1, Errors: 0","import ipaddress
+import socket
+
+class IpUtil:
+
+    @staticmethod
+    def is_valid_ipv4(ip_address):
+        try:
+            ipaddress.IPv4Address(ip_address)
+            return True
+        except (ValueError, TypeError):
+            return False
+
+    @staticmethod
+    def is_valid_ipv6(ip_address):
+        try:
+            ipaddress.IPv6Address(ip_address)
+            return True
+        except (ValueError, TypeError):
+            return False
+
+    @staticmethod
+    def get_hostname(ip_address):
+        try:
+            return socket.gethostbyaddr(ip_address)[0]
+        except (socket.herror, socket.gaierror):
+            return None",False,"Tests: 16, Failures: 1, Errors: 0","import re
+import socket
+
+_ipv4_re = re.compile(r'^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$')
+
+class IpUtil:
+
+    @staticmethod
+    def is_valid_ipv4(ip_address):
+        if not isinstance(ip_address, str):
+            return False
+        return _ipv4_re.match(ip_address) is not None
+
+    @staticmethod
+    def is_valid_ipv6(ip_address):
+        if not isinstance(ip_address, str):
+            return False
+        try:
+            socket.inet_pton(socket.AF_INET6, ip_address)
+            return True
+        except (socket.error, OSError):
+            return False
+
+    @staticmethod
+    def get_hostname(ip_address):
+        try:
+            return socket.gethostbyaddr(ip_address)[0]
+        except (socket.herror, socket.gaierror):
+            return None",False,"Tests: 16, Failures: 1, Errors: 0","import socket
+
+class IpUtil:
+
+    @staticmethod
+    def is_valid_ipv4(ip_address):
+        if not isinstance(ip_address, str):
+            return False
+        parts = ip_address.split('.')
+        if len(parts) != 4:
+            return False
+        try:
+            socket.inet_aton(ip_address)
+        except (socket.error, OSError):
+            return False
+        for p in parts:
+            if not p.isdigit() or not 0 <= int(p) <= 255:
+                return False
+        return True
+
+    @staticmethod
+    def is_valid_ipv6(ip_address):
+        if not isinstance(ip_address, str):
+            return False
+        try:
+            socket.inet_pton(socket.AF_INET6, ip_address)
+            return True
+        except (socket.error, OSError):
+            return False
+
+    @staticmethod
+    def get_hostname(ip_address):
+        try:
+            return socket.gethostbyaddr(ip_address)[0]
+        except (socket.herror, socket.gaierror):
+            return None",False,"Tests: 16, Failures: 1, Errors: 0","import socket
+import ipaddress
+
+class IpUtil:
+
+    @classmethod
+    def is_valid_ipv4(cls, ip_address):
+        try:
+            addr = ipaddress.ip_address(ip_address)
+            return addr.version == 4
+        except (ValueError, TypeError):
+            return False
+
+    @classmethod
+    def is_valid_ipv6(cls, ip_address):
+        try:
+            addr = ipaddress.ip_address(ip_address)
+            return addr.version == 6
+        except (ValueError, TypeError):
+            return False
+
+    @classmethod
+    def get_hostname(cls, ip_address):
+        try:
+            return socket.gethostbyaddr(ip_address)[0]
+        except (socket.herror, socket.gaierror):
+            return None",False,"Tests: 16, Failures: 1, Errors: 0","import socket
+import ipaddress
+from typing import Optional
+
+class IpUtil:
+
+    @staticmethod
+    def is_valid_ipv4(ip_address) -> bool:
+        try:
+            a = ipaddress.ip_address(ip_address)
+            return a.version == 4
+        except (ValueError, TypeError):
+            return False
+
+    @staticmethod
+    def is_valid_ipv6(ip_address) -> bool:
+        try:
+            a = ipaddress.ip_address(ip_address)
+            return a.version == 6
+        except (ValueError, TypeError):
+            return False
+
+    @staticmethod
+    def get_hostname(ip_address) -> Optional[str]:
+        try:
+            name = socket.gethostbyaddr(ip_address)[0]
+            return name
+        except (socket.herror, socket.gaierror):
+            try:
+                fqdn = socket.getfqdn(ip_address)
+                if fqdn and fqdn != ip_address:
+                    return fqdn
+            except Exception:
+                pass
+            return None",False,"Tests: 16, Failures: 1, Errors: 0"
+49,"class JobMarketplace:
+    def __init__(self):
+        self.job_listings = []
+        self.resumes = []
+
+    def post_job(self, job_title, company, requirements):
+        # requirements = ['requirement1', 'requirement2']
+        job = {""job_title"": job_title, ""company"": company, ""requirements"": requirements}
+        self.job_listings.append(job)
+
+    def remove_job(self, job):
+        self.job_listings.remove(job)
+
+    def submit_resume(self, name, skills, experience):
+        resume = {""name"": name, ""skills"": skills, ""experience"": experience}
+        self.resumes.append(resume)
+
+    def withdraw_resume(self, resume):
+        self.resumes.remove(resume)
+
+    def search_jobs(self, criteria):
+        matching_jobs = []
+        for job_listing in self.job_listings:
+            if criteria.lower() in job_listing[""job_title""].lower() or criteria.lower() in [r.lower() for r in job_listing[""requirements""]]:
+                matching_jobs.append(job_listing)
+        return matching_jobs
+
+    def get_job_applicants(self, job):
+        applicants = []
+        for resume in self.resumes:
+            if self.matches_requirements(resume, job[""requirements""]):
+                applicants.append(resume)
+        return applicants
+
+    @staticmethod
+    def matches_requirements(resume, requirements):
+        for skill in resume[""skills""]:
+            if skill not in requirements:
+                return False
+        return True",True,"Tests: 36, Failures: 0, Errors: 0","from dataclasses import dataclass, field
+from typing import List
+
+@dataclass
+class Job:
+    job_title: str
+    company: str
+    requirements: List[str] = field(default_factory=list)
+
+@dataclass
+class Resume:
+    name: str
+    skills: List[str] = field(default_factory=list)
+    experience: int = 0
+
+class JobMarketplace:
+    def __init__(self):
+        self.job_listings: List[Job] = []
+        self.resumes: List[Resume] = []
+
+    def post_job(self, job_title, company, requirements):
+        job = Job(job_title=job_title, company=company, requirements=list(requirements))
+        self.job_listings.append(job)
+        return job
+
+    def remove_job(self, job):
+        self.job_listings.remove(job)
+
+    def submit_resume(self, name, skills, experience):
+        resume = Resume(name=name, skills=list(skills), experience=experience)
+        self.resumes.append(resume)
+        return resume
+
+    def withdraw_resume(self, resume):
+        self.resumes.remove(resume)
+
+    def search_jobs(self, criteria):
+        crit = criteria.lower()
+        matches = []
+        for job in self.job_listings:
+            if crit in job.job_title.lower() or crit in job.company.lower():
+                matches.append(job)
+                continue
+            for req in job.requirements:
+                if crit in req.lower():
+                    matches.append(job)
+                    break
+        return matches
+
+    def get_job_applicants(self, job):
+        applicants = []
+        for resume in self.resumes:
+            if self.matches_requirements(resume, job.requirements):
+                applicants.append(resume)
+        return applicants
+
+    @staticmethod
+    def matches_requirements(resume, requirements):
+        req_set = {r.lower() for r in requirements}
+        skill_set = {s.lower() for s in resume.skills}
+        return req_set.issubset(skill_set)",False,"Tests: 36, Failures: 0, Errors: 36","class JobMarketplace:
+    def __init__(self):
+        self.job_listings = []
+        self.resumes = []
+
+    def post_job(self, job_title, company, requirements):
+        job = {""job_title"": job_title, ""company"": company, ""requirements"": list(requirements)}
+        self.job_listings.append(job)
+        return job
+
+    def remove_job(self, job):
+        if job in self.job_listings:
+            self.job_listings.remove(job)
+            return True
+        return False
+
+    def submit_resume(self, name, skills, experience):
+        resume = {""name"": name, ""skills"": list(skills), ""experience"": experience}
+        self.resumes.append(resume)
+        return resume
+
+    def withdraw_resume(self, resume):
+        if resume in self.resumes:
+            self.resumes.remove(resume)
+            return True
+        return False
+
+    def search_jobs(self, criteria):
+        crit = criteria.lower()
+        matches = []
+        for job in self.job_listings:
+            if crit in job[""job_title""].lower() or crit in job[""company""].lower():
+                matches.append(job)
+                continue
+            for req in job[""requirements""]:
+                if crit in req.lower():
+                    matches.append(job)
+                    break
+        return matches
+
+    def get_job_applicants(self, job):
+        applicants = [r for r in self.resumes if self.matches_requirements(r, job[""requirements""])]
+        return applicants
+
+    @staticmethod
+    def matches_requirements(resume, requirements):
+        reqs = set(req.lower() for req in requirements)
+        skills = set(s.lower() for s in resume[""skills""])
+        return reqs <= skills",False,"Tests: 36, Failures: 1, Errors: 0","import itertools
+
+class JobMarketplace:
+    def __init__(self):
+        self._job_counter = itertools.count(1)
+        self._resume_counter = itertools.count(1)
+        self.job_listings = {}
+        self.resumes = {}
+
+    def post_job(self, job_title, company, requirements):
+        job_id = next(self._job_counter)
+        self.job_listings[job_id] = {""id"": job_id, ""job_title"": job_title, ""company"": company, ""requirements"": list(requirements)}
+        return job_id
+
+    def remove_job(self, job_id):
+        if job_id in self.job_listings:
+            del self.job_listings[job_id]
+            return True
+        return False
+
+    def submit_resume(self, name, skills, experience):
+        resume_id = next(self._resume_counter)
+        self.resumes[resume_id] = {""id"": resume_id, ""name"": name, ""skills"": list(skills), ""experience"": experience}
+        return resume_id
+
+    def withdraw_resume(self, resume_id):
+        if resume_id in self.resumes:
+            del self.resumes[resume_id]
+            return True
+        return False
+
+    def search_jobs(self, criteria):
+        crit = criteria.lower()
+        results = []
+        for job in self.job_listings.values():
+            if crit in job[""job_title""].lower() or crit in job[""company""].lower():
+                results.append(job)
+                continue
+            if any(crit in req.lower() for req in job[""requirements""]):
+                results.append(job)
+        return results
+
+    def get_job_applicants(self, job_id):
+        if job_id not in self.job_listings:
+            return []
+        job = self.job_listings[job_id]
+        applicants = []
+        for resume in self.resumes.values():
+            if self.matches_requirements(resume, job[""requirements""]):
+                applicants.append(resume)
+        return applicants
+
+    @staticmethod
+    def matches_requirements(resume, requirements):
+        reqs = set(r.lower() for r in requirements)
+        skills = set(s.lower() for s in resume[""skills""])
+        return reqs.issubset(skills)",False,"Tests: 36, Failures: 12, Errors: 20","class JobMarketplace:
+    def __init__(self):
+        self.job_listings = []
+        self.resumes = []
+
+    def post_job(self, job_title, company, requirements):
+        job = {""job_title"": job_title, ""company"": company, ""requirements"": list(requirements)}
+        self.job_listings.append(job)
+        return job
+
+    def remove_job(self, job):
+        if job not in self.job_listings:
+            raise ValueError(""Job not found"")
+        self.job_listings.remove(job)
+
+    def submit_resume(self, name, skills, experience):
+        resume = {""name"": name, ""skills"": list(skills), ""experience"": experience}
+        self.resumes.append(resume)
+        return resume
+
+    def withdraw_resume(self, resume):
+        if resume not in self.resumes:
+            raise ValueError(""Resume not found"")
+        self.resumes.remove(resume)
+
+    def search_jobs(self, criteria):
+        crit = criteria.lower()
+        return [
+            job for job in self.job_listings
+            if crit in job[""job_title""].lower()
+            or crit in job[""company""].lower()
+            or any(crit in req.lower() for req in job[""requirements""])
+        ]
+
+    def get_job_applicants(self, job):
+        return [r for r in self.resumes if self.matches_requirements(r, job[""requirements""])]
+
+    @staticmethod
+    def matches_requirements(resume, requirements):
+        skills = {s.lower() for s in resume[""skills""]}
+        reqs = {r.lower() for r in requirements}
+        return reqs.issubset(skills)",False,"Tests: 36, Failures: 1, Errors: 0","import re
+
+class JobMarketplace:
+    def __init__(self):
+        self.job_listings = []
+        self.resumes = []
+
+    def post_job(self, job_title, company, requirements):
+        job = {""job_title"": job_title, ""company"": company, ""requirements"": list(requirements)}
+        self.job_listings.append(job)
+        return job
+
+    def remove_job(self, job):
+        try:
+            self.job_listings.remove(job)
+            return True
+        except ValueError:
+            return False
+
+    def submit_resume(self, name, skills, experience):
+        resume = {""name"": name, ""skills"": list(skills), ""experience"": experience}
+        self.resumes.append(resume)
+        return resume
+
+    def withdraw_resume(self, resume):
+        try:
+            self.resumes.remove(resume)
+            return True
+        except ValueError:
+            return False
+
+    def search_jobs(self, criteria):
+        pattern = re.compile(re.escape(criteria), re.IGNORECASE)
+        matches = []
+        for job in self.job_listings:
+            if pattern.search(job[""job_title""]) or pattern.search(job[""company""]):
+                matches.append(job)
+                continue
+            if any(pattern.search(req) for req in job[""requirements""]):
+                matches.append(job)
+        return matches
+
+    def get_job_applicants(self, job):
+        scored = []
+        reqs = [r.lower() for r in job[""requirements""]]
+        for resume in self.resumes:
+            match_count = sum(1 for s in resume[""skills""] if s.lower() in reqs)
+            if match_count > 0:
+                r = dict(resume)
+                r[""match_score""] = match_count
+                scored.append(r)
+        scored.sort(key=lambda x: x[""match_score""], reverse=True)
+        return scored
+
+    @staticmethod
+    def matches_requirements(resume, requirements):
+        reqs = set(r.lower() for r in requirements)
+        skills = set(s.lower() for s in resume[""skills""])
+        return reqs.issubset(skills)",False,"Tests: 36, Failures: 5, Errors: 0"
+50,"import json
+import os
+
+
+class JSONProcessor:
+    def read_json(self, file_path):
+        if not os.path.exists(file_path):
+            return 0
+        try:
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+            return data
+        except:
+            return -1
+
+    def write_json(self, data, file_path):
+        try:
+            with open(file_path, 'w') as file:
+                json.dump(data, file)
+            return 1
+        except:
+            return -1
+
+    def process_json(self, file_path, remove_key):
+        data = self.read_json(file_path)
+        if data == 0 or data == -1:
+            return 0
+        if remove_key in data:
+            del data[remove_key]
+            self.write_json(data, file_path)
+            return 1
+        else:
+            return 0",True,"Tests: 16, Failures: 0, Errors: 0","from pathlib import Path
+import json
+from json.decoder import JSONDecodeError
+
+class JSONProcessor:
+    def read_json(self, file_path):
+        p = Path(file_path)
+        if not p.exists():
+            return 0
+        try:
+            with p.open('r', encoding='utf-8') as f:
+                return json.load(f)
+        except JSONDecodeError:
+            return -1
+        except Exception:
+            return -1
+
+    def write_json(self, data, file_path):
+        p = Path(file_path)
+        try:
+            with p.open('w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            return 1
+        except Exception:
+            return -1
+
+    def process_json(self, file_path, remove_key):
+        data = self.read_json(file_path)
+        if data in (0, -1):
+            return 0
+        if isinstance(data, dict) and remove_key in data:
+            del data[remove_key]
+            res = self.write_json(data, file_path)
+            return 1 if res == 1 else 0
+        return 0",True,"Tests: 16, Failures: 0, Errors: 0","import os
+import json
+import tempfile
+from json.decoder import JSONDecodeError
+
+class JSONProcessor:
+    def read_json(self, file_path):
+        if not os.path.exists(file_path):
+            return 0
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except JSONDecodeError:
+            return -1
+        except Exception:
+            return -1
+
+    def write_json(self, data, file_path):
+        dir_name = os.path.dirname(file_path) or '.'
+        tmp_path = None
+        try:
+            fd, tmp_path = tempfile.mkstemp(dir=dir_name)
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                json.dump(data, f)
+            os.replace(tmp_path, file_path)
+            return 1
+        except Exception:
+            try:
+                if tmp_path and os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except Exception:
+                pass
+            return -1
+
+    def process_json(self, file_path, remove_key):
+        data = self.read_json(file_path)
+        if data == 0 or data == -1:
+            return 0
+        if isinstance(data, dict) and remove_key in data:
+            data.pop(remove_key, None)
+            return 1 if self.write_json(data, file_path) == 1 else 0
+        return 0",False,"Tests: 16, Failures: 2, Errors: 0","import os
+import json
+from typing import Union
+from json.decoder import JSONDecodeError
+
+class JSONProcessor:
+    @staticmethod
+    def read_json(file_path: str) -> Union[int, dict, list]:
+        if not os.path.exists(file_path):
+            return 0
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except JSONDecodeError:
+            return -1
+        except Exception:
+            return -1
+
+    @staticmethod
+    def write_json(data, file_path: str) -> int:
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, separators=(',', ':'))
+            return 1
+        except Exception:
+            return -1
+
+    def process_json(self, file_path: str, remove_key: str) -> int:
+        data = self.read_json(file_path)
+        if data in (0, -1):
+            return 0
+        if isinstance(data, dict):
+            if remove_key in data:
+                data.pop(remove_key)
+                return 1 if self.write_json(data, file_path) == 1 else 0
+        return 0",True,"Tests: 16, Failures: 0, Errors: 0","import os
+import json
+
+class JSONProcessor:
+    def read_json(self, file_path):
+        if not os.path.exists(file_path):
+            return 0
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return -1
+
+    def write_json(self, data, file_path):
+        try:
+            text = json.dumps(data)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(text)
+            return 1
+        except Exception:
+            return -1
+
+    def process_json(self, file_path, remove_key):
+        try:
+            data = self.read_json(file_path)
+            if data == 0 or data == -1:
+                return 0
+            if isinstance(data, dict) and remove_key in data:
+                del data[remove_key]
+                if self.write_json(data, file_path) == 1:
+                    return 1
+                return 0
+            return 0
+        except Exception:
+            return 0",True,"Tests: 16, Failures: 0, Errors: 0","import json
+import os
+from pathlib import Path
+from json.decoder import JSONDecodeError
+import shutil
+
+class JSONProcessor:
+    def read_json(self, file_path):
+        p = Path(file_path)
+        if not p.exists():
+            return 0
+        try:
+            with p.open('r', encoding='utf-8') as f:
+                return json.load(f)
+        except JSONDecodeError:
+            return -1
+        except Exception:
+            return -1
+
+    def write_json(self, data, file_path):
+        p = Path(file_path)
+        backup = p.with_suffix(p.suffix + '.bak')
+        try:
+            if p.exists():
+                shutil.copy2(p, backup)
+            with p.open('w', encoding='utf-8') as f:
+                json.dump(data, f)
+            if backup.exists():
+                backup.unlink()
+            return 1
+        except Exception:
+            try:
+                if backup.exists():
+                    shutil.move(str(backup), str(p))
+            except Exception:
+                pass
+            return -1
+
+    def process_json(self, file_path, remove_key):
+        data = self.read_json(file_path)
+        if data in (0, -1):
+            return 0
+        if isinstance(data, dict) and remove_key in data:
+            data.pop(remove_key, None)
+            return 1 if self.write_json(data, file_path) == 1 else 0
+        return 0",False,"Tests: 16, Failures: 0, Errors: 2"
+51,"import numpy as np
+
+
+class KappaCalculator:
+
+    @staticmethod
+    def kappa(testData, k):
+        dataMat = np.mat(testData)
+        P0 = 0.0
+        for i in range(k):
+            P0 += dataMat[i, i] * 1.0
+        xsum = np.sum(dataMat, axis=1)
+        ysum = np.sum(dataMat, axis=0)
+        sum = np.sum(dataMat)
+        Pe = float(ysum * xsum) / sum / sum
+        P0 = float(P0 / sum * 1.0)
+        cohens_coefficient = float((P0 - Pe) / (1 - Pe))
+        return cohens_coefficient
+
+    @staticmethod
+    def fleiss_kappa(testData, N, k, n):
+        dataMat = np.mat(testData, float)
+        oneMat = np.ones((k, 1))
+        sum = 0.0
+        P0 = 0.0
+        for i in range(N):
+            temp = 0.0
+            for j in range(k):
+                sum += dataMat[i, j]
+                temp += 1.0 * dataMat[i, j] ** 2
+            temp -= n
+            temp /= (n - 1) * n
+            P0 += temp
+        P0 = 1.0 * P0 / N
+        ysum = np.sum(dataMat, axis=0)
+        for i in range(k):
+            ysum[0, i] = (ysum[0, i] / sum) ** 2
+        Pe = ysum * oneMat * 1.0
+        ans = (P0 - Pe) / (1 - Pe)
+        return ans[0, 0]",False,"Tests: 11, Failures: 0, Errors: 11","import numpy as np
+
+class KappaCalculator:
+    @staticmethod
+    def kappa(testData, k):
+        mat = np.asarray(testData, dtype=float)
+        if mat.size == 0:
+            return 0.0
+        total = mat.sum()
+        if total == 0:
+            return 0.0
+        diag_sum = np.trace(mat)
+        observed = diag_sum / total
+        row_sums = mat.sum(axis=1).ravel()
+        col_sums = mat.sum(axis=0).ravel()
+        expected = float(np.dot(row_sums, col_sums)) / (total * total)
+        denom = 1.0 - expected
+        if denom == 0:
+            return 0.0
+        return float((observed - expected) / denom)
+
+    @staticmethod
+    def fleiss_kappa(testData, N, k, n):
+        mat = np.asarray(testData, dtype=float)
+        if mat.size == 0 or N == 0 or n <= 1:
+            return 0.0
+        row_squares = np.sum(mat * mat, axis=1)
+        P_i = (row_squares - n) / (n * (n - 1))
+        Pbar = P_i.mean()
+        p_j = mat.sum(axis=0) / (N * n)
+        Pbar_e = float(np.sum(p_j * p_j))
+        denom = 1.0 - Pbar_e
+        if denom == 0:
+            return 0.0
+        return float((Pbar - Pbar_e) / denom)",False,"Tests: 11, Failures: 4, Errors: 0","class KappaCalculator:
+
+    @staticmethod
+    def kappa(testData, k):
+        if not testData:
+            return 0.0
+        total = 0.0
+        diag = 0.0
+        row_sums = [0.0] * k
+        col_sums = [0.0] * k
+        for i in range(k):
+            row = testData[i]
+            for j in range(k):
+                v = float(row[j])
+                total += v
+                row_sums[i] += v
+                col_sums[j] += v
+                if i == j:
+                    diag += v
+        if total == 0.0:
+            return 0.0
+        observed = diag / total
+        expected = 0.0
+        for i in range(k):
+            expected += row_sums[i] * col_sums[i]
+        expected = expected / (total * total)
+        denom = 1.0 - expected
+        if denom == 0.0:
+            return 0.0
+        return (observed - expected) / denom
+
+    @staticmethod
+    def fleiss_kappa(testData, N, k, n):
+        if not testData or N == 0 or n <= 1:
+            return 0.0
+        P_sum = 0.0
+        total_counts = 0.0
+        for i in range(N):
+            row = testData[i]
+            row_total_sq = 0.0
+            for j in range(k):
+                v = float(row[j])
+                total_counts += v
+                row_total_sq += v * v
+            P_i = (row_total_sq - n) / (n * (n - 1))
+            P_sum += P_i
+        Pbar = P_sum / N
+        p_j = [0.0] * k
+        for j in range(k):
+            for i in range(N):
+                p_j[j] += float(testData[i][j])
+        for j in range(k):
+            p_j[j] = p_j[j] / (N * n)
+        Pbar_e = sum(x * x for x in p_j)
+        denom = 1.0 - Pbar_e
+        if denom == 0.0:
+            return 0.0
+        return (Pbar - Pbar_e) / denom",False,"Tests: 11, Failures: 4, Errors: 0","import numpy as np
+
+class KappaCalculator:
+    @staticmethod
+    def kappa(testData, k):
+        arr = np.array(testData, dtype=np.float64)
+        if arr.size == 0:
+            return 0.0
+        total = arr.sum()
+        if total == 0:
+            return 0.0
+        observed = np.einsum('ii->', arr) / total
+        row = arr.sum(axis=1).flatten()
+        col = arr.sum(axis=0).flatten()
+        expected = np.einsum('i,i->', row, col) / (total * total)
+        if 1.0 - expected == 0.0:
+            return 0.0
+        return float((observed - expected) / (1.0 - expected))
+
+    @staticmethod
+    def fleiss_kappa(testData, N, k, n):
+        arr = np.array(testData, dtype=np.float64)
+        if arr.size == 0 or N == 0 or n <= 1:
+            return 0.0
+        row_sq = np.einsum('ij,ij->i', arr, arr)
+        P_i = (row_sq - n) / (n * (n - 1))
+        Pbar = P_i.mean()
+        p_j = arr.sum(axis=0) / (N * n)
+        Pbar_e = float((p_j * p_j).sum())
+        denom = 1.0 - Pbar_e
+        if denom == 0.0:
+            return 0.0
+        return float((Pbar - Pbar_e) / denom)",False,"Tests: 11, Failures: 4, Errors: 0","import numpy as np
+
+class KappaCalculator:
+    @staticmethod
+    def kappa(testData, k):
+        mat = np.asarray(testData, dtype=float)
+        if mat.ndim != 2 or mat.shape[0] < k or mat.shape[1] < k:
+            mat = mat.reshape((k, k))
+        total = mat.sum()
+        if total == 0:
+            return 0.0
+        diag = 0.0
+        for i in range(k):
+            diag += mat[i, i]
+        observed = diag / total
+        row = mat.sum(axis=1)
+        col = mat.sum(axis=0)
+        expected = float((row * col.T).sum()) / (total * total)
+        if expected >= 1.0:
+            return 0.0
+        return float((observed - expected) / (1.0 - expected))
+
+    @staticmethod
+    def fleiss_kappa(testData, N, k, n):
+        mat = np.asarray(testData, dtype=float)
+        if mat.ndim != 2 or mat.shape[0] != N or mat.shape[1] != k:
+            mat = mat.reshape((N, k))
+        totals = mat.sum(axis=1)
+        if np.any(totals != n):
+            pass
+        sum_sq = np.sum(mat * mat, axis=1)
+        P_i = (sum_sq - n) / (n * (n - 1))
+        Pbar = P_i.mean()
+        p_j = mat.sum(axis=0) / (N * n)
+        Pbar_e = float((p_j ** 2).sum())
+        if Pbar_e >= 1.0:
+            return 0.0
+        return float((Pbar - Pbar_e) / (1.0 - Pbar_e))",False,"Tests: 11, Failures: 4, Errors: 0","import numpy as np
+
+class KappaCalculator:
+    @staticmethod
+    def kappa(testData, k):
+        data = np.array(testData, dtype=float)
+        if data.size == 0:
+            return 0.0
+        total = data.sum()
+        if total == 0:
+            return 0.0
+        diag = sum(data[i, i] for i in range(min(k, data.shape[0], data.shape[1])))
+        observed = diag / total
+        row = data.sum(axis=1).A1 if hasattr(data.sum(axis=1), 'A1') else data.sum(axis=1).ravel()
+        col = data.sum(axis=0).A1 if hasattr(data.sum(axis=0), 'A1') else data.sum(axis=0).ravel()
+        expected = float(sum(row[i] * col[i] for i in range(len(row)))) / (total * total)
+        if (1 - expected) == 0:
+            return 0.0
+        return float((observed - expected) / (1 - expected))
+
+    @staticmethod
+    def fleiss_kappa(testData, N, k, n):
+        data = np.array(testData, dtype=float)
+        if data.size == 0 or N == 0 or n <= 1:
+            return 0.0
+        P_list = []
+        for i in range(N):
+            s = sum(v * v for v in data[i])
+            P_i = (s - n) / (n * (n - 1))
+            P_list.append(P_i)
+        Pbar = sum(P_list) / N
+        p_j = [sum(data[i][j] for i in range(N)) / (N * n) for j in range(k)]
+        Pbar_e = sum(x * x for x in p_j)
+        if (1 - Pbar_e) == 0:
+            return 0.0
+        return float((Pbar - Pbar_e) / (1 - Pbar_e))",False,"Tests: 11, Failures: 4, Errors: 0"
+52,"import nltk
+from nltk.stem import WordNetLemmatizer
+from nltk import pos_tag, word_tokenize
+import string
+
+nltk.download('averaged_perceptron_tagger')
+nltk.download('punkt')
+nltk.download('wordnet')
+
+
+class Lemmatization:
+    def __init__(self):
+        self.lemmatizer = WordNetLemmatizer()
+
+    def lemmatize_sentence(self, sentence):
+        lemmatized_words = []
+        sentence = self.remove_punctuation(sentence)
+        words = word_tokenize(sentence)
+        tagged_words = pos_tag(words)
+        for word, tag in tagged_words:
+            if tag.startswith('V'):
+                lemmatized_word = self.lemmatizer.lemmatize(word, pos='v')
+            elif tag.startswith('J'):
+                lemmatized_word = self.lemmatizer.lemmatize(word, pos='a')
+            elif tag.startswith('R'):
+                lemmatized_word = self.lemmatizer.lemmatize(word, pos='r')
+            else:
+                lemmatized_word = self.lemmatizer.lemmatize(word)
+            lemmatized_words.append(lemmatized_word)
+        return lemmatized_words
+
+    def get_pos_tag(self, sentence):
+        pos_tags = []
+        sentence = self.remove_punctuation(sentence)
+        words = word_tokenize(sentence)
+        tagged_words = pos_tag(words)
+        for tagged_word in tagged_words:
+            pos_tags.append(tagged_word[1])
+        return pos_tags
+
+    def remove_punctuation(self, sentence):
+        return sentence.translate(str.maketrans('', '', string.punctuation))",False,"Tests: 16, Failures: 0, Errors: 11","import nltk
+from nltk.stem import WordNetLemmatizer
+from nltk import pos_tag, word_tokenize
+import string
+
+nltk.download('averaged_perceptron_tagger', quiet=True)
+nltk.download('punkt', quiet=True)
+nltk.download('wordnet', quiet=True)
+
+
+class Lemmatization:
+    def __init__(self):
+        self.lemmatizer = WordNetLemmatizer()
+
+    def _wordnet_pos(self, treebank_tag):
+        if not treebank_tag:
+            return None
+        tag = treebank_tag[0].upper()
+        if tag == 'J':
+            return 'a'
+        if tag == 'V':
+            return 'v'
+        if tag == 'N':
+            return 'n'
+        if tag == 'R':
+            return 'r'
+        return None
+
+    def lemmatize_sentence(self, sentence):
+        sentence = self.remove_punctuation(sentence)
+        tokens = word_tokenize(sentence)
+        tagged = pos_tag(tokens)
+        result = []
+        for word, tag in tagged:
+            wn_tag = self._wordnet_pos(tag)
+            if wn_tag:
+                result.append(self.lemmatizer.lemmatize(word, pos=wn_tag))
+            else:
+                result.append(self.lemmatizer.lemmatize(word))
+        return result
+
+    def get_pos_tag(self, sentence):
+        sentence = self.remove_punctuation(sentence)
+        tokens = word_tokenize(sentence)
+        return [tag for (_, tag) in pos_tag(tokens)]
+
+    def remove_punctuation(self, sentence):
+        return sentence.translate(str.maketrans('', '', string.punctuation))",False,"Tests: 16, Failures: 0, Errors: 11","import nltk
+import re
+from nltk.stem import WordNetLemmatizer
+from nltk import pos_tag
+nltk.download('averaged_perceptron_tagger', quiet=True)
+nltk.download('wordnet', quiet=True)
+
+class Lemmatization:
+    def __init__(self):
+        self.lemmatizer = WordNetLemmatizer()
+        self._cache = {}
+
+    def _tokenize(self, sentence):
+        return re.findall(r""\b\w+\b"", sentence)
+
+    def _map_pos(self, tag):
+        if not tag:
+            return None
+        t = tag[0].upper()
+        return {'J': 'a', 'V': 'v', 'N': 'n', 'R': 'r'}.get(t, None)
+
+    def lemmatize_sentence(self, sentence):
+        key = ('lemmatize', sentence)
+        if key in self._cache:
+            return self._cache[key][:]
+        words = self._tokenize(self.remove_punctuation(sentence))
+        tags = pos_tag(words)
+        out = []
+        for w, t in tags:
+            wn = self._map_pos(t)
+            if wn:
+                out.append(self.lemmatizer.lemmatize(w, pos=wn))
+            else:
+                out.append(self.lemmatizer.lemmatize(w))
+        self._cache[key] = out[:]
+        return out
+
+    def get_pos_tag(self, sentence):
+        words = self._tokenize(self.remove_punctuation(sentence))
+        return [tag for (_, tag) in pos_tag(words)]
+
+    def remove_punctuation(self, sentence):
+        return re.sub(r'[^\w\s]', '', sentence)",False,"Tests: 16, Failures: 0, Errors: 11","import nltk
+from nltk.stem import WordNetLemmatizer
+from nltk import pos_tag
+from nltk.tokenize import TweetTokenizer
+import re
+
+nltk.download('averaged_perceptron_tagger', quiet=True)
+nltk.download('wordnet', quiet=True)
+
+class Lemmatization:
+    def __init__(self):
+        self.lemmatizer = WordNetLemmatizer()
+        self.tokenizer = TweetTokenizer()
+
+    def _map(self, tag):
+        if not tag:
+            return None
+        c = tag[0].upper()
+        if c == 'J':
+            return 'a'
+        if c == 'V':
+            return 'v'
+        if c == 'N':
+            return 'n'
+        if c == 'R':
+            return 'r'
+        return None
+
+    def lemmatize_sentence(self, sentence):
+        cleaned = self.remove_punctuation(sentence)
+        tokens = self.tokenizer.tokenize(cleaned)
+        tags = pos_tag(tokens)
+        lemmas = []
+        for w, t in tags:
+            pos = self._map(t)
+            if pos:
+                lemmas.append(self.lemmatizer.lemmatize(w, pos=pos))
+            else:
+                lemmas.append(self.lemmatizer.lemmatize(w))
+        return lemmas
+
+    def get_pos_tag(self, sentence):
+        cleaned = self.remove_punctuation(sentence)
+        tokens = self.tokenizer.tokenize(cleaned)
+        return [t for (_, t) in pos_tag(tokens)]
+
+    def remove_punctuation(self, sentence):
+        return re.sub(r'[^\w\s]', '', sentence)",False,"Tests: 16, Failures: 0, Errors: 11","import nltk
+from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import TreebankWordTokenizer
+from nltk import pos_tag
+import string
+
+nltk.download('averaged_perceptron_tagger', quiet=True)
+nltk.download('wordnet', quiet=True)
+
+class Lemmatization:
+    def __init__(self):
+        self.lemmatizer = WordNetLemmatizer()
+        self.tokenizer = TreebankWordTokenizer()
+
+    def _wn_pos(self, tag):
+        if not tag:
+            return None
+        t0 = tag[0].upper()
+        if t0 == 'N':
+            return 'n'
+        if t0 == 'V':
+            return 'v'
+        if t0 == 'J':
+            return 'a'
+        if t0 == 'R':
+            return 'r'
+        return None
+
+    def lemmatize_sentence(self, sentence):
+        cleaned = self.remove_punctuation(sentence)
+        tokens = self.tokenizer.tokenize(cleaned)
+        tagged = pos_tag(tokens)
+        result = []
+        for word, tag in tagged:
+            wn = self._wn_pos(tag)
+            if wn:
+                result.append(self.lemmatizer.lemmatize(word, pos=wn))
+            else:
+                result.append(self.lemmatizer.lemmatize(word))
+        return result
+
+    def get_pos_tag(self, sentence):
+        cleaned = self.remove_punctuation(sentence)
+        tokens = self.tokenizer.tokenize(cleaned)
+        return [tag for (_, tag) in pos_tag(tokens)]
+
+    def remove_punctuation(self, sentence):
+        return sentence.translate(str.maketrans('', '', string.punctuation))",False,"Tests: 16, Failures: 0, Errors: 11","import nltk
+from nltk.stem import WordNetLemmatizer
+from nltk import pos_tag, word_tokenize
+import re
+
+nltk.download('averaged_perceptron_tagger', quiet=True)
+nltk.download('punkt', quiet=True)
+nltk.download('wordnet', quiet=True)
+
+class Lemmatization:
+    def __init__(self):
+        self.lemmatizer = WordNetLemmatizer()
+
+    def _map_tag(self, tag):
+        if not tag:
+            return None
+        first = tag[0].upper()
+        mapping = {'J': 'a', 'V': 'v', 'N': 'n', 'R': 'r'}
+        return mapping.get(first, None)
+
+    def lemmatize_sentence(self, sentence):
+        cleaned = self.remove_punctuation(sentence)
+        tokens = word_tokenize(cleaned)
+        tags = pos_tag(tokens)
+        lemmas = []
+        for tok, tg in tags:
+            pos = self._map_tag(tg)
+            if pos:
+                lemmas.append(self.lemmatizer.lemmatize(tok, pos=pos))
+            else:
+                if re.fullmatch(r'\d+(\.\d+)?', tok):
+                    lemmas.append(tok)
+                else:
+                    lemmas.append(self.lemmatizer.lemmatize(tok))
+        return lemmas
+
+    def get_pos_tag(self, sentence):
+        cleaned = self.remove_punctuation(sentence)
+        tokens = word_tokenize(cleaned)
+        return [t for (_, t) in pos_tag(tokens)]
+
+    def remove_punctuation(self, sentence):
+        return re.sub(r'[^\w\s]', '', sentence)",False,"Tests: 16, Failures: 0, Errors: 11"
+53,"import re
+import string
+
+
+class LongestWord:
+
+    def __init__(self):
+        self.word_list = []
+
+    def add_word(self, word):
+        self.word_list.append(word)
+
+    def find_longest_word(self, sentence):
+        longest_word = """"
+        sentence = sentence.lower()
+        sentence = re.sub('[%s]' % re.escape(string.punctuation), '', sentence)
+        sentence = re.split(' ', sentence)
+        for word in sentence:
+            if word in self.word_list and len(word) > len(longest_word):
+                longest_word = word
+        return longest_word",True,"Tests: 10, Failures: 0, Errors: 0","import re
+
+class LongestWord:
+    def __init__(self):
+        self._words = set()
+
+    def add_word(self, word):
+        self._words.add(word.lower())
+
+    def find_longest_word(self, sentence):
+        words = re.findall(r'\b\w+\b', sentence.lower())
+        candidates = (w for w in words if w in self._words)
+        return max(candidates, key=len, default='')",False,"Tests: 10, Failures: 0, Errors: 5","import string
+
+class LongestWord:
+    def __init__(self):
+        self.word_list = []
+
+    def add_word(self, word):
+        self.word_list.append(word.lower())
+
+    def find_longest_word(self, sentence):
+        trans = str.maketrans('', '', string.punctuation)
+        cleaned = sentence.lower().translate(trans)
+        longest = ''
+        for w in cleaned.split():
+            if w in self.word_list and len(w) > len(longest):
+                longest = w
+        return longest",True,"Tests: 10, Failures: 0, Errors: 0","import re
+
+class LongestWord:
+    def __init__(self):
+        self.words = set()
+
+    def add_word(self, word):
+        self.words.add(word.lower())
+
+    def find_longest_word(self, sentence):
+        words = re.findall(r""[A-Za-z0-9']+"", sentence.lower())
+        for w in sorted(words, key=len, reverse=True):
+            if w in self.words:
+                return w
+        return ''",False,"Tests: 10, Failures: 0, Errors: 5","import re
+
+class LongestWord:
+    def __init__(self):
+        self.words = set()
+
+    def add_word(self, word):
+        self.words.add(word.lower())
+
+    def find_longest_word(self, sentence):
+        words = re.findall(r'\b\w+\b', sentence.lower())
+        matches = set(words) & self.words
+        if not matches:
+            return ''
+        return max(matches, key=len)",False,"Tests: 10, Failures: 0, Errors: 5","import re
+from typing import Dict
+
+class LongestWord:
+    def __init__(self):
+        self._map: Dict[str, str] = {}
+
+    def add_word(self, word):
+        key = word.lower()
+        if key not in self._map or len(word) > len(self._map[key]):
+            self._map[key] = word
+
+    def find_longest_word(self, sentence):
+        words = re.findall(r'\b\w+\b', sentence.lower())
+        longest_key = ''
+        for w in words:
+            if w in self._map and len(w) > len(longest_key):
+                longest_key = w
+        return self._map.get(longest_key, '')",False,"Tests: 10, Failures: 0, Errors: 5"
+54,"import random
+
+
+class MahjongConnect:
+    def __init__(self, BOARD_SIZE, ICONS):
+        self.BOARD_SIZE = BOARD_SIZE
+        self.ICONS = ICONS
+        self.board = self.create_board()
+
+    def create_board(self):
+        board = [[random.choice(self.ICONS) for _ in range(self.BOARD_SIZE[1])] for _ in range(self.BOARD_SIZE[0])]
+        return board
+
+    def is_valid_move(self, pos1, pos2):
+        x1, y1 = pos1
+        x2, y2 = pos2
+
+        # Check if positions are within the game board range
+        if not (0 <= x1 < self.BOARD_SIZE[0] and 0 <= y1 < self.BOARD_SIZE[1] and 0 <= x2 < self.BOARD_SIZE[
+            0] and 0 <= y2 <
+                self.BOARD_SIZE[1]):
+            return False
+
+        # Check if the two positions are the same
+        if pos1 == pos2:
+            return False
+
+        # Check if the two positions have the same icon
+        if self.board[x1][y1] != self.board[x2][y2]:
+            return False
+
+        # Check if there is a valid path between the two positions
+        if not self.has_path(pos1, pos2):
+            return False
+
+        return True
+
+    def has_path(self, pos1, pos2):
+        visited = set()
+        stack = [pos1]
+
+        while stack:
+            current_pos = stack.pop()
+            if current_pos == pos2:
+                return True
+
+            if current_pos in visited:
+                continue
+
+            visited.add(current_pos)
+            x, y = current_pos
+
+            # Check adjacent positions (up, down, left, right)
+            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                new_x, new_y = x + dx, y + dy
+                if 0 <= new_x < self.BOARD_SIZE[0] and 0 <= new_y < self.BOARD_SIZE[1]:
+                    if (new_x, new_y) not in visited and self.board[new_x][new_y] == self.board[x][y]:
+                        stack.append((new_x, new_y))
+
+        return False
+
+    def remove_icons(self, pos1, pos2):
+        x1, y1 = pos1
+        x2, y2 = pos2
+        self.board[x1][y1] = ' '
+        self.board[x2][y2] = ' '
+
+    def is_game_over(self):
+        for row in self.board:
+            if any(icon != ' ' for icon in row):
+                return False
+        return True",True,"Tests: 28, Failures: 0, Errors: 0","import random
+from collections import deque
+
+class MahjongConnect:
+    def __init__(self, BOARD_SIZE, ICONS):
+        self.BOARD_SIZE = BOARD_SIZE  # (rows, cols)
+        self.ICONS = ICONS
+        self.board = self.create_board()
+
+    def create_board(self):
+        rows, cols = self.BOARD_SIZE
+        return [[random.choice(self.ICONS) for _ in range(cols)] for _ in range(rows)]
+
+    def is_valid_move(self, pos1, pos2):
+        r1, c1 = pos1
+        r2, c2 = pos2
+        rows, cols = self.BOARD_SIZE
+
+        if not (0 <= r1 < rows and 0 <= c1 < cols and 0 <= r2 < rows and 0 <= c2 < cols):
+            return False
+        if pos1 == pos2:
+            return False
+        if self.board[r1][c1] != self.board[r2][c2]:
+            return False
+        return self.has_path(pos1, pos2)
+
+    def has_path(self, pos1, pos2):
+        rows, cols = self.BOARD_SIZE
+        r2, c2 = pos2
+        icon = self.board[pos1[0]][pos1[1]]
+        if icon == ' ':
+            return False
+
+        visited = [[False]*cols for _ in range(rows)]
+        dq = deque([pos1])
+        visited[pos1[0]][pos1[1]] = True
+
+        while dq:
+            r, c = dq.popleft()
+            if (r, c) == (r2, c2):
+                return True
+            for dr, dc in ((1,0),(-1,0),(0,1),(0,-1)):
+                nr, nc = r+dr, c+dc
+                if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc] and self.board[nr][nc] == icon:
+                    visited[nr][nc] = True
+                    dq.append((nr, nc))
+        return False
+
+    def remove_icons(self, pos1, pos2):
+        r1, c1 = pos1
+        r2, c2 = pos2
+        self.board[r1][c1] = ' '
+        self.board[r2][c2] = ' '
+
+    def is_game_over(self):
+        for row in self.board:
+            for icon in row:
+                if icon != ' ':
+                    return False
+        return True",False,"Tests: 28, Failures: 0, Errors: 1","import random
+import sys
+sys.setrecursionlimit(10000)
+
+class MahjongConnect:
+    def __init__(self, BOARD_SIZE, ICONS):
+        self.BOARD_SIZE = BOARD_SIZE
+        self.ICONS = ICONS
+        self.board = self.create_board()
+
+    def create_board(self):
+        r, c = self.BOARD_SIZE
+        return [[random.choice(self.ICONS) for _ in range(c)] for _ in range(r)]
+
+    def is_valid_move(self, pos1, pos2):
+        r1, c1 = pos1
+        r2, c2 = pos2
+        rows, cols = self.BOARD_SIZE
+        if not (0 <= r1 < rows and 0 <= c1 < cols and 0 <= r2 < rows and 0 <= c2 < cols):
+            return False
+        if pos1 == pos2:
+            return False
+        if self.board[r1][c1] != self.board[r2][c2]:
+            return False
+        return self._dfs_has_path(pos1, pos2, set())
+
+    def _dfs_has_path(self, current, target, visited):
+        if current == target:
+            return True
+        visited.add(current)
+        r, c = current
+        icon = self.board[r][c]
+        for dr, dc in ((0,1),(0,-1),(1,0),(-1,0)):
+            nr, nc = r+dr, c+dc
+            nxt = (nr, nc)
+            if nxt in visited:
+                continue
+            if 0 <= nr < self.BOARD_SIZE[0] and 0 <= nc < self.BOARD_SIZE[1]:
+                if self.board[nr][nc] == icon:
+                    if self._dfs_has_path(nxt, target, visited):
+                        return True
+        return False
+
+    def has_path(self, pos1, pos2):
+        return self._dfs_has_path(pos1, pos2, set())
+
+    def remove_icons(self, pos1, pos2):
+        r1, c1 = pos1
+        r2, c2 = pos2
+        self.board[r1][c1] = ' '
+        self.board[r2][c2] = ' '
+
+    def is_game_over(self):
+        return all(icon == ' ' for row in self.board for icon in row)",False,"Tests: 28, Failures: 0, Errors: 1","import random
+from collections import deque
+
+class MahjongConnect:
+    def __init__(self, BOARD_SIZE, ICONS):
+        self.BOARD_SIZE = BOARD_SIZE
+        self.ICONS = ICONS
+        self.board = self.create_board()
+        self._components = None
+        self._build_components()
+
+    def create_board(self):
+        rows, cols = self.BOARD_SIZE
+        return [[random.choice(self.ICONS) for _ in range(cols)] for _ in range(rows)]
+
+    def _build_components(self):
+        rows, cols = self.BOARD_SIZE
+        comp = [[-1]*cols for _ in range(rows)]
+        cid = 0
+        for r in range(rows):
+            for c in range(cols):
+                if comp[r][c] != -1 or self.board[r][c] == ' ':
+                    continue
+                icon = self.board[r][c]
+                dq = deque([(r,c)])
+                comp[r][c] = cid
+                while dq:
+                    cr, cc = dq.popleft()
+                    for dr, dc in ((1,0),(-1,0),(0,1),(0,-1)):
+                        nr, nc = cr+dr, cc+dc
+                        if 0 <= nr < rows and 0 <= nc < cols and comp[nr][nc] == -1 and self.board[nr][nc] == icon:
+                            comp[nr][nc] = cid
+                            dq.append((nr,nc))
+                cid += 1
+        self._components = comp
+
+    def is_valid_move(self, pos1, pos2):
+        r1, c1 = pos1
+        r2, c2 = pos2
+        rows, cols = self.BOARD_SIZE
+        if not (0 <= r1 < rows and 0 <= c1 < cols and 0 <= r2 < rows and 0 <= c2 < cols):
+            return False
+        if pos1 == pos2:
+            return False
+        if self.board[r1][c1] != self.board[r2][c2]:
+            return False
+        # Rebuild components to account for any changes
+        self._build_components()
+        return self._components[r1][c1] != -1 and self._components[r1][c1] == self._components[r2][c2]
+
+    def has_path(self, pos1, pos2):
+        # Leverage components
+        self._build_components()
+        r1, c1 = pos1
+        r2, c2 = pos2
+        return (0 <= r1 < self.BOARD_SIZE[0] and 0 <= c1 < self.BOARD_SIZE[1] and
+                0 <= r2 < self.BOARD_SIZE[0] and 0 <= c2 < self.BOARD_SIZE[1] and
+                self._components[r1][c1] != -1 and self._components[r1][c1] == self._components[r2][c2])
+
+    def remove_icons(self, pos1, pos2):
+        r1, c1 = pos1
+        r2, c2 = pos2
+        self.board[r1][c1] = ' '
+        self.board[r2][c2] = ' '
+        self._build_components()
+
+    def is_game_over(self):
+        return all(cell == ' ' for row in self.board for cell in row)",True,"Tests: 28, Failures: 0, Errors: 0","import random
+
+class MahjongConnect:
+    def __init__(self, BOARD_SIZE, ICONS):
+        self.BOARD_SIZE = BOARD_SIZE
+        self.ICONS = ICONS
+        self.board = self.create_board()
+
+    def create_board(self):
+        rows, cols = self.BOARD_SIZE
+        return [[random.choice(self.ICONS) for _ in range(cols)] for _ in range(rows)]
+
+    def is_valid_move(self, pos1, pos2):
+        if pos1 == pos2:
+            return False
+        r1, c1 = pos1
+        r2, c2 = pos2
+        rows, cols = self.BOARD_SIZE
+        if not (0 <= r1 < rows and 0 <= c1 < cols and 0 <= r2 < rows and 0 <= c2 < cols):
+            return False
+        if self.board[r1][c1] != self.board[r2][c2]:
+            return False
+        return self._flood_fill_reachable(pos1, pos2)
+
+    def _flood_fill_reachable(self, start, target):
+        rows, cols = self.BOARD_SIZE
+        sr, sc = start
+        tr, tc = target
+        icon = self.board[sr][sc]
+        if icon == ' ':
+            return False
+        stack = [start]
+        visited = set()
+        while stack:
+            r, c = stack.pop()
+            if (r, c) == (tr, tc):
+                return True
+            if (r, c) in visited:
+                continue
+            visited.add((r, c))
+            # Expand neighbors
+            if r+1 < rows and (r+1, c) not in visited and self.board[r+1][c] == icon:
+                stack.append((r+1, c))
+            if r-1 >= 0 and (r-1, c) not in visited and self.board[r-1][c] == icon:
+                stack.append((r-1, c))
+            if c+1 < cols and (r, c+1) not in visited and self.board[r][c+1] == icon:
+                stack.append((r, c+1))
+            if c-1 >= 0 and (r, c-1) not in visited and self.board[r][c-1] == icon:
+                stack.append((r, c-1))
+        return False
+
+    def has_path(self, pos1, pos2):
+        return self._flood_fill_reachable(pos1, pos2)
+
+    def remove_icons(self, pos1, pos2):
+        r1, c1 = pos1
+        r2, c2 = pos2
+        self.board[r1][c1] = ' '
+        self.board[r2][c2] = ' '
+
+    def is_game_over(self):
+        for row in self.board:
+            for icon in row:
+                if icon != ' ':
+                    return False
+        return True",False,"Tests: 28, Failures: 0, Errors: 1","import random
+from collections import deque
+
+class MahjongConnect:
+    def __init__(self, BOARD_SIZE, ICONS):
+        self.BOARD_SIZE = BOARD_SIZE
+        self.ICONS = ICONS
+        self.board = self.create_board()
+
+    def create_board(self):
+        r, c = self.BOARD_SIZE
+        return [[random.choice(self.ICONS) for _ in range(c)] for _ in range(r)]
+
+    def _index(self, pos):
+        return pos[0]*self.BOARD_SIZE[1] + pos[1]
+
+    def _pos(self, idx):
+        return (idx // self.BOARD_SIZE[1], idx % self.BOARD_SIZE[1])
+
+    def is_valid_move(self, pos1, pos2):
+        rows, cols = self.BOARD_SIZE
+        r1, c1 = pos1
+        r2, c2 = pos2
+        if not (0 <= r1 < rows and 0 <= c1 < cols and 0 <= r2 < rows and 0 <= c2 < cols):
+            return False
+        if pos1 == pos2:
+            return False
+        if self.board[r1][c1] != self.board[r2][c2]:
+            return False
+        return self.has_path(pos1, pos2)
+
+    def has_path(self, pos1, pos2):
+        rows, cols = self.BOARD_SIZE
+        total = rows * cols
+        start = self._index(pos1)
+        target = self._index(pos2)
+        icon = self.board[pos1[0]][pos1[1]]
+        if icon == ' ':
+            return False
+        visited = [False] * total
+        dq = deque([start])
+        visited[start] = True
+        while dq:
+            cur = dq.popleft()
+            if cur == target:
+                return True
+            r, c = self._pos(cur)
+            for dr, dc in ((1,0),(-1,0),(0,1),(0,-1)):
+                nr, nc = r+dr, c+dc
+                if 0 <= nr < rows and 0 <= nc < cols:
+                    ni = nr*cols + nc
+                    if not visited[ni] and self.board[nr][nc] == icon:
+                        visited[ni] = True
+                        dq.append(ni)
+        return False
+
+    def remove_icons(self, pos1, pos2):
+        r1, c1 = pos1
+        r2, c2 = pos2
+        self.board[r1][c1] = ' '
+        self.board[r2][c2] = ' '
+
+    def is_game_over(self):
+        return all(self.board[r][c] == ' ' for r in range(self.BOARD_SIZE[0]) for c in range(self.BOARD_SIZE[1]))",False,"Tests: 28, Failures: 0, Errors: 1"
+55,"class Manacher:
+    def __init__(self, input_string) -> None:
+        self.input_string = input_string
+
+    def palindromic_length(self, center, diff, string):
+        if (center - diff == -1 or center + diff == len(string)
+                or string[center - diff] != string[center + diff]):
+            return 0
+        return 1 + self.palindromic_length(center, diff + 1, string)
+
+
+    def palindromic_string(self):
+        max_length = 0
+
+        new_input_string = """"
+        output_string = """"
+
+        for i in self.input_string[:len(self.input_string) - 1]:
+            new_input_string += i + ""|""
+        new_input_string += self.input_string[-1]
+
+        for i in range(len(new_input_string)):
+
+            length =self.palindromic_length(i, 1, new_input_string)
+
+            if max_length < length:
+                max_length = length
+                start = i
+
+        for i in new_input_string[start - max_length:start + max_length + 1]:
+            if i != ""|"":
+                output_string += i
+
+        return output_string",True,"Tests: 11, Failures: 0, Errors: 0","class Manacher:
+    def __init__(self, input_string) -> None:
+        self.input_string = input_string
+
+    def palindromic_string(self):
+        s = self.input_string
+        if not s:
+            return """"
+        # Transform s to add separators to handle even-length palindromes
+        t = ""^#"" + ""#"".join(s) + ""#$""
+        n = len(t)
+        p = [0] * n
+        center = right = 0
+        for i in range(1, n - 1):
+            mirror = 2 * center - i
+            if i < right:
+                p[i] = min(right - i, p[mirror])
+            while t[i + (1 + p[i])] == t[i - (1 + p[i])]:
+                p[i] += 1
+            if i + p[i] > right:
+                center, right = i, i + p[i]
+        max_len = 0
+        center_index = 0
+        for i in range(1, n - 1):
+            if p[i] > max_len:
+                max_len = p[i]
+                center_index = i
+        start = (center_index - max_len) // 2
+        return s[start:start + max_len]",False,"Tests: 11, Failures: 0, Errors: 6","class ExpandCenter:
+    def __init__(self, input_string) -> None:
+        self.s = input_string
+
+    def _expand(self, left, right):
+        s = self.s
+        while left >= 0 and right < len(s) and s[left] == s[right]:
+            left -= 1
+            right += 1
+        return left + 1, right  # start inclusive, end exclusive
+
+    def palindromic_string(self):
+        s = self.s
+        n = len(s)
+        if n == 0:
+            return """"
+        best_start, best_end = 0, 1
+        for i in range(n):
+            l1, r1 = self._expand(i, i)
+            if r1 - l1 > best_end - best_start:
+                best_start, best_end = l1, r1
+            l2, r2 = self._expand(i, i + 1)
+            if r2 - l2 > best_end - best_start:
+                best_start, best_end = l2, r2
+        return s[best_start:best_end]",False,"Tests: 11, Failures: 0, Errors: 6","class DynamicProgramming:
+    def __init__(self, input_string) -> None:
+        self.s = input_string
+
+    def palindromic_string(self):
+        s = self.s
+        n = len(s)
+        if n == 0:
+            return """"
+        dp = [[False] * n for _ in range(n)]
+        start = 0
+        max_len = 1
+        for i in range(n):
+            dp[i][i] = True
+        for i in range(n - 1):
+            if s[i] == s[i + 1]:
+                dp[i][i + 1] = True
+                start = i
+                max_len = 2
+        for length in range(3, n + 1):
+            for i in range(n - length + 1):
+                j = i + length - 1
+                if s[i] == s[j] and dp[i + 1][j - 1]:
+                    dp[i][j] = True
+                    if length > max_len:
+                        start = i
+                        max_len = length
+        return s[start:start + max_len]",False,"Tests: 11, Failures: 0, Errors: 6","class BruteForce:
+    def __init__(self, input_string) -> None:
+        self.s = input_string
+
+    def palindromic_string(self):
+        s = self.s
+        n = len(s)
+        if n == 0:
+            return """"
+        best = s[0]
+        for i in range(n):
+            for j in range(i + 1, n + 1):
+                sub = s[i:j]
+                if len(sub) > len(best) and sub == sub[::-1]:
+                    best = sub
+        return best",False,"Tests: 11, Failures: 0, Errors: 6","class PythonicMax:
+    def __init__(self, input_string) -> None:
+        self.s = input_string
+
+    def palindromic_string(self):
+        s = self.s
+        if not s:
+            return """"
+        n = len(s)
+        candidates = (s[i:j] for i in range(n) for j in range(i + 1, n + 1) if s[i:j] == s[i:j][::-1])
+        return max(candidates, key=len)",False,"Tests: 11, Failures: 0, Errors: 6"
+56,"class MetricsCalculator:
+    def __init__(self):
+        self.true_positives = 0
+        self.false_positives = 0
+        self.false_negatives = 0
+        self.true_negatives = 0
+
+    def update(self, predicted_labels, true_labels):
+        for predicted, true in zip(predicted_labels, true_labels):
+            if predicted == 1 and true == 1:
+                self.true_positives += 1
+            elif predicted == 1 and true == 0:
+                self.false_positives += 1
+            elif predicted == 0 and true == 1:
+                self.false_negatives += 1
+            elif predicted == 0 and true == 0:
+                self.true_negatives += 1
+
+    def precision(self, predicted_labels, true_labels):
+        self.update(predicted_labels, true_labels)
+        if self.true_positives + self.false_positives == 0:
+            return 0.0
+        return self.true_positives / (self.true_positives + self.false_positives)
+
+    def recall(self, predicted_labels, true_labels):
+        self.update(predicted_labels, true_labels)
+        if self.true_positives + self.false_negatives == 0:
+            return 0.0
+        return self.true_positives / (self.true_positives + self.false_negatives)
+
+    def f1_score(self, predicted_labels, true_labels):
+        self.update(predicted_labels, true_labels)
+        precision = self.precision(predicted_labels, true_labels)
+        recall = self.recall(predicted_labels, true_labels)
+        if precision + recall == 0.0:
+            return 0.0
+        return (2 * precision * recall) / (precision + recall)
+
+    def accuracy(self, predicted_labels, true_labels):
+        self.update(predicted_labels, true_labels)
+        total = self.true_positives + self.true_negatives + self.false_positives + self.false_negatives
+        if total == 0:
+            return 0.0
+        return (self.true_positives + self.true_negatives) / total",True,"Tests: 30, Failures: 0, Errors: 0","def precision(predicted_labels, true_labels):
+    tp = sum(1 for p, t in zip(predicted_labels, true_labels) if p == 1 and t == 1)
+    fp = sum(1 for p, t in zip(predicted_labels, true_labels) if p == 1 and t == 0)
+    denom = tp + fp
+    return tp / denom if denom != 0 else 0.0
+
+def recall(predicted_labels, true_labels):
+    tp = sum(1 for p, t in zip(predicted_labels, true_labels) if p == 1 and t == 1)
+    fn = sum(1 for p, t in zip(predicted_labels, true_labels) if p == 0 and t == 1)
+    denom = tp + fn
+    return tp / denom if denom != 0 else 0.0
+
+def f1_score(predicted_labels, true_labels):
+    p = precision(predicted_labels, true_labels)
+    r = recall(predicted_labels, true_labels)
+    return (2 * p * r) / (p + r) if (p + r) != 0 else 0.0
+
+def accuracy(predicted_labels, true_labels):
+    total = 0
+    correct = 0
+    for p, t in zip(predicted_labels, true_labels):
+        total += 1
+        if p == t:
+            correct += 1
+    return correct / total if total != 0 else 0.0",False,"Tests: 30, Failures: 0, Errors: 30","class MetricsCalculator:
+    def _confusion(self, predicted_labels, true_labels):
+        tp = fp = fn = tn = 0
+        for p, t in zip(predicted_labels, true_labels):
+            if p == 1 and t == 1:
+                tp += 1
+            elif p == 1 and t == 0:
+                fp += 1
+            elif p == 0 and t == 1:
+                fn += 1
+            elif p == 0 and t == 0:
+                tn += 1
+        return tp, fp, fn, tn
+
+    def precision(self, predicted_labels, true_labels):
+        tp, fp, _, _ = self._confusion(predicted_labels, true_labels)
+        denom = tp + fp
+        return tp / denom if denom != 0 else 0.0
+
+    def recall(self, predicted_labels, true_labels):
+        tp, _, fn, _ = self._confusion(predicted_labels, true_labels)
+        denom = tp + fn
+        return tp / denom if denom != 0 else 0.0
+
+    def f1_score(self, predicted_labels, true_labels):
+        p = self.precision(predicted_labels, true_labels)
+        r = self.recall(predicted_labels, true_labels)
+        return (2 * p * r) / (p + r) if (p + r) != 0 else 0.0
+
+    def accuracy(self, predicted_labels, true_labels):
+        tp, fp, fn, tn = self._confusion(predicted_labels, true_labels)
+        total = tp + fp + fn + tn
+        return (tp + tn) / total if total != 0 else 0.0",False,"Tests: 30, Failures: 0, Errors: 6","class MetricsCalculator:
+    def precision(self, predicted_labels, true_labels):
+        predicted_positives = sum(1 for p in predicted_labels if p == 1)
+        if predicted_positives == 0:
+            return 0.0
+        tp = sum(1 for p, t in zip(predicted_labels, true_labels) if p == 1 and t == 1)
+        return tp / predicted_positives
+
+    def recall(self, predicted_labels, true_labels):
+        actual_positives = sum(1 for t in true_labels if t == 1)
+        if actual_positives == 0:
+            return 0.0
+        tp = sum(1 for p, t in zip(predicted_labels, true_labels) if p == 1 and t == 1)
+        return tp / actual_positives
+
+    def f1_score(self, predicted_labels, true_labels):
+        p = self.precision(predicted_labels, true_labels)
+        r = self.recall(predicted_labels, true_labels)
+        return (2 * p * r) / (p + r) if (p + r) != 0 else 0.0
+
+    def accuracy(self, predicted_labels, true_labels):
+        matches = sum(1 for p, t in zip(predicted_labels, true_labels) if p == t)
+        total = sum(1 for _ in zip(predicted_labels, true_labels))
+        return matches / total if total != 0 else 0.0",False,"Tests: 30, Failures: 1, Errors: 6","import numpy as np
+
+class MetricsCalculator:
+    def precision(self, predicted_labels, true_labels):
+        p = np.asarray(predicted_labels)
+        t = np.asarray(true_labels)
+        tp = int(((p == 1) & (t == 1)).sum())
+        fp = int(((p == 1) & (t == 0)).sum())
+        denom = tp + fp
+        return tp / denom if denom != 0 else 0.0
+
+    def recall(self, predicted_labels, true_labels):
+        p = np.asarray(predicted_labels)
+        t = np.asarray(true_labels)
+        tp = int(((p == 1) & (t == 1)).sum())
+        fn = int(((p == 0) & (t == 1)).sum())
+        denom = tp + fn
+        return tp / denom if denom != 0 else 0.0
+
+    def f1_score(self, predicted_labels, true_labels):
+        p = self.precision(predicted_labels, true_labels)
+        r = self.recall(predicted_labels, true_labels)
+        return (2 * p * r) / (p + r) if (p + r) != 0 else 0.0
+
+    def accuracy(self, predicted_labels, true_labels):
+        p = np.asarray(predicted_labels)
+        t = np.asarray(true_labels)
+        correct = int((p == t).sum())
+        total = p.size
+        return correct / total if total != 0 else 0.0",False,"Tests: 30, Failures: 1, Errors: 6","from collections import Counter
+
+class MetricsCalculator:
+    def _pair_counts(self, predicted_labels, true_labels):
+        c = Counter((int(p), int(t)) for p, t in zip(predicted_labels, true_labels))
+        tp = c[(1, 1)]
+        fp = c[(1, 0)]
+        fn = c[(0, 1)]
+        tn = c[(0, 0)]
+        return tp, fp, fn, tn
+
+    def precision(self, predicted_labels, true_labels):
+        tp, fp, _, _ = self._pair_counts(predicted_labels, true_labels)
+        denom = tp + fp
+        return tp / denom if denom != 0 else 0.0
+
+    def recall(self, predicted_labels, true_labels):
+        tp, _, fn, _ = self._pair_counts(predicted_labels, true_labels)
+        denom = tp + fn
+        return tp / denom if denom != 0 else 0.0
+
+    def f1_score(self, predicted_labels, true_labels):
+        p = self.precision(predicted_labels, true_labels)
+        r = self.recall(predicted_labels, true_labels)
+        return (2 * p * r) / (p + r) if (p + r) != 0 else 0.0
+
+    def accuracy(self, predicted_labels, true_labels):
+        tp, fp, fn, tn = self._pair_counts(predicted_labels, true_labels)
+        total = tp + fp + fn + tn
+        return (tp + tn) / total if total != 0 else 0.0",False,"Tests: 30, Failures: 0, Errors: 6"
+57,"import numpy as np
+
+
+class MetricsCalculator2:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def mrr(data):
+        if type(data) != list and type(data) != tuple:
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+
+        if len(data) == 0:
+            return 0.0, [0.0]
+        if type(data) == tuple:
+            (sub_list, total_num) = data
+            sub_list = np.array(sub_list)
+            if total_num == 0:
+                return 0.0, [0.0]
+            else:
+                ranking_array = 1.0 / (np.array(list(range(len(sub_list)))) + 1)
+                mr_np = sub_list * ranking_array
+
+                mr = 0.0
+                for team in mr_np:
+                    if team > 0:
+                        mr = team
+                        break
+                return mr, [mr]
+
+        if type(data) == list:
+            separate_result = []
+            for (sub_list, total_num) in data:
+                sub_list = np.array(sub_list)
+
+                if total_num == 0:
+                    mr = 0.0
+                else:
+                    ranking_array = 1.0 / (np.array(list(range(len(sub_list)))) + 1)
+                    mr_np = sub_list * ranking_array
+
+                    mr = 0.0
+                    for team in mr_np:
+                        if team > 0:
+                            mr = team
+                            break
+
+                separate_result.append(mr)
+            return np.mean(separate_result), separate_result
+
+    @staticmethod
+    def map(data):
+        if type(data) != list and type(data) != tuple:
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+
+        if len(data) == 0:
+            return 0.0, [0.0]
+        if type(data) == tuple:
+            (sub_list, total_num) = data
+            sub_list = np.array(sub_list)
+            if total_num == 0:
+                return 0.0, [0.0]
+            else:
+                ranking_array = 1.0 / (np.array(list(range(len(sub_list)))) + 1)
+
+                right_ranking_list = []
+                count = 1
+                for t in sub_list:
+                    if t == 0:
+                        right_ranking_list.append(0)
+                    else:
+                        right_ranking_list.append(count)
+                        count += 1
+
+                ap = np.sum(np.array(right_ranking_list) * ranking_array) / total_num
+                return ap, [ap]
+
+        if type(data) == list:
+            separate_result = []
+            for (sub_list, total_num) in data:
+                sub_list = np.array(sub_list)
+
+                if total_num == 0:
+                    ap = 0.0
+                else:
+                    ranking_array = 1.0 / (np.array(list(range(len(sub_list)))) + 1)
+
+                    right_ranking_list = []
+                    count = 1
+                    for t in sub_list:
+                        if t == 0:
+                            right_ranking_list.append(0)
+                        else:
+                            right_ranking_list.append(count)
+                            count += 1
+
+                    ap = np.sum(np.array(right_ranking_list) * ranking_array) / total_num
+
+                separate_result.append(ap)
+            return np.mean(separate_result), separate_result",True,"Tests: 20, Failures: 0, Errors: 0","import numpy as np
+
+class MetricsCalculator2:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def mrr(data):
+        if not isinstance(data, (list, tuple)):
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+        if len(data) == 0:
+            return 0.0, [0.0]
+        if isinstance(data, tuple):
+            sub_list, total_num = data
+            sub_list = np.asarray(sub_list)
+            if total_num == 0:
+                return 0.0, [0.0]
+            idx = np.where(sub_list > 0)[0]
+            if idx.size == 0:
+                return 0.0, [0.0]
+            rr = 1.0 / (idx[0] + 1)
+            return float(rr), [float(rr)]
+        results = []
+        for sub_list, total_num in data:
+            sub_list = np.asarray(sub_list)
+            if total_num == 0:
+                results.append(0.0)
+            else:
+                idx = np.where(sub_list > 0)[0]
+                if idx.size == 0:
+                    results.append(0.0)
+                else:
+                    results.append(float(1.0 / (idx[0] + 1)))
+        return float(np.mean(results)), results
+
+    @staticmethod
+    def map(data):
+        if not isinstance(data, (list, tuple)):
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+        if len(data) == 0:
+            return 0.0, [0.0]
+        if isinstance(data, tuple):
+            sub_list, total_num = data
+            sub_list = np.asarray(sub_list)
+            if total_num == 0:
+                return 0.0, [0.0]
+            rel = (sub_list > 0).astype(float)
+            ranks = np.arange(1, len(sub_list) + 1)
+            precisions = np.cumsum(rel) / ranks
+            ap = float(np.sum(precisions * rel) / total_num)
+            return ap, [ap]
+        results = []
+        for sub_list, total_num in data:
+            sub_list = np.asarray(sub_list)
+            if total_num == 0:
+                results.append(0.0)
+            else:
+                rel = (sub_list > 0).astype(float)
+                ranks = np.arange(1, len(sub_list) + 1)
+                precisions = np.cumsum(rel) / ranks
+                ap = float(np.sum(precisions * rel) / total_num)
+                results.append(ap)
+        return float(np.mean(results)), results",True,"Tests: 20, Failures: 0, Errors: 0","class MetricsCalculator2:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def mrr(data):
+        if type(data) not in (list, tuple):
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+        if len(data) == 0:
+            return 0.0, [0.0]
+        def single_mrr(sub_list, total_num):
+            if total_num == 0:
+                return 0.0
+            for i, v in enumerate(sub_list):
+                if v > 0:
+                    return 1.0 / (i + 1)
+            return 0.0
+        if type(data) is tuple:
+            sub_list, total_num = data
+            return float(single_mrr(sub_list, total_num)), [float(single_mrr(sub_list, total_num))]
+        results = []
+        for sub_list, total_num in data:
+            results.append(float(single_mrr(sub_list, total_num)))
+        mean = sum(results) / len(results) if results else 0.0
+        return float(mean), results
+
+    @staticmethod
+    def map(data):
+        if type(data) not in (list, tuple):
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+        if len(data) == 0:
+            return 0.0, [0.0]
+        def single_ap(sub_list, total_num):
+            if total_num == 0:
+                return 0.0
+            hits = 0
+            acc = 0.0
+            for i, v in enumerate(sub_list, start=1):
+                if v > 0:
+                    hits += 1
+                    acc += hits / i
+            return acc / total_num
+        if type(data) is tuple:
+            sub_list, total_num = data
+            return float(single_ap(sub_list, total_num)), [float(single_ap(sub_list, total_num))]
+        results = []
+        for sub_list, total_num in data:
+            results.append(float(single_ap(sub_list, total_num)))
+        mean = sum(results) / len(results) if results else 0.0
+        return float(mean), results",True,"Tests: 20, Failures: 0, Errors: 0","from itertools import islice
+
+class MetricsCalculator2:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def _is_sequence(obj):
+        return isinstance(obj, (list, tuple))
+
+    @staticmethod
+    def mrr(data):
+        if not MetricsCalculator2._is_sequence(data):
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+        if len(data) == 0:
+            return 0.0, [0.0]
+        def compute_one(pair):
+            sub_list, total_num = pair
+            if total_num == 0:
+                return 0.0
+            for pos, v in enumerate(sub_list, 1):
+                if v:
+                    return 1.0 / pos
+            return 0.0
+        if isinstance(data, tuple):
+            val = compute_one(data)
+            return float(val), [float(val)]
+        vals = [float(compute_one(pair)) for pair in data]
+        return float(sum(vals) / len(vals)), vals
+
+    @staticmethod
+    def map(data):
+        if not MetricsCalculator2._is_sequence(data):
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+        if len(data) == 0:
+            return 0.0, [0.0]
+        def compute_one(pair):
+            sub_list, total_num = pair
+            if total_num == 0:
+                return 0.0
+            hits = 0
+            s = 0.0
+            for i, v in enumerate(sub_list, 1):
+                if v:
+                    hits += 1
+                    s += hits / i
+            return s / total_num
+        if isinstance(data, tuple):
+            val = compute_one(data)
+            return float(val), [float(val)]
+        vals = [float(compute_one(pair)) for pair in data]
+        return float(sum(vals) / len(vals)), vals",True,"Tests: 20, Failures: 0, Errors: 0","import math
+
+class MetricsCalculator2:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def mrr(data):
+        if type(data) not in (list, tuple):
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+        if len(data) == 0:
+            return 0.0, [0.0]
+        def one(sub_list, total_num):
+            if total_num == 0:
+                return 0.0
+            for i, x in enumerate(sub_list):
+                if x and x > 0:
+                    return 1.0 / (i + 1)
+            return 0.0
+        if isinstance(data, tuple):
+            v = one(*data)
+            return float(v), [float(v)]
+        out = []
+        for pair in data:
+            out.append(float(one(*pair)))
+        mean = sum(out) / len(out) if out else 0.0
+        return float(mean), out
+
+    @staticmethod
+    def map(data):
+        if type(data) not in (list, tuple):
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+        if len(data) == 0:
+            return 0.0, [0.0]
+        def one(sub_list, total_num):
+            if total_num == 0:
+                return 0.0
+            num_rel = 0
+            s = 0.0
+            for i, x in enumerate(sub_list, start=1):
+                if x and x > 0:
+                    num_rel += 1
+                    s += num_rel / i
+            return s / total_num
+        if isinstance(data, tuple):
+            v = one(*data)
+            return float(v), [float(v)]
+        out = []
+        for pair in data:
+            out.append(float(one(*pair)))
+        mean = sum(out) / len(out) if out else 0.0
+        return float(mean), out",True,"Tests: 20, Failures: 0, Errors: 0","class MetricsCalculator2:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def mrr(data):
+        if not isinstance(data, (list, tuple)):
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+        if len(data) == 0:
+            return 0.0, [0.0]
+        def mrr_single(sub_list, total_num):
+            if total_num == 0:
+                return 0.0
+            for idx, val in enumerate(sub_list):
+                if val != 0:
+                    return 1.0 / (idx + 1)
+            return 0.0
+        if isinstance(data, tuple):
+            val = mrr_single(*data)
+            return float(val), [float(val)]
+        results = list(map(lambda p: float(mrr_single(*p)), data))
+        avg = sum(results) / len(results) if results else 0.0
+        return float(avg), results
+
+    @staticmethod
+    def map(data):
+        if not isinstance(data, (list, tuple)):
+            raise Exception(""the input must be a tuple([0,...,1,...],int) or a iteration of list of tuple"")
+        if len(data) == 0:
+            return 0.0, [0.0]
+        def ap_single(sub_list, total_num):
+            if total_num == 0:
+                return 0.0
+            hits = 0
+            total = 0.0
+            for idx, val in enumerate(sub_list, start=1):
+                if val != 0:
+                    hits += 1
+                    total += hits / idx
+            return total / total_num
+        if isinstance(data, tuple):
+            val = ap_single(*data)
+            return float(val), [float(val)]
+        results = list(map(lambda p: float(ap_single(*p)), data))
+        avg = sum(results) / len(results) if results else 0.0
+        return float(avg), results",True,"Tests: 20, Failures: 0, Errors: 0"
+58,"import random
+
+class MinesweeperGame:
+    def __init__(self, n, k) -> None:
+        self.n = n
+        self.k = k
+        self.minesweeper_map = self.generate_mine_sweeper_map()
+        self.player_map = self.generate_playerMap()
+        self.score = 0
+
+    def generate_mine_sweeper_map(self):
+        arr = [[0 for row in range(self.n)] for column in range(self.n)]
+        for num in range(self.k):
+            x = random.randint(0, self.n-1)
+            y = random.randint(0, self.n-1)
+            arr[y][x] = 'X'
+            if (x >=0 and x <= self.n-2) and (y >= 0 and y <= self.n-1):
+                if arr[y][x+1] != 'X':
+                    arr[y][x+1] += 1
+            if (x >=1 and x <= self.n-1) and (y >= 0 and y <= self.n-1):
+                if arr[y][x-1] != 'X':
+                    arr[y][x-1] += 1
+            if (x >= 1 and x <= self.n-1) and (y >= 1 and y <= self.n-1):
+                if arr[y-1][x-1] != 'X':
+                    arr[y-1][x-1] += 1
+    
+            if (x >= 0 and x <= self.n-2) and (y >= 1 and y <= self.n-1):
+                if arr[y-1][x+1] != 'X':
+                    arr[y-1][x+1] += 1 
+            if (x >= 0 and x <= self.n-1) and (y >= 1 and y <= self.n-1):
+                if arr[y-1][x] != 'X':
+                    arr[y-1][x] += 1
+    
+            if (x >=0 and x <= self.n-2) and (y >= 0 and y <= self.n-2):
+                if arr[y+1][x+1] != 'X':
+                    arr[y+1][x+1] += 1
+            if (x >= 1 and x <= self.n-1) and (y >= 0 and y <= self.n-2):
+                if arr[y+1][x-1] != 'X':
+                    arr[y+1][x-1] += 1
+            if (x >= 0 and x <= self.n-1) and (y >= 0 and y <= self.n-2):
+                if arr[y+1][x] != 'X':
+                    arr[y+1][x] += 1
+        return arr
+    
+    def generate_playerMap(self):
+        arr = [['-' for row in range(self.n)] for column in range(self.n)]
+        return arr
+
+    def check_won(self, map):
+        for i in range(self.n):
+            for j in range(self.n):
+                if map[i][j] == '-' and self.minesweeper_map[i][j] != 'X':
+                    return False
+        return True
+    
+    def sweep(self, x, y):
+
+        if (self.minesweeper_map[x][y] == 'X'):
+            return False
+        else:
+            self.player_map[x][y] = self.minesweeper_map[x][y]
+            self.score += 1
+            if self.check_won(self.player_map) == True:
+                return True
+            return self.player_map",False,"Tests: 22, Failures: 1, Errors: 0","import random
+from collections import deque
+
+class MinesweeperGame:
+    def __init__(self, n, k) -> None:
+        self.n = n
+        self.k = min(k, n * n)
+        self.minesweeper_map = self._generate_mine_sweeper_map()
+        self.player_map = [['-' for _ in range(n)] for _ in range(n)]
+        self.score = 0
+
+    def _generate_mine_sweeper_map(self):
+        grid = [[0 for _ in range(self.n)] for _ in range(self.n)]
+        all_positions = list(range(self.n * self.n))
+        mines = set(random.sample(all_positions, self.k))
+        for pos in mines:
+            r, c = divmod(pos, self.n)
+            grid[r][c] = 'X'
+        directions = [(-1, -1), (-1, 0), (-1, 1),
+                      (0, -1),           (0, 1),
+                      (1, -1),  (1, 0),  (1, 1)]
+        for pos in mines:
+            r, c = divmod(pos, self.n)
+            for dr, dc in directions:
+                rr, cc = r + dr, c + dc
+                if 0 <= rr < self.n and 0 <= cc < self.n and grid[rr][cc] != 'X':
+                    grid[rr][cc] += 1
+        return grid
+
+    def check_won(self, player_map):
+        for r in range(self.n):
+            for c in range(self.n):
+                if player_map[r][c] == '-' and self.minesweeper_map[r][c] != 'X':
+                    return False
+        return True
+
+    def sweep(self, x, y):
+        if not (0 <= x < self.n and 0 <= y < self.n):
+            return self.player_map
+        if self.minesweeper_map[x][y] == 'X':
+            return False
+        if self.player_map[x][y] != '-':
+            if self.check_won(self.player_map):
+                return True
+            return self.player_map
+        queue = deque()
+        queue.append((x, y))
+        visited = set()
+        while queue:
+            r, c = queue.popleft()
+            if (r, c) in visited:
+                continue
+            visited.add((r, c))
+            if self.player_map[r][c] == '-':
+                self.player_map[r][c] = self.minesweeper_map[r][c]
+                self.score += 1
+            if self.minesweeper_map[r][c] == 0:
+                for dr in (-1, 0, 1):
+                    for dc in (-1, 0, 1):
+                        if dr == 0 and dc == 0:
+                            continue
+                        rr, cc = r + dr, c + dc
+                        if 0 <= rr < self.n and 0 <= cc < self.n and (rr, cc) not in visited and self.player_map[rr][cc] == '-':
+                            if self.minesweeper_map[rr][cc] != 'X':
+                                queue.append((rr, cc))
+        if self.check_won(self.player_map):
+            return True
+        return self.player_map",False,"Tests: 22, Failures: 1, Errors: 7","import random
+
+class MinesweeperGame:
+    def __init__(self, n, k) -> None:
+        self.n = n
+        self.k = min(k, n * n)
+        self.minesweeper_map = self._create_board()
+        self.player_map = [['-' for _ in range(n)] for _ in range(n)]
+        self.score = 0
+
+    def _create_board(self):
+        board = [[0 for _ in range(self.n)] for _ in range(self.n)]
+        mines = set()
+        while len(mines) < self.k:
+            r = random.randrange(self.n)
+            c = random.randrange(self.n)
+            mines.add((r, c))
+        for r, c in mines:
+            board[r][c] = 'X'
+        for r, c in mines:
+            for dr in (-1, 0, 1):
+                for dc in (-1, 0, 1):
+                    if dr == 0 and dc == 0:
+                        continue
+                    rr, cc = r + dr, c + dc
+                    if 0 <= rr < self.n and 0 <= cc < self.n and board[rr][cc] != 'X':
+                        board[rr][cc] += 1
+        return board
+
+    def check_won(self, player_map):
+        for r in range(self.n):
+            for c in range(self.n):
+                if player_map[r][c] == '-' and self.minesweeper_map[r][c] != 'X':
+                    return False
+        return True
+
+    def sweep(self, x, y):
+        if not (0 <= x < self.n and 0 <= y < self.n):
+            return self.player_map
+        if self.minesweeper_map[x][y] == 'X':
+            return False
+        if self.player_map[x][y] == '-':
+            self.player_map[x][y] = self.minesweeper_map[x][y]
+            self.score += 1
+        if self.check_won(self.player_map):
+            return True
+        return self.player_map",False,"Tests: 22, Failures: 0, Errors: 7","import random
+import itertools
+
+class MinesweeperGame:
+    def __init__(self, n, k) -> None:
+        self.n = n
+        self.k = min(k, n * n)
+        self.minesweeper_map = self._build_map()
+        self.player_map = [['-' for _ in range(n)] for _ in range(n)]
+        self.score = 0
+
+    def _build_map(self):
+        coords = list(itertools.product(range(self.n), range(self.n)))
+        random.shuffle(coords)
+        mines = set(coords[:self.k])
+        grid = [[0 for _ in range(self.n)] for _ in range(self.n)]
+        for r, c in mines:
+            grid[r][c] = 'X'
+        for r, c in mines:
+            for rr in range(r - 1, r + 2):
+                for cc in range(c - 1, c + 2):
+                    if 0 <= rr < self.n and 0 <= cc < self.n and grid[rr][cc] != 'X':
+                        grid[rr][cc] += 1
+        return grid
+
+    def check_won(self, player_map):
+        for r in range(self.n):
+            for c in range(self.n):
+                if player_map[r][c] == '-' and self.minesweeper_map[r][c] != 'X':
+                    return False
+        return True
+
+    def sweep(self, x, y):
+        if not (0 <= x < self.n and 0 <= y < self.n):
+            return self.player_map
+        if self.minesweeper_map[x][y] == 'X':
+            return False
+        if self.player_map[x][y] != '-':
+            if self.check_won(self.player_map):
+                return True
+            return self.player_map
+        stack = [(x, y)]
+        while stack:
+            r, c = stack.pop()
+            if self.player_map[r][c] != '-':
+                continue
+            self.player_map[r][c] = self.minesweeper_map[r][c]
+            self.score += 1
+            if self.minesweeper_map[r][c] == 0:
+                for rr in range(r - 1, r + 2):
+                    for cc in range(c - 1, c + 2):
+                        if 0 <= rr < self.n and 0 <= cc < self.n and self.player_map[rr][cc] == '-':
+                            if self.minesweeper_map[rr][cc] != 'X':
+                                stack.append((rr, cc))
+        if self.check_won(self.player_map):
+            return True
+        return self.player_map",False,"Tests: 22, Failures: 1, Errors: 7","import random
+
+class MinesweeperGame:
+    def __init__(self, n, k) -> None:
+        self.n = n
+        self.k = max(0, min(k, n * n))
+        self.minesweeper_map = self._init_map()
+        self.player_map = [['-' for _ in range(n)] for _ in range(n)]
+        self.score = 0
+
+    def _init_map(self):
+        grid = [[0 for _ in range(self.n)] for _ in range(self.n)]
+        placed = 0
+        attempts = 0
+        while placed < self.k and attempts < self.k * 10 + 1000:
+            r = random.randrange(self.n)
+            c = random.randrange(self.n)
+            if grid[r][c] == 'X':
+                attempts += 1
+                continue
+            grid[r][c] = 'X'
+            placed += 1
+            for dr in (-1, 0, 1):
+                for dc in (-1, 0, 1):
+                    if dr == 0 and dc == 0:
+                        continue
+                    rr, cc = r + dr, c + dc
+                    if 0 <= rr < self.n and 0 <= cc < self.n and grid[rr][cc] != 'X':
+                        grid[rr][cc] += 1
+        return grid
+
+    def check_won(self, player_map):
+        for r in range(self.n):
+            for c in range(self.n):
+                if player_map[r][c] == '-' and self.minesweeper_map[r][c] != 'X':
+                    return False
+        return True
+
+    def sweep(self, x, y):
+        if x < 0 or x >= self.n or y < 0 or y >= self.n:
+            return self.player_map
+        if self.minesweeper_map[x][y] == 'X':
+            return False
+        if self.player_map[x][y] == '-':
+            self.player_map[x][y] = self.minesweeper_map[x][y]
+            self.score += 1
+        if self.check_won(self.player_map):
+            return True
+        return self.player_map",False,"Tests: 22, Failures: 0, Errors: 7","import random
+from collections import deque
+
+class MinesweeperGame:
+    def __init__(self, n, k) -> None:
+        self.n = n
+        self.k = max(0, min(k, n * n))
+        self.minesweeper_map = self._make_board()
+        self.player_map = [['-' for _ in range(n)] for _ in range(n)]
+        self.score = 0
+
+    def _make_board(self):
+        board = [[0 for _ in range(self.n)] for _ in range(self.n)]
+        all_cells = [(r, c) for r in range(self.n) for c in range(self.n)]
+        mines = set(random.sample(all_cells, self.k))
+        for r, c in mines:
+            board[r][c] = 'X'
+        for r, c in mines:
+            for dr, dc in [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]:
+                rr, cc = r + dr, c + dc
+                if 0 <= rr < self.n and 0 <= cc < self.n and board[rr][cc] != 'X':
+                    board[rr][cc] += 1
+        return board
+
+    def check_won(self, player_map):
+        for r in range(self.n):
+            for c in range(self.n):
+                if player_map[r][c] == '-' and self.minesweeper_map[r][c] != 'X':
+                    return False
+        return True
+
+    def sweep(self, x, y):
+        if not (0 <= x < self.n and 0 <= y < self.n):
+            return self.player_map
+        if self.minesweeper_map[x][y] == 'X':
+            return False
+        if self.player_map[x][y] != '-':
+            if self.check_won(self.player_map):
+                return True
+            return self.player_map
+        dq = deque()
+        dq.append((x, y))
+        while dq:
+            r, c = dq.popleft()
+            if self.player_map[r][c] != '-':
+                continue
+            self.player_map[r][c] = self.minesweeper_map[r][c]
+            self.score += 1
+            if self.minesweeper_map[r][c] == 0:
+                for dr, dc in [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]:
+                    rr, cc = r + dr, c + dc
+                    if 0 <= rr < self.n and 0 <= cc < self.n and self.player_map[rr][cc] == '-':
+                        if self.minesweeper_map[rr][cc] != 'X':
+                            dq.append((rr, cc))
+        if self.check_won(self.player_map):
+            return True
+        return self.player_map",False,"Tests: 22, Failures: 1, Errors: 7"
+59,"from datetime import datetime
+import numpy as np
+
+class MovieBookingSystem:
+    def __init__(self):
+        self.movies = []
+
+    def add_movie(self, name, price, start_time, end_time, n):
+        movie = {
+            'name': name,
+            'price': price,
+            'start_time': datetime.strptime(start_time, '%H:%M'),
+            'end_time': datetime.strptime(end_time, '%H:%M'),
+            'seats': np.zeros((n, n))
+        }
+        self.movies.append(movie)
+
+    def book_ticket(self, name, seats_to_book):
+        for movie in self.movies:
+            if movie['name'] == name:
+                for seat in seats_to_book:
+                    if movie['seats'][seat[0]][seat[1]] == 0:
+                        movie['seats'][seat[0]][seat[1]] = 1
+                    else:
+                        return ""Booking failed.""
+                return ""Booking success.""
+        return ""Movie not found.""
+
+
+    def available_movies(self, start_time, end_time):
+        start_time = datetime.strptime(start_time, '%H:%M')
+        end_time = datetime.strptime(end_time, '%H:%M')
+
+        available_movies = []
+        for movie in self.movies:
+            if start_time <= movie['start_time'] and movie['end_time'] <= end_time:
+                available_movies.append(movie['name'])
+
+        return available_movies",True,"Tests: 16, Failures: 0, Errors: 0","from datetime import datetime
+import numpy as np
+
+class MovieBookingSystem:
+    def __init__(self):
+        self.movies = []
+
+    def add_movie(self, name, price, start_time, end_time, n):
+        movie = {
+            'name': name,
+            'price': price,
+            'start_time': datetime.strptime(start_time, '%H:%M'),
+            'end_time': datetime.strptime(end_time, '%H:%M'),
+            'seats': np.zeros((n, n), dtype=int),
+            'size': n
+        }
+        self.movies.append(movie)
+
+    def book_ticket(self, name, seats_to_book):
+        for movie in self.movies:
+            if movie['name'] == name:
+                n = movie['size']
+                for r, c in seats_to_book:
+                    if not (0 <= r < n and 0 <= c < n):
+                        return ""Booking failed.""
+                booked_positions = []
+                for r, c in seats_to_book:
+                    if movie['seats'][r, c] == 0:
+                        movie['seats'][r, c] = 1
+                        booked_positions.append((r, c))
+                    else:
+                        for br, bc in booked_positions:
+                            movie['seats'][br, bc] = 0
+                        return ""Booking failed.""
+                return ""Booking success.""
+        return ""Movie not found.""
+
+    def available_movies(self, start_time, end_time):
+        start_time = datetime.strptime(start_time, '%H:%M')
+        end_time = datetime.strptime(end_time, '%H:%M')
+        result = []
+        for movie in self.movies:
+            if start_time <= movie['start_time'] and movie['end_time'] <= end_time:
+                result.append(movie['name'])
+        return result",True,"Tests: 16, Failures: 0, Errors: 0","from datetime import datetime
+
+class Movie:
+    def __init__(self, name, price, start_time, end_time, n):
+        self.name = name
+        self.price = price
+        self.start_time = datetime.strptime(start_time, '%H:%M')
+        self.end_time = datetime.strptime(end_time, '%H:%M')
+        self.n = n
+        self.seats = [[False]*n for _ in range(n)]
+
+    def book(self, seats):
+        for r, c in seats:
+            if r < 0 or c < 0 or r >= self.n or c >= self.n:
+                return False
+            if self.seats[r][c]:
+                return False
+        for r, c in seats:
+            self.seats[r][c] = True
+        return True
+
+class MovieBookingSystem:
+    def __init__(self):
+        self.movies = []
+
+    def add_movie(self, name, price, start_time, end_time, n):
+        self.movies.append(Movie(name, price, start_time, end_time, n))
+
+    def book_ticket(self, name, seats_to_book):
+        for m in self.movies:
+            if m.name == name:
+                ok = m.book(seats_to_book)
+                return ""Booking success."" if ok else ""Booking failed.""
+        return ""Movie not found.""
+
+    def available_movies(self, start_time, end_time):
+        start_time = datetime.strptime(start_time, '%H:%M')
+        end_time = datetime.strptime(end_time, '%H:%M')
+        available = []
+        for m in self.movies:
+            if start_time <= m.start_time and m.end_time <= end_time:
+                available.append(m.name)
+        return available",False,"Tests: 16, Failures: 0, Errors: 16","from datetime import datetime
+from dataclasses import dataclass, field
+
+@dataclass
+class Movie:
+    name: str
+    price: float
+    start_time: datetime
+    end_time: datetime
+    n: int
+    booked: set = field(default_factory=set)
+
+    @classmethod
+    def create(cls, name, price, start_time, end_time, n):
+        st = datetime.strptime(start_time, '%H:%M')
+        et = datetime.strptime(end_time, '%H:%M')
+        return cls(name, price, st, et, n)
+
+    def can_book(self, seats):
+        for r, c in seats:
+            if not (0 <= r < self.n and 0 <= c < self.n):
+                return False
+            if (r, c) in self.booked:
+                return False
+        return True
+
+    def book(self, seats):
+        if not self.can_book(seats):
+            return False
+        for s in seats:
+            self.booked.add(s)
+        return True
+
+class MovieBookingSystem:
+    def __init__(self):
+        self.movies = {}
+
+    def add_movie(self, name, price, start_time, end_time, n):
+        self.movies[name] = Movie.create(name, price, start_time, end_time, n)
+
+    def book_ticket(self, name, seats_to_book):
+        movie = self.movies.get(name)
+        if movie is None:
+            return ""Movie not found.""
+        if movie.book(seats_to_book):
+            return ""Booking success.""
+        return ""Booking failed.""
+
+    def available_movies(self, start_time, end_time):
+        st = datetime.strptime(start_time, '%H:%M')
+        et = datetime.strptime(end_time, '%H:%M')
+        return [m.name for m in self.movies.values() if st <= m.start_time and m.end_time <= et]",False,"Tests: 16, Failures: 0, Errors: 16","from datetime import datetime
+from threading import Lock
+
+class MovieBookingSystem:
+    def __init__(self):
+        self._movies = {}
+        self._locks = {}
+
+    def add_movie(self, name, price, start_time, end_time, n):
+        st = datetime.strptime(start_time, '%H:%M')
+        et = datetime.strptime(end_time, '%H:%M')
+        seats = [[0]*n for _ in range(n)]
+        self._movies[name] = {'name': name, 'price': price, 'start_time': st, 'end_time': et, 'seats': seats, 'n': n}
+        self._locks[name] = Lock()
+
+    def book_ticket(self, name, seats_to_book):
+        movie = self._movies.get(name)
+        if movie is None:
+            return ""Movie not found.""
+        lock = self._locks[name]
+        with lock:
+            n = movie['n']
+            for r, c in seats_to_book:
+                if r < 0 or c < 0 or r >= n or c >= n:
+                    return ""Booking failed.""
+                if movie['seats'][r][c] == 1:
+                    return ""Booking failed.""
+            for r, c in seats_to_book:
+                movie['seats'][r][c] = 1
+            return ""Booking success.""
+
+    def available_movies(self, start_time, end_time):
+        st = datetime.strptime(start_time, '%H:%M')
+        et = datetime.strptime(end_time, '%H:%M')
+        names = []
+        for m in self._movies.values():
+            if st <= m['start_time'] and m['end_time'] <= et:
+                names.append(m['name'])
+        return names",False,"Tests: 16, Failures: 0, Errors: 11","from datetime import datetime
+
+class MovieBookingSystem:
+    def __init__(self):
+        self.movies = []
+
+    def add_movie(self, name, price, start_time, end_time, n):
+        start = datetime.strptime(start_time, '%H:%M')
+        end = datetime.strptime(end_time, '%H:%M')
+        seats = set()
+        self.movies.append({'name': name, 'price': price, 'start': start, 'end': end, 'n': n, 'seats': seats})
+
+    def book_ticket(self, name, seats_to_book):
+        for movie in self.movies:
+            if movie['name'] == name:
+                n = movie['n']
+                for r, c in seats_to_book:
+                    if not (0 <= r < n and 0 <= c < n):
+                        return ""Booking failed.""
+                    if (r, c) in movie['seats']:
+                        return ""Booking failed.""
+                for s in seats_to_book:
+                    movie['seats'].add(s)
+                return ""Booking success.""
+        return ""Movie not found.""
+
+    def available_movies(self, start_time, end_time):
+        st = datetime.strptime(start_time, '%H:%M')
+        et = datetime.strptime(end_time, '%H:%M')
+        return [m['name'] for m in self.movies if st <= m['start'] and m['end'] <= et]",False,"Tests: 16, Failures: 0, Errors: 10"
+60,"import sqlite3
+
+
+class MovieTicketDB:
+    def __init__(self, db_name):
+        self.connection = sqlite3.connect(db_name)
+        self.cursor = self.connection.cursor()
+        self.create_table()
+
+    def create_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tickets (
+                id INTEGER PRIMARY KEY,
+                movie_name TEXT,
+                theater_name TEXT,
+                seat_number TEXT,
+                customer_name TEXT
+            )
+        ''')
+        self.connection.commit()
+
+    def insert_ticket(self, movie_name, theater_name, seat_number, customer_name):
+        self.cursor.execute('''
+            INSERT INTO tickets (movie_name, theater_name, seat_number, customer_name)
+            VALUES (?, ?, ?, ?)
+        ''', (movie_name, theater_name, seat_number, customer_name))
+        self.connection.commit()
+
+    def search_tickets_by_customer(self, customer_name):
+        self.cursor.execute('''
+            SELECT * FROM tickets WHERE customer_name = ?
+        ''', (customer_name,))
+        tickets = self.cursor.fetchall()
+        return tickets
+
+    def delete_ticket(self, ticket_id):
+        self.cursor.execute('''
+            DELETE FROM tickets WHERE id = ?
+        ''', (ticket_id,))
+        self.connection.commit()",False,"Tests: 16, Failures: 1, Errors: 0","import sqlite3
+from typing import List, Dict, Optional
+
+
+class MovieTicketDB:
+    def __init__(self, db_name: str):
+        self.connection = sqlite3.connect(db_name)
+        self.connection.row_factory = sqlite3.Row
+        self.cursor = self.connection.cursor()
+        self.create_table()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+
+    def create_table(self) -> None:
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tickets (
+                id INTEGER PRIMARY KEY,
+                movie_name TEXT,
+                theater_name TEXT,
+                seat_number TEXT,
+                customer_name TEXT
+            )
+        ''')
+        self.connection.commit()
+
+    def insert_ticket(self, movie_name: str, theater_name: str, seat_number: str, customer_name: str) -> int:
+        self.cursor.execute('''
+            INSERT INTO tickets (movie_name, theater_name, seat_number, customer_name)
+            VALUES (?, ?, ?, ?)
+        ''', (movie_name, theater_name, seat_number, customer_name))
+        self.connection.commit()
+        return self.cursor.lastrowid
+
+    def search_tickets_by_customer(self, customer_name: str) -> List[Dict]:
+        self.cursor.execute('SELECT * FROM tickets WHERE customer_name = ?', (customer_name,))
+        rows = self.cursor.fetchall()
+        return [dict(row) for row in rows]
+
+    def delete_ticket(self, ticket_id: int) -> bool:
+        self.cursor.execute('DELETE FROM tickets WHERE id = ?', (ticket_id,))
+        self.connection.commit()
+        return self.cursor.rowcount > 0
+
+    def close(self) -> None:
+        try:
+            self.cursor.close()
+        finally:
+            self.connection.close()",False,"Tests: 16, Failures: 0, Errors: 16","import sqlite3
+from dataclasses import dataclass
+from typing import List, Optional
+
+
+@dataclass
+class Ticket:
+    id: Optional[int]
+    movie_name: str
+    theater_name: str
+    seat_number: str
+    customer_name: str
+
+
+class MovieTicketDB:
+    def __init__(self, db_name: str):
+        self.conn = sqlite3.connect(db_name)
+        self._ensure_table()
+
+    def _ensure_table(self):
+        cur = self.conn.cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS tickets (
+                id INTEGER PRIMARY KEY,
+                movie_name TEXT,
+                theater_name TEXT,
+                seat_number TEXT,
+                customer_name TEXT
+            )
+        ''')
+        self.conn.commit()
+        cur.close()
+
+    def insert_ticket(self, movie_name: str, theater_name: str, seat_number: str, customer_name: str) -> Ticket:
+        cur = self.conn.cursor()
+        cur.execute('''
+            INSERT INTO tickets (movie_name, theater_name, seat_number, customer_name)
+            VALUES (?, ?, ?, ?)
+        ''', (movie_name, theater_name, seat_number, customer_name))
+        self.conn.commit()
+        ticket_id = cur.lastrowid
+        cur.close()
+        return Ticket(id=ticket_id, movie_name=movie_name, theater_name=theater_name, seat_number=seat_number, customer_name=customer_name)
+
+    def search_tickets_by_customer(self, customer_name: str) -> List[Ticket]:
+        cur = self.conn.cursor()
+        cur.execute('SELECT id, movie_name, theater_name, seat_number, customer_name FROM tickets WHERE customer_name = ?', (customer_name,))
+        rows = cur.fetchall()
+        cur.close()
+        return [Ticket(id=row[0], movie_name=row[1], theater_name=row[2], seat_number=row[3], customer_name=row[4]) for row in rows]
+
+    def delete_ticket(self, ticket_id: int) -> bool:
+        cur = self.conn.cursor()
+        cur.execute('DELETE FROM tickets WHERE id = ?', (ticket_id,))
+        self.conn.commit()
+        deleted = cur.rowcount > 0
+        cur.close()
+        return deleted
+
+    def update_ticket(self, ticket_id: int, movie_name: str = None, theater_name: str = None, seat_number: str = None, customer_name: str = None) -> bool:
+        parts = []
+        params = []
+        if movie_name is not None:
+            parts.append('movie_name = ?'); params.append(movie_name)
+        if theater_name is not None:
+            parts.append('theater_name = ?'); params.append(theater_name)
+        if seat_number is not None:
+            parts.append('seat_number = ?'); params.append(seat_number)
+        if customer_name is not None:
+            parts.append('customer_name = ?'); params.append(customer_name)
+        if not parts:
+            return False
+        params.append(ticket_id)
+        sql = 'UPDATE tickets SET ' + ', '.join(parts) + ' WHERE id = ?'
+        cur = self.conn.cursor()
+        cur.execute(sql, tuple(params))
+        self.conn.commit()
+        updated = cur.rowcount > 0
+        cur.close()
+        return updated
+
+    def close(self):
+        self.conn.close()",False,Exception: name 'Ticket' is not defined,"import sqlite3
+import threading
+from typing import List, Tuple
+
+
+class MovieTicketDB:
+    def __init__(self, db_name: str):
+        # allow usage from multiple threads
+        self.connection = sqlite3.connect(db_name, check_same_thread=False)
+        self.lock = threading.Lock()
+        self._create_table()
+
+    def _create_table(self) -> None:
+        with self.lock:
+            cur = self.connection.cursor()
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS tickets (
+                    id INTEGER PRIMARY KEY,
+                    movie_name TEXT,
+                    theater_name TEXT,
+                    seat_number TEXT,
+                    customer_name TEXT
+                )
+            ''')
+            self.connection.commit()
+            cur.close()
+
+    def insert_ticket(self, movie_name: str, theater_name: str, seat_number: str, customer_name: str) -> int:
+        with self.lock:
+            cur = self.connection.cursor()
+            cur.execute('''
+                INSERT INTO tickets (movie_name, theater_name, seat_number, customer_name)
+                VALUES (?, ?, ?, ?)
+            ''', (movie_name, theater_name, seat_number, customer_name))
+            self.connection.commit()
+            ticket_id = cur.lastrowid
+            cur.close()
+            return ticket_id
+
+    def search_tickets_by_customer(self, customer_name: str) -> List[Tuple]:
+        with self.lock:
+            cur = self.connection.cursor()
+            cur.execute('SELECT id, movie_name, theater_name, seat_number, customer_name FROM tickets WHERE customer_name = ?', (customer_name,))
+            rows = cur.fetchall()
+            cur.close()
+            return rows
+
+    def delete_ticket(self, ticket_id: int) -> bool:
+        with self.lock:
+            cur = self.connection.cursor()
+            cur.execute('DELETE FROM tickets WHERE id = ?', (ticket_id,))
+            self.connection.commit()
+            deleted = cur.rowcount > 0
+            cur.close()
+            return deleted
+
+    def list_all(self) -> List[Tuple]:
+        with self.lock:
+            cur = self.connection.cursor()
+            cur.execute('SELECT id, movie_name, theater_name, seat_number, customer_name FROM tickets')
+            rows = cur.fetchall()
+            cur.close()
+            return rows
+
+    def close(self) -> None:
+        self.connection.close()
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass",True,"Tests: 16, Failures: 0, Errors: 0","import sqlite3
+from typing import List, Dict
+
+
+class MovieTicketDB:
+    def __init__(self, db_name: str):
+        self.conn = sqlite3.connect(db_name)
+        self.conn.row_factory = lambda cursor, row: {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
+        self._create_table()
+
+    def _create_table(self):
+        self.conn.execute('''
+            CREATE TABLE IF NOT EXISTS tickets (
+                id INTEGER PRIMARY KEY,
+                movie_name TEXT,
+                theater_name TEXT,
+                seat_number TEXT,
+                customer_name TEXT
+            )
+        ''')
+        self.conn.commit()
+
+    def insert_ticket(self, movie_name: str, theater_name: str, seat_number: str, customer_name: str) -> int:
+        cur = self.conn.execute('''
+            INSERT INTO tickets (movie_name, theater_name, seat_number, customer_name)
+            VALUES (?, ?, ?, ?)
+        ''', (movie_name, theater_name, seat_number, customer_name))
+        self.conn.commit()
+        return cur.lastrowid
+
+    def search_tickets_by_customer(self, customer_name: str) -> List[Dict]:
+        cur = self.conn.execute('SELECT * FROM tickets WHERE customer_name = ?', (customer_name,))
+        return cur.fetchall()
+
+    def delete_ticket(self, ticket_id: int) -> bool:
+        cur = self.conn.execute('DELETE FROM tickets WHERE id = ?', (ticket_id,))
+        self.conn.commit()
+        return cur.rowcount > 0
+
+    def list_tickets(self) -> List[Dict]:
+        cur = self.conn.execute('SELECT * FROM tickets')
+        return cur.fetchall()
+
+    def __del__(self):
+        try:
+            self.conn.close()
+        except Exception:
+            pass",False,"Tests: 16, Failures: 11, Errors: 21","import sqlite3
+from typing import Iterable, Tuple
+
+
+class MovieTicketDB:
+    def __init__(self, db_name: str = "":memory:""):
+        # use autocommit disabled (default) and explicit commits
+        self.conn = sqlite3.connect(db_name)
+        self._ensure_table()
+
+    def _ensure_table(self):
+        with self.conn:
+            self.conn.execute('''
+                CREATE TABLE IF NOT EXISTS tickets (
+                    id INTEGER PRIMARY KEY,
+                    movie_name TEXT,
+                    theater_name TEXT,
+                    seat_number TEXT,
+                    customer_name TEXT
+                )
+            ''')
+
+    def insert_ticket(self, movie_name: str, theater_name: str, seat_number: str, customer_name: str) -> int:
+        cur = self.conn.execute('''
+            INSERT INTO tickets (movie_name, theater_name, seat_number, customer_name)
+            VALUES (?, ?, ?, ?)
+        ''', (movie_name, theater_name, seat_number, customer_name))
+        return cur.lastrowid
+
+    def insert_many(self, tickets: Iterable[Tuple[str, str, str, str]]) -> int:
+        cur = self.conn.executemany('''
+            INSERT INTO tickets (movie_name, theater_name, seat_number, customer_name)
+            VALUES (?, ?, ?, ?)
+        ''', tickets)
+        return cur.rowcount
+
+    def search_tickets_by_customer(self, customer_name: str):
+        cur = self.conn.execute('SELECT id, movie_name, theater_name, seat_number, customer_name FROM tickets WHERE customer_name = ?', (customer_name,))
+        return cur.fetchall()
+
+    def delete_ticket(self, ticket_id: int) -> bool:
+        cur = self.conn.execute('DELETE FROM tickets WHERE id = ?', (ticket_id,))
+        return cur.rowcount > 0
+
+    def get_ticket(self, ticket_id: int):
+        cur = self.conn.execute('SELECT id, movie_name, theater_name, seat_number, customer_name FROM tickets WHERE id = ?', (ticket_id,))
+        return cur.fetchone()
+
+    def close(self):
+        self.conn.close()
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass",False,"Tests: 16, Failures: 1, Errors: 31"
+61,"class MusicPlayer:
+    def __init__(self):
+        self.playlist = []
+        self.current_song = None
+        self.volume = 50
+
+    def add_song(self, song):
+        self.playlist.append(song)
+
+    def remove_song(self, song):
+        if song in self.playlist:
+            self.playlist.remove(song)
+            if self.current_song == song:
+                self.stop()
+
+    def play(self):
+        if self.playlist and self.current_song:
+            return self.playlist[0]
+        elif len(self.playlist): 
+            return False
+
+    def stop(self):
+        if self.current_song:
+            self.current_song = None
+            return True
+        else:
+            return False
+
+    def switch_song(self):
+        if self.current_song:
+            current_index = self.playlist.index(self.current_song)
+            if current_index < len(self.playlist) - 1:
+                self.current_song = self.playlist[current_index + 1]
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def previous_song(self):
+        if self.current_song:
+            current_index = self.playlist.index(self.current_song)
+            if current_index > 0:
+                self.current_song = self.playlist[current_index - 1]
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def set_volume(self, volume):
+        if 0 <= volume <= 100:
+            self.volume = volume
+        else:
+            return False
+
+    def shuffle(self):
+        if self.playlist:
+            import random
+            random.shuffle(self.playlist)
+            return True
+        else:
+            return False",True,"Tests: 42, Failures: 0, Errors: 0","import random
+
+class MusicPlayer:
+    def __init__(self):
+        self.playlist = []
+        self.current_song = None
+        self.volume = 50
+
+    def add_song(self, song):
+        self.playlist.append(song)
+        return True
+
+    def remove_song(self, song):
+        if song in self.playlist:
+            self.playlist.remove(song)
+            if self.current_song == song:
+                self.stop()
+            return True
+        return False
+
+    def play(self):
+        if not self.playlist:
+            return False
+        if self.current_song is None:
+            self.current_song = self.playlist[0]
+        return self.current_song
+
+    def stop(self):
+        if self.current_song is None:
+            return False
+        self.current_song = None
+        return True
+
+    def switch_song(self):
+        if not self.playlist or self.current_song is None:
+            return False
+        try:
+            idx = self.playlist.index(self.current_song)
+        except ValueError:
+            return False
+        if idx < len(self.playlist) - 1:
+            self.current_song = self.playlist[idx + 1]
+            return True
+        return False
+
+    def previous_song(self):
+        if not self.playlist or self.current_song is None:
+            return False
+        try:
+            idx = self.playlist.index(self.current_song)
+        except ValueError:
+            return False
+        if idx > 0:
+            self.current_song = self.playlist[idx - 1]
+            return True
+        return False
+
+    def set_volume(self, volume):
+        if not isinstance(volume, int):
+            return False
+        if 0 <= volume <= 100:
+            self.volume = volume
+            return True
+        return False
+
+    def shuffle(self):
+        if not self.playlist:
+            return False
+        current = self.current_song
+        random.shuffle(self.playlist)
+        if current in self.playlist:
+            self.current_song = current
+        else:
+            self.current_song = None
+        return True",False,"Tests: 42, Failures: 6, Errors: 0","import random
+
+class MusicPlayer:
+    def __init__(self):
+        self.playlist = []
+        self.current_index = None
+        self.volume = 50
+
+    def add_song(self, song):
+        self.playlist.append(song)
+        if self.current_index is None:
+            self.current_index = None
+        return True
+
+    def remove_song(self, song):
+        if song not in self.playlist:
+            return False
+        idx = self.playlist.index(song)
+        self.playlist.pop(idx)
+        if self.current_index is None:
+            return True
+        if idx < self.current_index:
+            self.current_index -= 1
+        elif idx == self.current_index:
+            # stop playback, try to keep a valid index if possible
+            if self.playlist:
+                if self.current_index >= len(self.playlist):
+                    self.current_index = len(self.playlist) - 1
+            else:
+                self.current_index = None
+        return True
+
+    def play(self):
+        if not self.playlist:
+            return False
+        if self.current_index is None:
+            self.current_index = 0
+        return self.playlist[self.current_index]
+
+    def stop(self):
+        if self.current_index is None:
+            return False
+        self.current_index = None
+        return True
+
+    def switch_song(self):
+        if self.current_index is None or not self.playlist:
+            return False
+        if self.current_index < len(self.playlist) - 1:
+            self.current_index += 1
+            return True
+        return False
+
+    def previous_song(self):
+        if self.current_index is None or not self.playlist:
+            return False
+        if self.current_index > 0:
+            self.current_index -= 1
+            return True
+        return False
+
+    def set_volume(self, volume):
+        try:
+            vol = int(volume)
+        except (TypeError, ValueError):
+            return False
+        if 0 <= vol <= 100:
+            self.volume = vol
+            return True
+        return False
+
+    def shuffle(self):
+        if not self.playlist:
+            return False
+        current = None
+        if self.current_index is not None:
+            current = self.playlist[self.current_index]
+        random.shuffle(self.playlist)
+        if current is None:
+            self.current_index = None
+        else:
+            try:
+                self.current_index = self.playlist.index(current)
+            except ValueError:
+                self.current_index = None
+        return True",False,"Tests: 42, Failures: 13, Errors: 0","from dataclasses import dataclass, field
+from typing import List, Optional
+import random
+
+@dataclass
+class MusicPlayer:
+    playlist: List[str] = field(default_factory=list)
+    current_song: Optional[str] = None
+    volume: int = 50
+
+    def add_song(self, song: str) -> bool:
+        self.playlist.append(song)
+        return True
+
+    def remove_song(self, song: str) -> bool:
+        if song not in self.playlist:
+            return False
+        self.playlist.remove(song)
+        if self.current_song == song:
+            self.current_song = None
+        return True
+
+    def play(self):
+        if not self.playlist:
+            return False
+        if self.current_song is None:
+            self.current_song = self.playlist[0]
+        return self.current_song
+
+    def stop(self) -> bool:
+        if self.current_song is None:
+            return False
+        self.current_song = None
+        return True
+
+    def switch_song(self) -> bool:
+        if self.current_song is None:
+            return False
+        try:
+            idx = self.playlist.index(self.current_song)
+        except ValueError:
+            return False
+        if idx + 1 < len(self.playlist):
+            self.current_song = self.playlist[idx + 1]
+            return True
+        return False
+
+    def previous_song(self) -> bool:
+        if self.current_song is None:
+            return False
+        try:
+            idx = self.playlist.index(self.current_song)
+        except ValueError:
+            return False
+        if idx - 1 >= 0:
+            self.current_song = self.playlist[idx - 1]
+            return True
+        return False
+
+    def set_volume(self, volume: int) -> None:
+        if not isinstance(volume, int):
+            raise TypeError(""Volume must be an integer"")
+        if not (0 <= volume <= 100):
+            raise ValueError(""Volume must be between 0 and 100"")
+        self.volume = volume
+
+    def shuffle(self) -> bool:
+        if not self.playlist:
+            return False
+        current = self.current_song
+        random.shuffle(self.playlist)
+        if current in self.playlist:
+            self.current_song = current
+        else:
+            self.current_song = None
+        return True",False,"Tests: 42, Failures: 3, Errors: 2","import random
+import threading
+
+class MusicPlayer:
+    def __init__(self):
+        self.playlist = []
+        self.current_song = None
+        self.volume = 50
+        self._lock = threading.RLock()
+
+    def add_song(self, song):
+        with self._lock:
+            self.playlist.append(song)
+            return True
+
+    def remove_song(self, song):
+        with self._lock:
+            if song not in self.playlist:
+                return False
+            self.playlist.remove(song)
+            if self.current_song == song:
+                self.current_song = None
+            return True
+
+    def play(self):
+        with self._lock:
+            if not self.playlist:
+                return False
+            if self.current_song is None:
+                self.current_song = self.playlist[0]
+            return self.current_song
+
+    def stop(self):
+        with self._lock:
+            if self.current_song is None:
+                return False
+            self.current_song = None
+            return True
+
+    def switch_song(self):
+        with self._lock:
+            if not self.playlist or self.current_song is None:
+                return False
+            try:
+                idx = self.playlist.index(self.current_song)
+            except ValueError:
+                return False
+            if idx + 1 < len(self.playlist):
+                self.current_song = self.playlist[idx + 1]
+                return True
+            return False
+
+    def previous_song(self):
+        with self._lock:
+            if not self.playlist or self.current_song is None:
+                return False
+            try:
+                idx = self.playlist.index(self.current_song)
+            except ValueError:
+                return False
+            if idx - 1 >= 0:
+                self.current_song = self.playlist[idx - 1]
+                return True
+            return False
+
+    def set_volume(self, volume):
+        with self._lock:
+            try:
+                v = int(volume)
+            except (TypeError, ValueError):
+                return False
+            if 0 <= v <= 100:
+                self.volume = v
+                return True
+            return False
+
+    def shuffle(self):
+        with self._lock:
+            if not self.playlist:
+                return False
+            current = self.current_song
+            random.shuffle(self.playlist)
+            if current in self.playlist:
+                self.current_song = current
+            else:
+                self.current_song = None
+            return True",False,"Tests: 42, Failures: 6, Errors: 0","from collections import deque
+import random
+
+class MusicPlayer:
+    def __init__(self):
+        self.playlist = deque()
+        self.volume = 50
+
+    def add_song(self, song):
+        self.playlist.append(song)
+        return True
+
+    def remove_song(self, song):
+        try:
+            idx = list(self.playlist).index(song)
+        except ValueError:
+            return False
+        # remove by reconstructing deque without the song
+        new_list = []
+        removed = False
+        for i, s in enumerate(self.playlist):
+            if i == idx and not removed and s == song:
+                removed = True
+                continue
+            new_list.append(s)
+        self.playlist = deque(new_list)
+        return True
+
+    def _current(self):
+        return self.playlist[0] if self.playlist else None
+
+    def play(self):
+        if not self.playlist:
+            return False
+        return self._current()
+
+    def stop(self):
+        if not self.playlist:
+            return False
+        # stopping means there is no current song; represent by rotating so that front becomes None conceptually
+        # We simulate stop by setting an internal flag: perform by clearing and re-adding? Simpler: keep playlist and track stopped state
+        # Implement stopped state as a marker at front
+        if getattr(self, ""_stopped"", False):
+            return False
+        self._stopped = True
+        return True
+
+    def switch_song(self):
+        if not self.playlist:
+            return False
+        if getattr(self, ""_stopped"", False):
+            return False
+        if len(self.playlist) == 1:
+            return False
+        self.playlist.rotate(-1)
+        return True
+
+    def previous_song(self):
+        if not self.playlist:
+            return False
+        if getattr(self, ""_stopped"", False):
+            return False
+        if len(self.playlist) == 1:
+            return False
+        self.playlist.rotate(1)
+        return True
+
+    def set_volume(self, volume):
+        try:
+            v = int(volume)
+        except (TypeError, ValueError):
+            return False
+        if 0 <= v <= 100:
+            self.volume = v
+            return True
+        return False
+
+    def shuffle(self):
+        if not self.playlist:
+            return False
+        current = self._current()
+        lst = list(self.playlist)
+        random.shuffle(lst)
+        self.playlist = deque(lst)
+        # keep stopped state as-is
+        if getattr(self, ""_stopped"", False):
+            return True
+        # attempt to restore current song to front if it existed
+        if current in self.playlist:
+            while self._current() != current:
+                self.playlist.rotate(-1)
+        return True",False,"Tests: 42, Failures: 18, Errors: 8"
+62,"class NLPDataProcessor:
+
+    def construct_stop_word_list(self):
+        stop_word_list = ['a', 'an', 'the']
+        return stop_word_list
+
+    def remove_stop_words(self, string_list, stop_word_list):
+        answer = []
+        for string in string_list:
+            string_split = string.split()
+            for word in string_split:
+                if word in stop_word_list:
+                    string_split.remove(word)
+            answer.append(string_split)
+        return answer
+
+    def process(self, string_list):
+        stop_word_list = self.construct_stop_word_list()
+        words_list = self.remove_stop_words(string_list, stop_word_list)
+        return words_list",True,"Tests: 11, Failures: 0, Errors: 0","class NLPDataProcessor:
+    def construct_stop_word_list(self):
+        return {'a', 'an', 'the'}
+
+    def remove_stop_words(self, string_list, stop_word_list):
+        stop_set = set(stop_word_list)
+        return [[word for word in s.split() if word not in stop_set] for s in string_list]
+
+    def process(self, string_list):
+        stop_word_list = self.construct_stop_word_list()
+        return self.remove_stop_words(string_list, stop_word_list)",False,"Tests: 11, Failures: 2, Errors: 0","class NLPDataProcessor:
+    def construct_stop_word_list(self):
+        return {'a', 'an', 'the'}
+
+    def remove_stop_words(self, string_list, stop_word_list):
+        stop_set = {w.lower() for w in stop_word_list}
+        result = []
+        for s in string_list:
+            tokens = s.split()
+            filtered = []
+            for tok in tokens:
+                cleaned = tok.strip('.,!?;:""()[]{}')
+                if cleaned.lower() not in stop_set:
+                    filtered.append(tok)
+            result.append(filtered)
+        return result
+
+    def process(self, string_list):
+        stop_word_list = self.construct_stop_word_list()
+        return self.remove_stop_words(string_list, stop_word_list)",False,"Tests: 11, Failures: 2, Errors: 0","import re
+
+class NLPDataProcessor:
+    def construct_stop_word_list(self):
+        return {'a', 'an', 'the'}
+
+    def remove_stop_words(self, string_list, stop_word_list):
+        stop_set = {w.lower() for w in stop_word_list}
+        token_re = re.compile(r'\w+')
+        output = []
+        for s in string_list:
+            tokens = token_re.findall(s)
+            output.append([t for t in tokens if t.lower() not in stop_set])
+        return output
+
+    def process(self, string_list):
+        stop_word_list = self.construct_stop_word_list()
+        return self.remove_stop_words(string_list, stop_word_list)",False,"Tests: 11, Failures: 3, Errors: 0","class NLPDataProcessor:
+    def construct_stop_word_list(self):
+        return ['a', 'an', 'the']
+
+    def remove_stop_words(self, string_list, stop_word_list):
+        stop = set(stop_word_list)
+        def filter_sentence(s):
+            return list(filter(lambda w: w not in stop, s.split()))
+        return list(map(filter_sentence, string_list))
+
+    def process(self, string_list):
+        stop_word_list = self.construct_stop_word_list()
+        return self.remove_stop_words(string_list, stop_word_list)",False,"Tests: 11, Failures: 1, Errors: 0","class NLPDataProcessor:
+    def construct_stop_word_list(self):
+        return ['a', 'an', 'the']
+
+    def remove_stop_words(self, string_list, stop_word_list):
+        stop = set(stop_word_list)
+        result = []
+        for s in string_list:
+            tokens = s.split()
+            i = 0
+            while i < len(tokens):
+                if tokens[i] in stop:
+                    tokens.pop(i)
+                else:
+                    i += 1
+            result.append(tokens)
+        return result
+
+    def process(self, string_list):
+        stop_word_list = self.construct_stop_word_list()
+        return self.remove_stop_words(string_list, stop_word_list)",False,"Tests: 11, Failures: 1, Errors: 0"
+63,"from collections import Counter
+import re
+
+class NLPDataProcessor2:
+
+    def process_data(self, string_list):
+        words_list = []
+        for string in string_list:
+            # Remove non-English letters and convert to lowercase
+            processed_string = re.sub(r'[^a-zA-Z\s]', '', string.lower())
+            # Split the string into words
+            words = processed_string.split()
+            words_list.append(words)
+        return words_list
+
+    def calculate_word_frequency(self, words_list):
+        word_frequency = Counter()
+        for words in words_list:
+            word_frequency.update(words)
+        sorted_word_frequency = dict(sorted(word_frequency.items(), key=lambda x: x[1], reverse=True))
+        top_5_word_frequency = dict(list(sorted_word_frequency.items())[:5])
+        return top_5_word_frequency
+
+    def process(self, string_list):
+        words_list = self.process_data(string_list)
+        word_frequency_dict = self.calculate_word_frequency(words_list)
+        return word_frequency_dict",True,"Tests: 16, Failures: 0, Errors: 0","import re
+from collections import Counter
+
+class NLPDataProcessorA:
+    def process_data(self, string_list):
+        result = []
+        for s in string_list:
+            words = re.findall(r'[a-z]+', s.lower())
+            result.append(words)
+        return result
+
+    def calculate_word_frequency(self, words_list):
+        c = Counter()
+        for words in words_list:
+            c.update(words)
+        return dict(c.most_common(5))
+
+    def process(self, string_list):
+        words_list = self.process_data(string_list)
+        return self.calculate_word_frequency(words_list)",False,"Tests: 16, Failures: 4, Errors: 0","from collections import Counter
+from heapq import nlargest
+
+class NLPDataProcessorB:
+    def _clean_to_words(self, text):
+        lowered = text.lower()
+        cleaned = ''.join(ch if (ch.isalpha() or ch.isspace()) else ' ' for ch in lowered)
+        return cleaned.split()
+
+    def process_data(self, string_list):
+        return [self._clean_to_words(s) for s in string_list]
+
+    def calculate_word_frequency(self, words_list):
+        freq = Counter()
+        for words in words_list:
+            freq.update(words)
+        if not freq:
+            return {}
+        top = nlargest(5, freq.items(), key=lambda kv: kv[1])
+        return dict(top)
+
+    def process(self, string_list):
+        words_list = self.process_data(string_list)
+        return self.calculate_word_frequency(words_list)",False,"Tests: 16, Failures: 4, Errors: 0","import re
+from collections import defaultdict
+
+class NLPDataProcessorC:
+    def process_data(self, string_list):
+        return [re.sub(r'[^a-zA-Z\s]', '', s).lower().split() for s in string_list]
+
+    def calculate_word_frequency(self, words_list):
+        counts = defaultdict(int)
+        for words in words_list:
+            for w in words:
+                counts[w] += 1
+        sorted_items = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+        return dict(sorted_items[:5])
+
+    def process(self, string_list):
+        words_list = self.process_data(string_list)
+        return self.calculate_word_frequency(words_list)",False,"Tests: 16, Failures: 4, Errors: 0","import re
+from collections import Counter
+from itertools import chain
+
+class NLPDataProcessorD:
+    def process_data(self, string_list):
+        pattern = re.compile(r'[^a-zA-Z\s]')
+        return [pattern.sub('', s).lower().split() for s in string_list]
+
+    def calculate_word_frequency(self, words_list):
+        flat = chain.from_iterable(words_list)
+        counter = Counter(flat)
+        items = sorted(counter.items(), key=lambda kv: (-kv[1], kv[0]))
+        return dict(items[:5])
+
+    def process(self, string_list):
+        return self.calculate_word_frequency(self.process_data(string_list))",False,"Tests: 16, Failures: 4, Errors: 0","import re
+from collections import Counter
+
+class NLPDataProcessorE:
+    def _words(self, text):
+        return re.findall(r'[A-Za-z]+', text)
+
+    def process_data(self, string_list):
+        return [[w.lower() for w in self._words(s)] for s in string_list]
+
+    def calculate_word_frequency(self, words_list):
+        c = Counter()
+        for words in words_list:
+            c.update(words)
+        sorted_items = sorted(c.items(), key=lambda x: (-x[1], x[0]))
+        return dict(sorted_items[:5])
+
+    def process(self, string_list):
+        return self.calculate_word_frequency(self.process_data(string_list))",False,"Tests: 16, Failures: 8, Errors: 0"
+64,"class NumberConverter:
+    @staticmethod
+    def decimal_to_binary(decimal_num):
+        binary_num = bin(decimal_num)[2:]
+        return binary_num
+
+    @staticmethod
+    def binary_to_decimal(binary_num):
+        decimal_num = int(binary_num, 2)
+        return decimal_num
+
+    @staticmethod
+    def decimal_to_octal(decimal_num):
+        octal_num = oct(decimal_num)[2:]
+        return octal_num
+
+    @staticmethod
+    def octal_to_decimal(octal_num):
+        decimal_num = int(octal_num, 8)
+        return decimal_num
+
+    @staticmethod
+    def decimal_to_hex(decimal_num):
+        hex_num = hex(decimal_num)[2:]
+        return hex_num
+
+    @staticmethod
+    def hex_to_decimal(hex_num):
+        decimal_num = int(hex_num, 16)
+        return decimal_num",True,"Tests: 31, Failures: 0, Errors: 0","class NumberConverter:
+    @staticmethod
+    def decimal_to_binary(decimal_num: int) -> str:
+        if not isinstance(decimal_num, int):
+            raise TypeError(""decimal_num must be an integer"")
+        if decimal_num < 0:
+            return ""-"" + format(-decimal_num, ""b"")
+        return format(decimal_num, ""b"")
+
+    @staticmethod
+    def binary_to_decimal(binary_num) -> int:
+        if isinstance(binary_num, int):
+            binary_num = str(binary_num)
+        s = str(binary_num).strip().replace(""_"", """")
+        sign = -1 if s.startswith(""-"") else 1
+        if s.startswith((""+"", ""-"")):
+            s = s[1:]
+        if s.startswith(""0b"") or s.startswith(""0B""):
+            s = s[2:]
+        return sign * int(s, 2)
+
+    @staticmethod
+    def decimal_to_octal(decimal_num: int) -> str:
+        if not isinstance(decimal_num, int):
+            raise TypeError(""decimal_num must be an integer"")
+        if decimal_num < 0:
+            return ""-"" + format(-decimal_num, ""o"")
+        return format(decimal_num, ""o"")
+
+    @staticmethod
+    def octal_to_decimal(octal_num) -> int:
+        if isinstance(octal_num, int):
+            octal_num = str(octal_num)
+        s = str(octal_num).strip().replace(""_"", """")
+        sign = -1 if s.startswith(""-"") else 1
+        if s.startswith((""+"", ""-"")):
+            s = s[1:]
+        if s.startswith(""0o"") or s.startswith(""0O""):
+            s = s[2:]
+        return sign * int(s, 8)
+
+    @staticmethod
+    def decimal_to_hex(decimal_num: int) -> str:
+        if not isinstance(decimal_num, int):
+            raise TypeError(""decimal_num must be an integer"")
+        if decimal_num < 0:
+            return ""-"" + format(-decimal_num, ""x"")
+        return format(decimal_num, ""x"")
+
+    @staticmethod
+    def hex_to_decimal(hex_num) -> int:
+        if isinstance(hex_num, int):
+            hex_num = str(hex_num)
+        s = str(hex_num).strip().replace(""_"", """")
+        sign = -1 if s.startswith(""-"") else 1
+        if s.startswith((""+"", ""-"")):
+            s = s[1:]
+        if s.startswith(""0x"") or s.startswith(""0X""):
+            s = s[2:]
+        return sign * int(s, 16)",True,"Tests: 31, Failures: 0, Errors: 0","def decimal_to_binary(n):
+    if not isinstance(n, int):
+        raise TypeError(""Expected integer"")
+    return bin(n)[2:] if n >= 0 else ""-"" + bin(-n)[2:]
+
+def binary_to_decimal(b):
+    if isinstance(b, int):
+        b = str(b)
+    b = str(b).strip()
+    if b.startswith(""-""):
+        return -int(b[1:], 2)
+    if b.startswith(""0b"") or b.startswith(""0B""):
+        b = b[2:]
+    return int(b, 2)
+
+def decimal_to_octal(n):
+    if not isinstance(n, int):
+        raise TypeError(""Expected integer"")
+    return oct(n)[2:] if n >= 0 else ""-"" + oct(-n)[2:]
+
+def octal_to_decimal(o):
+    if isinstance(o, int):
+        o = str(o)
+    s = str(o).strip()
+    sign = -1 if s.startswith(""-"") else 1
+    if s.startswith((""-"", ""+"")):
+        s = s[1:]
+    if s.startswith(""0o"") or s.startswith(""0O""):
+        s = s[2:]
+    return sign * int(s, 8)
+
+def decimal_to_hex(n):
+    if not isinstance(n, int):
+        raise TypeError(""Expected integer"")
+    return hex(n)[2:] if n >= 0 else ""-"" + hex(-n)[2:]
+
+def hex_to_decimal(h):
+    if isinstance(h, int):
+        h = str(h)
+    s = str(h).strip()
+    sign = -1 if s.startswith(""-"") else 1
+    if s.startswith((""+"", ""-"")):
+        s = s[1:]
+    if s.startswith(""0x"") or s.startswith(""0X""):
+        s = s[2:]
+    return sign * int(s, 16)",False,"Tests: 31, Failures: 0, Errors: 31","class ManualNumberConverter:
+    DIGITS = ""0123456789ABCDEF""
+
+    @staticmethod
+    def _to_base(n, base):
+        if not isinstance(n, int):
+            raise TypeError(""n must be int"")
+        if n == 0:
+            return ""0""
+        sign = ""-"" if n < 0 else """"
+        n = abs(n)
+        parts = []
+        while n > 0:
+            parts.append(ManualNumberConverter.DIGITS[n % base])
+            n //= base
+        return sign + """".join(reversed(parts))
+
+    @staticmethod
+    def _from_base(s, base):
+        if isinstance(s, int):
+            s = str(s)
+        s = s.strip().upper()
+        sign = -1 if s.startswith(""-"") else 1
+        if s.startswith((""+"", ""-"")):
+            s = s[1:]
+        if s.startswith(""0X"") or s.startswith(""0B"") or s.startswith(""0O""):
+            if base == 16 and s.startswith(""0X""):
+                s = s[2:]
+            elif base == 2 and s.startswith(""0B""):
+                s = s[2:]
+            elif base == 8 and s.startswith(""0O""):
+                s = s[2:]
+        value = 0
+        for ch in s:
+            if ch not in ManualNumberConverter.DIGITS[:base]:
+                raise ValueError(f""Invalid digit '{ch}' for base {base}"")
+            value = value * base + ManualNumberConverter.DIGITS.index(ch)
+        return sign * value
+
+    @staticmethod
+    def decimal_to_binary(n):
+        return ManualNumberConverter._to_base(n, 2)
+
+    @staticmethod
+    def binary_to_decimal(s):
+        return ManualNumberConverter._from_base(s, 2)
+
+    @staticmethod
+    def decimal_to_octal(n):
+        return ManualNumberConverter._to_base(n, 8)
+
+    @staticmethod
+    def octal_to_decimal(s):
+        return ManualNumberConverter._from_base(s, 8)
+
+    @staticmethod
+    def decimal_to_hex(n):
+        return ManualNumberConverter._to_base(n, 16).lower()
+
+    @staticmethod
+    def hex_to_decimal(s):
+        return ManualNumberConverter._from_base(s, 16)",False,"Tests: 31, Failures: 0, Errors: 31","class NumberConverterWithValidation:
+    @staticmethod
+    def _clean_input(s):
+        if isinstance(s, int):
+            s = str(s)
+        s = str(s).strip()
+        if s.startswith(""+""):
+            s = s[1:]
+        return s
+
+    @staticmethod
+    def decimal_to_binary(n):
+        if not isinstance(n, int):
+            raise TypeError(""Input must be integer"")
+        return format(n, 'b') if n >= 0 else '-' + format(-n, 'b')
+
+    @staticmethod
+    def binary_to_decimal(s):
+        s = NumberConverterWithValidation._clean_input(s)
+        if s.startswith('-'):
+            return -int(s[1:].lstrip('0') or '0', 2)
+        return int(s.lstrip('0') or '0', 2)
+
+    @staticmethod
+    def decimal_to_octal(n):
+        if not isinstance(n, int):
+            raise TypeError(""Input must be integer"")
+        return format(n, 'o') if n >= 0 else '-' + format(-n, 'o')
+
+    @staticmethod
+    def octal_to_decimal(s):
+        s = NumberConverterWithValidation._clean_input(s)
+        if s.startswith('-'):
+            return -int(s[1:].lstrip('0') or '0', 8)
+        return int(s.lstrip('0') or '0', 8)
+
+    @staticmethod
+    def decimal_to_hex(n, uppercase=False):
+        if not isinstance(n, int):
+            raise TypeError(""Input must be integer"")
+        h = format(n, 'x') if n >= 0 else '-' + format(-n, 'x')
+        return h.upper() if uppercase and not h.startswith('-') else (('-' + h[1:].upper()) if uppercase and h.startswith('-') else h)
+
+    @staticmethod
+    def hex_to_decimal(s):
+        s = NumberConverterWithValidation._clean_input(s)
+        if s.startswith('-'):
+            return -int(s[1:].lstrip('0') or '0', 16)
+        return int(s.lstrip('0') or '0', 16)",False,"Tests: 31, Failures: 0, Errors: 16","class BaseConverter:
+    def __init__(self, mapping=None):
+        self.mapping = mapping or ""0123456789abcdef""
+
+    def convert_from_decimal(self, value, base):
+        if not isinstance(value, int):
+            raise TypeError(""value must be int"")
+        if value == 0:
+            return ""0""
+        sign = ""-"" if value < 0 else """"
+        value = abs(value)
+        digits = []
+        while value:
+            digits.append(self.mapping[value % base])
+            value //= base
+        return sign + """".join(reversed(digits))
+
+    def convert_to_decimal(self, s, base):
+        if isinstance(s, int):
+            s = str(s)
+        s = s.strip().lower()
+        sign = -1 if s.startswith(""-"") else 1
+        if s.startswith((""+"", ""-"")):
+            s = s[1:]
+        if s.startswith(""0x"") or s.startswith(""0o"") or s.startswith(""0b""):
+            s = s[2:]
+        value = 0
+        for ch in s:
+            if ch not in self.mapping[:base]:
+                raise ValueError(""Invalid character for base"")
+            value = value * base + self.mapping.index(ch)
+        return sign * value
+
+    def decimal_to_binary(self, n):
+        return self.convert_from_decimal(n, 2)
+
+    def binary_to_decimal(self, s):
+        return self.convert_to_decimal(s, 2)
+
+    def decimal_to_octal(self, n):
+        return self.convert_from_decimal(n, 8)
+
+    def octal_to_decimal(self, s):
+        return self.convert_to_decimal(s, 8)
+
+    def decimal_to_hex(self, n):
+        return self.convert_from_decimal(n, 16)
+
+    def hex_to_decimal(self, s):
+        return self.convert_to_decimal(s, 16)",False,"Tests: 31, Failures: 0, Errors: 31"
+65,"class NumberWordFormatter:
+    def __init__(self):
+        self.NUMBER = ["""", ""ONE"", ""TWO"", ""THREE"", ""FOUR"", ""FIVE"", ""SIX"", ""SEVEN"", ""EIGHT"", ""NINE""]
+        self.NUMBER_TEEN = [""TEN"", ""ELEVEN"", ""TWELVE"", ""THIRTEEN"", ""FOURTEEN"", ""FIFTEEN"", ""SIXTEEN"", ""SEVENTEEN"",
+                            ""EIGHTEEN"",
+                            ""NINETEEN""]
+        self.NUMBER_TEN = [""TEN"", ""TWENTY"", ""THIRTY"", ""FORTY"", ""FIFTY"", ""SIXTY"", ""SEVENTY"", ""EIGHTY"", ""NINETY""]
+        self.NUMBER_MORE = ["""", ""THOUSAND"", ""MILLION"", ""BILLION""]
+        self.NUMBER_SUFFIX = [""k"", ""w"", """", ""m"", """", """", ""b"", """", """", ""t"", """", """", ""p"", """", """", ""e""]
+
+    def format(self, x):
+        if x is not None:
+            return self.format_string(str(x))
+        else:
+            return """"
+
+    def format_string(self, x):
+        lstr, rstr = (x.split('.') + [''])[:2]
+        lstrrev = lstr[::-1]
+        a = [''] * 5
+
+        if len(lstrrev) % 3 == 1:
+            lstrrev += ""00""
+        elif len(lstrrev) % 3 == 2:
+            lstrrev += ""0""
+
+        lm = """"
+        for i in range(len(lstrrev) // 3):
+            a[i] = lstrrev[3 * i:3 * i + 3][::-1]
+            if a[i] != ""000"":
+                lm = self.trans_three(a[i]) + "" "" + self.parse_more(i) + "" "" + lm
+            else:
+                lm += self.trans_three(a[i])
+
+        xs = f""AND CENTS {self.trans_two(rstr)} "" if rstr else """"
+        if not lm.strip():
+            return ""ZERO ONLY""
+        else:
+            return f""{lm.strip()} {xs}ONLY""
+
+    def trans_two(self, s):
+        s = s.zfill(2)
+        if s[0] == ""0"":
+            return self.NUMBER[int(s[-1])]
+        elif s[0] == ""1"":
+            return self.NUMBER_TEEN[int(s) - 10]
+        elif s[1] == ""0"":
+            return self.NUMBER_TEN[int(s[0]) - 1]
+        else:
+            return self.NUMBER_TEN[int(s[0]) - 1] + "" "" + self.NUMBER[int(s[-1])]
+
+    def trans_three(self, s):
+        if s[0] == ""0"":
+            return self.trans_two(s[1:])
+        elif s[1:] == ""00"":
+            return f""{self.NUMBER[int(s[0])]} HUNDRED""
+        else:
+            return f""{self.NUMBER[int(s[0])]} HUNDRED AND {self.trans_two(s[1:])}""
+
+    def parse_more(self, i):
+        return self.NUMBER_MORE[i]",True,"Tests: 28, Failures: 0, Errors: 0","class NumberWordFormatter:
+    def __init__(self):
+        self.UNITS = ["""", ""ONE"", ""TWO"", ""THREE"", ""FOUR"", ""FIVE"", ""SIX"", ""SEVEN"", ""EIGHT"", ""NINE""]
+        self.TEENS = [""TEN"", ""ELEVEN"", ""TWELVE"", ""THIRTEEN"", ""FOURTEEN"", ""FIFTEEN"", ""SIXTEEN"", ""SEVENTEEN"", ""EIGHTEEN"", ""NINETEEN""]
+        self.TENS = ["""", ""TEN"", ""TWENTY"", ""THIRTY"", ""FORTY"", ""FIFTY"", ""SIXTY"", ""SEVENTY"", ""EIGHTY"", ""NINETY""]
+        self.SCALES = ["""", ""THOUSAND"", ""MILLION"", ""BILLION"", ""TRILLION""]
+    def format(self, x):
+        if x is None:
+            return """"
+        return self.format_string(str(x))
+    def format_string(self, x):
+        parts = (x.split('.') + [''])[:2]
+        int_part, frac_part = parts[0], parts[1]
+        # sanitize integer part (allow leading + or -)
+        if int_part.strip() == """":
+            int_part = ""0""
+        int_part = int_part.lstrip('+')
+        sign = """"
+        if int_part.startswith('-'):
+            sign = ""MINUS ""
+            int_part = int_part[1:]
+        # split into 3-digit groups from right
+        groups = []
+        s = int_part
+        while s:
+            groups.append(s[-3:])
+            s = s[:-3]
+        if not groups:
+            groups = [""0""]
+        words = []
+        for idx, grp in enumerate(groups):
+            grp = grp.zfill(3)
+            gwords = self._three_to_words(grp)
+            if gwords:
+                scale = self.SCALES[idx] if idx < len(self.SCALES) else """"
+                words.append((gwords + ("" "" + scale if scale else """")).strip())
+        if not words:
+            main = ""ZERO""
+        else:
+            main = "" "".join(reversed(words))
+        frac_words = """"
+        if frac_part:
+            frac_words = ""AND CENTS "" + self._two_to_words(frac_part[:2]) + "" ""
+        return f""{sign}{main} {frac_words}ONLY"".strip()
+    def _two_to_words(self, s):
+        s = s.zfill(2)[:2]
+        if s[0] == ""0"":
+            return self.UNITS[int(s[1])]
+        if s[0] == ""1"":
+            return self.TEENS[int(s[1])]
+        if s[1] == ""0"":
+            return self.TENS[int(s[0])]
+        return f""{self.TENS[int(s[0])]} {self.UNITS[int(s[1])]}""
+    def _three_to_words(self, s):
+        s = s.zfill(3)
+        h, rest = int(s[0]), s[1:]
+        parts = []
+        if h > 0:
+            parts.append(f""{self.UNITS[h]} HUNDRED"")
+            if rest != ""00"":
+                parts.append(""AND"")
+        if rest != ""00"":
+            parts.append(self._two_to_words(rest))
+        return "" "".join(parts).strip()",False,"Tests: 28, Failures: 0, Errors: 16","class NumberWordFormatter:
+    def __init__(self):
+        self.NUMBER = ["""", ""ONE"", ""TWO"", ""THREE"", ""FOUR"", ""FIVE"", ""SIX"", ""SEVEN"", ""EIGHT"", ""NINE""]
+        self.NUMBER_TEEN = [""TEN"", ""ELEVEN"", ""TWELVE"", ""THIRTEEN"", ""FOURTEEN"", ""FIFTEEN"", ""SIXTEEN"", ""SEVENTEEN"", ""EIGHTEEN"", ""NINETEEN""]
+        self.NUMBER_TEN = ["""", ""TEN"", ""TWENTY"", ""THIRTY"", ""FORTY"", ""FIFTY"", ""SIXTY"", ""SEVENTY"", ""EIGHTY"", ""NINETY""]
+        self.SUFFIX = ["""", ""THOUSAND"", ""MILLION"", ""BILLION"", ""TRILLION""]
+    def format(self, x):
+        if x is None:
+            return """"
+        return self._format_str(str(x))
+    def _format_str(self, s):
+        left, right = (s.split('.') + [''])[:2]
+        left = left.lstrip('+')
+        sign = """"
+        if left.startswith('-'):
+            sign = ""MINUS ""
+            left = left[1:]
+        if left == """":
+            left = ""0""
+        # break into chunks
+        chunks = []
+        while left:
+            chunks.append(left[-3:].zfill(3))
+            left = left[:-3]
+        if not chunks:
+            chunks = [""000""]
+        parts = []
+        for i, chunk in enumerate(chunks):
+            word = self._chunk_to_words(chunk)
+            if word:
+                suffix = self.SUFFIX[i] if i < len(self.SUFFIX) else """"
+                parts.append((word + ("" "" + suffix if suffix else """")).strip())
+        if not parts:
+            main = ""ZERO""
+        else:
+            main = "" "".join(reversed(parts))
+        cents = """"
+        if right:
+            cents = ""AND CENTS "" + self._two(right[:2]) + "" ""
+        return f""{sign}{main} {cents}ONLY"".strip()
+    def _two(self, s):
+        s = s.zfill(2)[:2]
+        if s[0] == '0':
+            return self.NUMBER[int(s[1])]
+        if s[0] == '1':
+            return self.NUMBER_TEEN[int(s[1])]
+        if s[1] == '0':
+            return self.NUMBER_TEN[int(s[0])]
+        return f""{self.NUMBER_TEN[int(s[0])]} {self.NUMBER[int(s[1])]}""
+    def _chunk_to_words(self, chunk):
+        if chunk == ""000"":
+            return """"
+        h = int(chunk[0])
+        rest = chunk[1:]
+        parts = []
+        if h > 0:
+            parts.append(f""{self.NUMBER[h]} HUNDRED"")
+            if rest != ""00"":
+                parts.append(""AND"")
+        if rest != ""00"":
+            parts.append(self._two(rest))
+        return "" "".join(parts)",False,"Tests: 28, Failures: 0, Errors: 22","class NumberWordFormatter:
+    def __init__(self):
+        self.ones = [""ZERO"",""ONE"",""TWO"",""THREE"",""FOUR"",""FIVE"",""SIX"",""SEVEN"",""EIGHT"",""NINE""]
+        self.teens = [""TEN"",""ELEVEN"",""TWELVE"",""THIRTEEN"",""FOURTEEN"",""FIFTEEN"",""SIXTEEN"",""SEVENTEEN"",""EIGHTEEN"",""NINETEEN""]
+        self.tens = ["""", """", ""TWENTY"",""THIRTY"",""FORTY"",""FIFTY"",""SIXTY"",""SEVENTY"",""EIGHTY"",""NINETY""]
+        self.scales = ["""", ""THOUSAND"", ""MILLION"", ""BILLION"", ""TRILLION""]
+    def format(self, x):
+        if x is None:
+            return """"
+        return self._to_words(str(x))
+    def _to_words(self, s):
+        left,right = (s.split('.') + [''])[:2]
+        left = left or ""0""
+        sign = """"
+        if left.startswith('-'):
+            sign = ""MINUS ""
+            left = left[1:]
+        n = int(left) if left.isdigit() else 0
+        if n == 0:
+            main = ""ZERO""
+        else:
+            groups = []
+            gi = 0
+            while n > 0:
+                rem = n % 1000
+                if rem:
+                    groups.append((self._under_thousand(rem) + (("" "" + self.scales[gi]) if self.scales[gi] else """")).strip())
+                n //= 1000
+                gi += 1
+            main = "" "".join(reversed(groups))
+        cents = """"
+        if right:
+            cents = ""AND CENTS "" + self._two_digits(right[:2]) + "" ""
+        return f""{sign}{main} {cents}ONLY"".strip()
+    def _two_digits(self, s):
+        s = s.zfill(2)[:2]
+        a,b = int(s[0]), int(s[1])
+        if a == 0:
+            return self.ones[b] if b>0 else ""ZERO""
+        if a == 1:
+            return self.teens[b]
+        if b == 0:
+            return self.tens[a]
+        return f""{self.tens[a]} {self.ones[b]}""
+    def _under_thousand(self, num):
+        hundred = num // 100
+        rem = num % 100
+        parts = []
+        if hundred:
+            parts.append(f""{self.ones[hundred]} HUNDRED"")
+            if rem:
+                parts.append(""AND"")
+        if rem:
+            parts.append(self._two_digits(str(rem)))
+        return "" "".join(parts)",False,"Tests: 28, Failures: 0, Errors: 22","class NumberWordFormatter:
+    def __init__(self):
+        self.UNIT = ["""", ""ONE"",""TWO"",""THREE"",""FOUR"",""FIVE"",""SIX"",""SEVEN"",""EIGHT"",""NINE""]
+        self.TEEN = [""TEN"",""ELEVEN"",""TWELVE"",""THIRTEEN"",""FOURTEEN"",""FIFTEEN"",""SIXTEEN"",""SEVENTEEN"",""EIGHTEEN"",""NINETEEN""]
+        self.TENS = ["""", ""TEN"",""TWENTY"",""THIRTY"",""FORTY"",""FIFTY"",""SIXTY"",""SEVENTY"",""EIGHTY"",""NINETY""]
+        self.LARGE = ["""", ""THOUSAND"", ""MILLION"", ""BILLION"", ""TRILLION""]
+    def format(self, x):
+        if x is None:
+            return """"
+        return self._format(str(x))
+    def _format(self, s):
+        left, right = (s.split('.') + [''])[:2]
+        left = left or ""0""
+        if left.startswith('+'):
+            left = left[1:]
+        sign = """"
+        if left.startswith('-'):
+            sign = ""MINUS ""
+            left = left[1:]
+        left = left.lstrip('0') or ""0""
+        groups = []
+        # pad left to multiple of 3
+        pad = (3 - len(left) % 3) % 3
+        left = (""0""*pad) + left
+        for i in range(0, len(left), 3):
+            groups.append(left[i:i+3])
+        words = []
+        for idx, g in enumerate(reversed(groups)):
+            w = self._three(g)
+            if w:
+                scale = self.LARGE[idx] if idx < len(self.LARGE) else """"
+                words.append((w + ("" "" + scale if scale else """")).strip())
+        main = ""ZERO"" if not words else "" "".join(reversed(words))
+        cents = """"
+        if right:
+            cents = ""AND CENTS "" + self._two(right[:2]) + "" ""
+        return f""{sign}{main} {cents}ONLY"".strip()
+    def _two(self, s):
+        s = s.zfill(2)[:2]
+        if s[0] == ""0"":
+            return self.UNIT[int(s[1])] or ""ZERO""
+        if s[0] == ""1"":
+            return self.TEEN[int(s[1])]
+        if s[1] == ""0"":
+            return self.TENS[int(s[0])]
+        return f""{self.TENS[int(s[0])]} {self.UNIT[int(s[1])]}""
+    def _three(self, s):
+        s = s.zfill(3)
+        h = int(s[0])
+        rest = s[1:]
+        parts = []
+        if h:
+            parts.append(f""{self.UNIT[h]} HUNDRED"")
+            if rest != ""00"":
+                parts.append(""AND"")
+        if rest != ""00"":
+            parts.append(self._two(rest))
+        return "" "".join(parts)",False,"Tests: 28, Failures: 0, Errors: 22","class NumberWordFormatter:
+    def __init__(self):
+        self.units = ["""",""ONE"",""TWO"",""THREE"",""FOUR"",""FIVE"",""SIX"",""SEVEN"",""EIGHT"",""NINE""]
+        self.teens = [""TEN"",""ELEVEN"",""TWELVE"",""THIRTEEN"",""FOURTEEN"",""FIFTEEN"",""SIXTEEN"",""SEVENTEEN"",""EIGHTEEN"",""NINETEEN""]
+        self.tens = ["""","""",""TWENTY"",""THIRTY"",""FORTY"",""FIFTY"",""SIXTY"",""SEVENTY"",""EIGHTY"",""NINETY""]
+        self.groups = ["""",""THOUSAND"",""MILLION"",""BILLION"",""TRILLION"",""QUADRILLION""]
+    def format(self, x):
+        if x is None:
+            return """"
+        return self.to_words(str(x))
+    def to_words(self, s):
+        left,right = (s.split('.') + [''])[:2]
+        left = left or ""0""
+        sign = """"
+        if left.startswith('-'):
+            sign = ""MINUS ""
+            left = left[1:]
+        # convert integer part by numeric grouping
+        try:
+            n = int(left)
+        except:
+            n = 0
+        if n == 0:
+            main = ""ZERO""
+        else:
+            parts = []
+            gi = 0
+            while n > 0:
+                chunk = n % 1000
+                if chunk:
+                    part = self._chunk(chunk)
+                    grpname = self.groups[gi] if gi < len(self.groups) else """"
+                    parts.append((part + ("" "" + grpname if grpname else """")).strip())
+                n //= 1000
+                gi += 1
+            main = "" "".join(reversed(parts))
+        cents = """"
+        if right:
+            cents = ""AND CENTS "" + self._two(right[:2]) + "" ""
+        return f""{sign}{main} {cents}ONLY"".strip()
+    def _two(self, s):
+        s = s.zfill(2)[:2]
+        a,b = int(s[0]), int(s[1])
+        if a == 0:
+            return self.units[b] or ""ZERO""
+        if a == 1:
+            return self.teens[b]
+        if b == 0:
+            return self.tens[a]
+        return f""{self.tens[a]} {self.units[b]}""
+    def _chunk(self, num):
+        h = num // 100
+        rem = num % 100
+        pieces = []
+        if h:
+            pieces.append(f""{self.units[h]} HUNDRED"")
+            if rem:
+                pieces.append(""AND"")
+        if rem:
+            if rem < 10:
+                pieces.append(self.units[rem])
+            elif rem < 20:
+                pieces.append(self.teens[rem-10])
+            else:
+                pieces.append((self.tens[rem//10] + ("" "" + self.units[rem%10] if rem%10 else """")).strip())
+        return "" "".join(pieces)",False,"Tests: 28, Failures: 0, Errors: 22"

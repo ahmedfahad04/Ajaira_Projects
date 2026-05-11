@@ -1,0 +1,561 @@
+task_id,base_code,base_code_test_passed,base_code_test_msg,variant_1,variant_1_test_passed,variant_1_test_msg,variant_2,variant_2_test_passed,variant_2_test_msg,variant_3,variant_3_test_passed,variant_3_test_msg,variant_4,variant_4_test_passed,variant_4_test_msg,variant_5,variant_5_test_passed,variant_5_test_msg
+0,"import logging
+import datetime
+
+
+class AccessGatewayFilter:
+
+    def __init__(self):
+        pass
+
+    def filter(self, request):
+        request_uri = request['path']
+        method = request['method']
+
+        if self.is_start_with(request_uri):
+            return True
+
+        try:
+            token = self.get_jwt_user(request)
+            user = token['user']
+            if user['level'] > 2:
+                self.set_current_user_info_and_log(user)
+                return True
+        except:
+            return False
+
+    def is_start_with(self, request_uri):
+        start_with = [""/api"", '/login']
+        for s in start_with:
+            if request_uri.startswith(s):
+                return True
+        return False
+
+    def get_jwt_user(self, request):
+        token = request['headers']['Authorization']
+        user = token['user']
+        if token['jwt'].startswith(user['name']):
+            jwt_str_date = token['jwt'].split(user['name'])[1]
+            jwt_date = datetime.datetime.strptime(jwt_str_date, ""%Y-%m-%d"")
+            if datetime.datetime.today() - jwt_date >= datetime.timedelta(days=3):
+                return None
+        return token
+
+    def set_current_user_info_and_log(self, user):
+        host = user['address']
+        logging.log(msg=user['name'] + host + str(datetime.datetime.now()), level=1)",True,"Tests: 19, Failures: 0, Errors: 0","import logging
+import datetime
+
+class AccessGatewayFilter:
+    def filter(self, request):
+        request_uri = request['path']
+        method = request['method']
+
+        if self.is_start_with(request_uri) or self.is_admin_user(request):
+            return True
+
+        try:
+            token = self.get_jwt_user(request)
+            user = token['user']
+            if user['level'] > 2:
+                self.set_current_user_info_and_log(user)
+                return True
+        except:
+            return False
+
+    def is_start_with(self, request_uri):
+        start_with = [""/api"", '/login']
+        return any(request_uri.startswith(s) for s in start_with)
+
+    def is_admin_user(self, request):
+        return request['path'] == '/admin'
+
+    def get_jwt_user(self, request):
+        token = request['headers']['Authorization']
+        user = token['user']
+        if token['jwt'].startswith(user['name']):
+            jwt_str_date = token['jwt'].split(user['name'])[1]
+            jwt_date = datetime.datetime.strptime(jwt_str_date, ""%Y-%m-%d"")
+            if datetime.datetime.today() - jwt_date > datetime.timedelta(days=3):
+                return None
+        return token
+
+    def set_current_user_info_and_log(self, user):
+        host = user['address']
+        logging.log(msg=user['name'] + host + str(datetime.datetime.now()), level=logging.INFO)",True,"Tests: 19, Failures: 0, Errors: 0","import logging
+import datetime
+from functools import reduce
+
+class AccessGatewayFilter:
+    def filter(self, request):
+        request_uri = request['path']
+        method = request['method']
+
+        if self.is_start_with(request_uri) or self.is_admin_user(request):
+            return True
+
+        try:
+            token = self.get_jwt_user(request)
+            user = token['user']
+            if user['level'] > 2:
+                self.set_current_user_info_and_log(user)
+                return True
+        except:
+            return False
+
+    def is_start_with(self, request_uri):
+        return any(s in request_uri for s in [""/api"", '/login'])
+
+    def is_admin_user(self, request):
+        return reduce(lambda x, y: x or y, [request['path'] == s for s in ['/api', '/login']])
+
+    def get_jwt_user(self, request):
+        token = request['headers']['Authorization']
+        user = token['user']
+        if token['jwt'].startswith(user['name']):
+            jwt_str_date = token['jwt'].split(user['name'])[1]
+            jwt_date = datetime.datetime.strptime(jwt_str_date, ""%Y-%m-%d"")
+            if datetime.datetime.today() - jwt_date > datetime.timedelta(days=3):
+                return None
+        return token
+
+    def set_current_user_info_and_log(self, user):
+        host = user['address']
+        logging.log(msg=user['name'] + host + str(datetime.datetime.now()), level=logging.INFO)",True,"Tests: 19, Failures: 0, Errors: 0","import logging
+import datetime
+from typing import Dict
+
+class AccessGatewayFilter:
+    def filter(self, request: Dict) -> bool:
+        request_uri = request['path']
+        method = request['method']
+
+        if self.is_start_with(request_uri) or self.is_admin_user(request):
+            return True
+
+        try:
+            token = self.get_jwt_user(request)
+            user = token['user']
+            if user['level'] > 2:
+                self.set_current_user_info_and_log(user)
+                return True
+        except:
+            return False
+
+    def is_start_with(self, request_uri: str) -> bool:
+        return any(request_uri.startswith(s) for s in [""/api"", '/login'])
+
+    def is_admin_user(self, request: Dict) -> bool:
+        return request['path'] == '/admin'
+
+    def get_jwt_user(self, request: Dict) -> Dict:
+        token = request['headers']['Authorization']
+        user = token['user']
+        if token['jwt'].startswith(user['name']):
+            jwt_str_date = token['jwt'].split(user['name'])[1]
+            jwt_date = datetime.datetime.strptime(jwt_str_date, ""%Y-%m-%d"")
+            if datetime.datetime.today() - jwt_date > datetime.timedelta(days=3):
+                return None
+        return token
+
+    def set_current_user_info_and_log(self, user: Dict) -> None:
+        host = user['address']
+        logging.log(msg=user['name'] + host + str(datetime.datetime.now()), level=logging.INFO)",True,"Tests: 19, Failures: 0, Errors: 0","import logging
+import datetime
+
+class AccessGatewayFilter:
+    def __init__(self):
+        self.logging_enabled = True
+
+    def filter(self, request):
+        request_uri = request['path']
+        method = request['method']
+
+        if self.is_start_with(request_uri) or self.is_admin_user(request):
+            return True
+
+        try:
+            token = self.get_jwt_user(request)
+            user = token['user']
+            if user['level'] > 2:
+                self.set_current_user_info_and_log(user)
+                return True
+        except:
+            return False
+
+    def is_start_with(self, request_uri):
+        return any(request_uri.startswith(s) for s in [""/api"", '/login'])
+
+    def is_admin_user(self, request):
+        return request['path'] == '/admin'
+
+    def get_jwt_user(self, request):
+        token = request['headers']['Authorization']
+        user = token['user']
+        if token['jwt'].startswith(user['name']):
+            jwt_str_date = token['jwt'].split(user['name'])[1]
+            jwt_date = datetime.datetime.strptime(jwt_str_date, ""%Y-%m-%d"")
+            if datetime.datetime.today() - jwt_date > datetime.timedelta(days=3):
+                return None
+        return token
+
+    def set_current_user_info_and_log(self, user):
+        if self.logging_enabled:
+            host = user['address']
+            logging.log(msg=user['name'] + host + str(datetime.datetime.now()), level=logging.INFO)",True,"Tests: 19, Failures: 0, Errors: 0","import logging
+import datetime
+
+class AccessGatewayFilter:
+    def filter(self, request):
+        request_uri = request['path']
+        method = request['method']
+
+        if self.is_start_with(request_uri) or self.is_admin_user(request):
+            logging.log(msg='Admin access', level=logging.INFO)
+            return True
+
+        try:
+            token = self.get_jwt_user(request)
+            user = token['user']
+            if user['level'] > 2:
+                self.set_current_user_info_and_log(user)
+                return True
+        except:
+            logging.log(msg='Error processing request', level=logging.ERROR)
+            return False
+
+    def is_start_with(self, request_uri):
+        return any(request_uri.startswith(s) for s in [""/api"", '/login'])
+
+    def is_admin_user(self, request):
+        return request['path'] == '/admin'
+
+    def get_jwt_user(self, request):
+        token = request['headers']['Authorization']
+        user = token['user']
+        if token['jwt'].startswith(user['name']):
+            jwt_str_date = token['jwt'].split(user['name'])[1]
+            jwt_date = datetime.datetime.strptime(jwt_str_date, ""%Y-%m-%d"")
+            if datetime.datetime.today() - jwt_date > datetime.timedelta(days=3):
+                logging.log(msg='JWT expired', level=logging.WARNING)
+                return None
+        return token
+
+    def set_current_user_info_and_log(self, user):
+        host = user['address']
+        logging.log(msg=user['name'] + host + str(datetime.datetime.now()), level=logging.INFO)",True,"Tests: 19, Failures: 0, Errors: 0"
+1,"import math
+
+
+class AreaCalculator:
+
+    def __init__(self, radius):
+        self.radius = radius
+
+    def calculate_circle_area(self):
+        return math.pi * self.radius ** 2
+
+    def calculate_sphere_area(self):
+        return 4 * math.pi * self.radius ** 2
+
+    def calculate_cylinder_area(self, height):
+        return 2 * math.pi * self.radius * (self.radius + height)
+
+    def calculate_sector_area(self, angle):
+        return self.radius ** 2 * angle / 2
+
+    def calculate_annulus_area(self, inner_radius, outer_radius):
+        return math.pi * (outer_radius ** 2 - inner_radius ** 2)",True,"Tests: 26, Failures: 0, Errors: 0","class AreaCalculator:
+    def __init__(self, radius):
+        self.radius = radius
+        self.pi = math.pi
+
+    def calculate_circle_area(self):
+        return self.pi * self.radius ** 2
+
+    def calculate_sphere_area(self):
+        return 4 * self.pi * self.radius ** 2
+
+    def calculate_cylinder_area(self, height):
+        return 2 * self.pi * self.radius * (self.radius + height)
+
+    def calculate_sector_area(self, angle):
+        return self.radius ** 2 * angle / 2
+
+    def calculate_annulus_area(self, inner_radius, outer_radius):
+        return self.pi * (outer_radius ** 2 - inner_radius ** 2)",False,"Tests: 26, Failures: 0, Errors: 26","import math
+
+class AreaCalculator:
+    def __init__(self, radius):
+        self.radius = radius
+
+    def calculate_circle_area(self):
+        return math.pow(self.radius, 2) * math.pi
+
+    def calculate_sphere_area(self):
+        return 4 * math.pi * math.pow(self.radius, 2)
+
+    def calculate_cylinder_area(self, height):
+        return 2 * math.pi * self.radius * (self.radius + height)
+
+    def calculate_sector_area(self, angle):
+        return math.pow(self.radius, 2) * angle / 2
+
+    def calculate_annulus_area(self, inner_radius, outer_radius):
+        return math.pi * (math.pow(outer_radius, 2) - math.pow(inner_radius, 2))",True,"Tests: 26, Failures: 0, Errors: 0","class AreaCalculator:
+    def __init__(self, radius):
+        self.radius = radius
+
+    def circle_area(self):
+        return self.radius**2 * 3.14159265359
+
+    def sphere_area(self):
+        return 4 * self.radius**2 * 3.14159265359
+
+    def cylinder_area(self, height):
+        return 2 * self.radius * (self.radius + height) * 3.14159265359
+
+    def sector_area(self, angle):
+        return self.radius**2 * angle / 2
+
+    def annulus_area(self, inner_radius, outer_radius):
+        return 3.14159265359 * (outer_radius**2 - inner_radius**2)",False,"Tests: 26, Failures: 0, Errors: 26","import math
+from typing import Optional
+
+class AreaCalculator:
+    def __init__(self, radius: float):
+        self.radius = radius
+
+    def calculate_circle_area(self) -> float:
+        return self.radius**2 * math.pi
+
+    def calculate_sphere_area(self) -> float:
+        return 4 * math.pi * self.radius**2
+
+    def calculate_cylinder_area(self, height: float) -> float:
+        return 2 * math.pi * self.radius * (self.radius + height)
+
+    def calculate_sector_area(self, angle: float) -> float:
+        return self.radius**2 * angle / 2
+
+    def calculate_annulus_area(self, inner_radius: float, outer_radius: float) -> float:
+        return math.pi * (outer_radius**2 - inner_radius**2)",True,"Tests: 26, Failures: 0, Errors: 0","import math
+
+class AreaCalculator:
+    def __init__(self, radius):
+        self.radius = radius
+
+    def calculate_circle_area(self):
+        return pow(self.radius, 2) * math.pi
+
+    def calculate_sphere_area(self):
+        return 4 * math.pi * pow(self.radius, 2)
+
+    def calculate_cylinder_area(self, height):
+        return 2 * math.pi * self.radius * (self.radius + height)
+
+    def calculate_sector_area(self, angle):
+        return pow(self.radius, 2) * angle / 2
+
+    def calculate_annulus_area(self, inner_radius, outer_radius):
+        return math.pi * (pow(outer_radius, 2) - pow(inner_radius, 2))",True,"Tests: 26, Failures: 0, Errors: 0"
+2,"class ArgumentParser:
+    def __init__(self):
+        self.arguments = {}
+        self.required = set()
+        self.types = {}
+
+    def parse_arguments(self, command_string):
+        args = command_string.split()[1:]
+        for i in range(len(args)):
+            arg = args[i]
+            if arg.startswith('--'):
+                key_value = arg[2:].split('=')
+                if len(key_value) == 2:
+                    self.arguments[key_value[0]] = self._convert_type(key_value[0], key_value[1])
+                else:
+                    self.arguments[key_value[0]] = True
+            elif arg.startswith('-'):
+                key = arg[1:]
+                if i + 1 < len(args) and not args[i + 1].startswith('-'):
+                    self.arguments[key] = self._convert_type(key, args[i + 1])
+                else:
+                    self.arguments[key] = True
+        missing_args = self.required - set(self.arguments.keys())
+        if missing_args:
+            return False, missing_args
+
+        return True, None
+
+    def get_argument(self, key):
+        return self.arguments.get(key)
+
+    def add_argument(self, arg, required=False, arg_type=str):
+        if required:
+            self.required.add(arg)
+        self.types[arg] = arg_type
+
+    def _convert_type(self, arg, value):
+        try:
+            return self.types[arg](value)
+        except (ValueError, KeyError):
+            return value",True,"Tests: 21, Failures: 0, Errors: 0","class ArgumentParser:
+    def __init__(self):
+        self.arguments = {}
+        self.required = set()
+        self.types = {}
+
+    def parse_arguments(self, command_string):
+        args = command_string.split()[1:]
+        for arg in args:
+            if arg.startswith('--'):
+                key_value = arg[2:].split('=')
+                self.arguments[key_value[0]] = self._convert_type(key_value[0], key_value[1])
+            elif arg.startswith('-'):
+                key = arg[1:]
+                if arg in self.arguments:
+                    self.arguments[key] = self._convert_type(key, '')
+                else:
+                    self.arguments[key] = True
+        missing_args = self.required - set(self.arguments.keys())
+        if missing_args:
+            return False, missing_args
+
+        return True, None
+
+    def get_argument(self, key):
+        return self.arguments.get(key)
+
+    def add_argument(self, arg, required=False, arg_type=str):
+        self.required.add(arg)
+        self.types[arg] = arg_type
+
+    def _convert_type(self, arg, value):
+        return self.types[arg](value)",False,"Tests: 21, Failures: 8, Errors: 2","from argparse import ArgumentParser
+
+class CustomArgumentParser(ArgumentParser):
+    def __init__(self):
+        super().__init__()
+        self.default_values = {}
+
+    def parse_arguments(self, command_string):
+        args = command_string.split()[1:]
+        for arg in args:
+            if arg.startswith('--'):
+                key_value = arg[2:].split('=')
+                if len(key_value) == 2:
+                    self.arguments[key_value[0]] = self._convert_type(key_value[0], key_value[1])
+                else:
+                    self.arguments[key_value[0]] = self.default_values.get(key_value[0], True)
+            elif arg.startswith('-'):
+                key = arg[1:]
+                if arg in self.arguments:
+                    self.arguments[key] = self._convert_type(key, '')
+                else:
+                    self.arguments[key] = True
+        missing_args = self.required - set(self.arguments.keys())
+        if missing_args:
+            return False, missing_args
+
+        return True, None",False,"Tests: 21, Failures: 0, Errors: 21","class ArgumentParser:
+    def __init__(self):
+        self.arguments = {}
+        self.required = set()
+
+    def parse_arguments(self, command_string):
+        args = command_string.split()[1:]
+        for arg in args:
+            if arg.startswith('--'):
+                key_value = arg[2:].split('=')
+                self.arguments[key_value[0]] = True if len(key_value) == 1 else self._convert_type(key_value[0], key_value[1])
+            elif arg.startswith('-'):
+                key = arg[1:]
+                self.arguments[key] = True
+        missing_args = self.required - set(self.arguments.keys())
+        if missing_args:
+            return False, missing_args
+
+        return True, None
+
+    def add_argument(self, arg, required=False):
+        self.required.add(arg)
+
+    def get_argument(self, key):
+        return self.arguments.get(key)
+
+    def _convert_type(self, arg, value):
+        return str(value)",False,"Tests: 21, Failures: 4, Errors: 11","class ArgumentParser:
+    def __init__(self):
+        self.arguments = {}
+        self.required = set()
+
+    def parse_arguments(self, command_string):
+        args = command_string.split()[1:]
+        for i in range(len(args)):
+            arg = args[i]
+            if arg.startswith('--'):
+                key_value = arg[2:].split('=')
+                if len(key_value) == 2:
+                    self.arguments[key_value[0]] = self._convert_type(key_value[0], key_value[1])
+                else:
+                    self.arguments[key_value[0]] = True
+            elif arg.startswith('-'):
+                key = arg[1:]
+                if i + 1 < len(args) and not args[i + 1].startswith('-'):
+                    self.arguments[key] = self._convert_type(key, args[i + 1])
+                else:
+                    self.arguments[key] = True
+        missing_args = self.required - set(self.arguments.keys())
+        if missing_args:
+            return False, missing_args
+
+        return True, None
+
+    def get_argument(self, key):
+        return self.arguments.get(key)
+
+    def add_argument(self, arg, required=False):
+        self.required.add(arg)
+
+    def _convert_type(self, arg, value):
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return value",False,"Tests: 21, Failures: 2, Errors: 11","class ArgumentParser:
+    def __init__(self):
+        self.arguments = {}
+        self.required = {}
+        self.types = {}
+
+    def parse_arguments(self, command_string):
+        args = command_string.split()[1:]
+        for arg in args:
+            if arg.startswith('--'):
+                key_value = arg[2:].split('=')
+                if len(key_value) == 2:
+                    self.arguments[key_value[0]] = self._convert_type(key_value[0], key_value[1])
+                else:
+                    self.arguments[key_value[0]] = True
+            elif arg.startswith('-'):
+                key = arg[1:]
+                if key in self.required:
+                    self.arguments[key] = True
+                elif arg in self.arguments:
+                    self.arguments[key] = self._convert_type(key, '')
+                else:
+                    self.arguments[key] = True
+        missing_args = [key for key in self.required if key not in self.arguments]
+        if missing_args:
+            return False, missing_args
+
+        return True, None
+
+    def add_argument(self, arg, required=False, arg_type=str):
+        self.required[arg] = required
+        self.types[arg] = arg_type
+
+    def get_argument(self, key):
+        return self.arguments.get(key)
+
+    def _convert_type(self, arg, value):
+        return self.types[arg](value)",False,"Tests: 21, Failures: 9, Errors: 1"

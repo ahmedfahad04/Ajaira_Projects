@@ -1,0 +1,2733 @@
+task_id,base_code,base_code_test_passed,base_code_test_msg,variant_1,variant_1_test_passed,variant_1_test_msg,variant_2,variant_2_test_passed,variant_2_test_msg,variant_3,variant_3_test_passed,variant_3_test_msg,variant_4,variant_4_test_passed,variant_4_test_msg,variant_5,variant_5_test_passed,variant_5_test_msg
+0,"    for idx, elem in enumerate(numbers):
+        for idx2, elem2 in enumerate(numbers):
+            if idx != idx2:
+                distance = abs(elem - elem2)
+                if distance < threshold:
+                    return True
+
+    return False
+",True,All assertions passed,"for idx in range(len(numbers)):
+        for idx2 in range(idx + 1, len(numbers)):
+            distance = abs(numbers[idx] - numbers[idx2])
+            if distance < threshold:
+                return True
+
+    return False",False,"Syntax error: unindent does not match any outer indentation level (<string>, line 8)","distances = [abs(a - b) for a, b in combinations(numbers, 2)]
+    return any(dist < threshold for dist in distances)",False,"Syntax error: unexpected indent (<string>, line 4)","visited = set()
+    for elem in numbers:
+        for num in numbers:
+            if num not in visited and abs(elem - num) < threshold:
+                return True
+        visited.add(elem)
+
+    return False",False,"Syntax error: unexpected indent (<string>, line 4)","for i in range(len(numbers)):
+        for j in range(i + 1, len(numbers)):
+            if abs(numbers[i] - numbers[j]) < threshold:
+                return True
+
+    return False",False,"Syntax error: unindent does not match any outer indentation level (<string>, line 7)","for idx in range(len(numbers)):
+        for idx2 in range(idx + 1, len(numbers)):
+            if abs(numbers[idx] - numbers[idx2]) < threshold:
+                return True
+
+    return False",False,"Syntax error: unindent does not match any outer indentation level (<string>, line 7)"
+1,"    result = []
+    current_string = []
+    current_depth = 0
+
+    for c in paren_string:
+        if c == '(':
+            current_depth += 1
+            current_string.append(c)
+        elif c == ')':
+            current_depth -= 1
+            current_string.append(c)
+
+            if current_depth == 0:
+                result.append(''.join(current_string))
+                current_string.clear()
+
+    return result
+",True,All assertions passed,result = [\'\'.join(segment) for segment in paren_string.split(\'()\') if segment],False,"Syntax error: unexpected character after line continuation character (<string>, line 3)","result = [\'\'.join(segment) for segment in paren_string.replace(\'()\', \'\').split(\'(\') if segment and segment[0] == \')\']",False,"Syntax error: unexpected character after line continuation character (<string>, line 3)","result = [segment for segment in paren_string.replace(\'()\', \'\').split(\'(\') if segment and segment[0] == \')\']",False,"Syntax error: unexpected character after line continuation character (<string>, line 3)","result = [\'\'.join(segment) for segment in paren_string.split(\'()\', 1) if segment]",False,"Syntax error: unexpected character after line continuation character (<string>, line 3)",result = [segment for segment in paren_string.split(\'(\') if segment and segment[0] == \')\'],False,"Syntax error: unexpected character after line continuation character (<string>, line 3)"
+2,"    return number % 1.0
+",True,All assertions passed,return float(number) % 1.0,True,All assertions passed,return number - int(number),True,All assertions passed,return number - number // 1,True,All assertions passed,return number.__mod__(1.0),True,All assertions passed,return number.__rmod__(1.0),False,Assertion failed: 
+3,"    balance = 0
+
+    for op in operations:
+        balance += op
+        if balance < 0:
+            return True
+
+    return False
+",True,All assertions passed,balance = sum(op for op in operations if op < 0) > 0,False,Assertion failed: ,balance = any(op < 0 for op in operations),False,Assertion failed: ,balance = all(op >= 0 for op in operations) == False,False,Assertion failed: ,balance = not all(op >= 0 for op in operations),False,Assertion failed: ,balance = any(op < 0 for op in operations) if any(op < 0 for op in operations) else False,False,Assertion failed: 
+4,"    mean = sum(numbers) / len(numbers)
+    return sum(abs(x - mean) for x in numbers) / len(numbers)
+",True,All assertions passed,"mean = sum(numbers) / len(numbers)
+    return sum((x - mean) ** 2 for x in numbers) / len(numbers)",False,"Syntax error: unexpected indent (<string>, line 4)","total = sum(numbers)
+    count = len(numbers)
+    mean = total / count
+    return sum(abs(x - mean) for x in numbers) / count",False,"Syntax error: unexpected indent (<string>, line 4)","avg = sum(numbers) / len(numbers)
+    return sum((x - avg) ** 2 for x in numbers) / len(numbers)",False,"Syntax error: unexpected indent (<string>, line 4)","mean = sum(numbers) / len(numbers)
+    return sum([abs(x - mean) for x in numbers]) / len(numbers)",False,"Syntax error: unexpected indent (<string>, line 4)","total = sum(numbers)
+    n = len(numbers)
+    mean = total / n
+    return sum((x - mean) ** 2 for x in numbers) / n",False,"Syntax error: unexpected indent (<string>, line 4)"
+5,"    if not numbers:
+        return []
+
+    result = []
+
+    for n in numbers[:-1]:
+        result.append(n)
+        result.append(delimeter)
+
+    result.append(numbers[-1])
+
+    return result
+",True,All assertions passed,"def intersperse(numbers, delimiter):
+    if not numbers:
+        return []
+    return [item for pair in zip(numbers[:-1], [delimiter] * (len(numbers) - 1)) for item in pair] + [numbers[-1]]",False,Assertion failed: ,"def intersperse(numbers, delimiter):
+    if not numbers:
+        return []
+    return sum(zip(numbers, [delimiter] * len(numbers)), ())",False,Assertion failed: ,"def intersperse(numbers, delimiter):
+    return numbers if not numbers else [numbers.pop(0)] + [delimiter] + intersperse(numbers, delimiter)",False,Assertion failed: ,"def intersperse(numbers, delimiter):
+    result = []
+    for i, n in enumerate(numbers):
+        if i > 0:
+            result.append(delimiter)
+        result.append(n)
+    return result",False,Assertion failed: ,"def intersperse(numbers, delimiter):
+    return [n for n in numbers] if not numbers else [numbers[0]] + [delimiter] + intersperse(numbers[1:], delimiter)",False,Assertion failed: 
+6,"    def parse_paren_group(s):
+        depth = 0
+        max_depth = 0
+        for c in s:
+            if c == '(':
+                depth += 1
+                max_depth = max(depth, max_depth)
+            else:
+                depth -= 1
+
+        return max_depth
+
+    return [parse_paren_group(x) for x in paren_string.split(' ') if x]
+",True,All assertions passed,"def parse_paren_group(s):
+    depth = 0
+    max_depth = 0
+    for c in s:
+        if c == '(':
+            depth += 1
+            if depth > max_depth:
+                max_depth = depth
+        elif c == ')':
+            depth -= 1
+
+    return max_depth
+
+return [parse_paren_group(x) for x in paren_string.split(' ') if x]",True,All assertions passed,"def parse_paren_group(s):
+    depth = 0
+    max_depth = 0
+    for c in s:
+        if c == '(':
+            depth += 1
+            max_depth = max(depth, max_depth)
+        elif c == ')':
+            depth -= 1
+        elif c == ' ':
+            continue
+
+    return max_depth
+
+return [parse_paren_group(x) for x in paren_string.split(' ') if x]",True,All assertions passed,"def parse_paren_group(s):
+    depth = 0
+    max_depth = 0
+    stack = []
+
+    for c in s:
+        if c == '(':
+            stack.append(c)
+            max_depth = max(len(stack), max_depth)
+        elif c == ')':
+            stack.pop()
+
+    return max_depth
+
+return [parse_paren_group(x) for x in paren_string.split(' ') if x]",True,All assertions passed,"def parse_paren_group(s):
+    depth = 0
+    max_depth = 0
+    for c in s:
+        if c == '(':
+            depth += 1
+            max_depth = max(depth, max_depth)
+        elif c == ')':
+            depth -= 1
+        elif c == ' ':
+            if not depth:
+                continue
+            break
+
+    return max_depth
+
+return [parse_paren_group(x) for x in paren_string.split(' ') if x]",True,All assertions passed,"def parse_paren_group(s):
+    depth = 0
+    max_depth = 0
+    for c in s:
+        if c == '(':
+            depth += 1
+            max_depth = max(depth, max_depth)
+        elif c == ')':
+            depth -= 1
+        elif c == ' ':
+            depth = 0
+
+    return max_depth
+
+return [parse_paren_group(x) for x in paren_string.split(' ') if x]",True,All assertions passed
+7,"    return [x for x in strings if substring in x]
+",True,All assertions passed,"def filter_strings(strings, substring):
+    return list(filter(lambda x: substring in x, strings))",False,Assertion failed: ,"def filter_strings(strings, substring):
+    return [x for x in strings if x.find(substring) != -1]",False,Assertion failed: ,"def filter_strings(strings, substring):
+    return [x for x in strings if substring in x and x.count(substring) > 0]",False,Assertion failed: ,"def filter_strings(strings, substring):
+    result = []
+    for string in strings:
+        if substring in string:
+            result.append(string)
+    return result",False,Assertion failed: ,"def filter_strings(strings, substring):
+    return [x for x in strings if x.startswith(substring)]",False,Assertion failed: 
+8,"    sum_value = 0
+    prod_value = 1
+
+    for n in numbers:
+        sum_value += n
+        prod_value *= n
+    return sum_value, prod_value
+",True,All assertions passed,"sum_value = sum(numbers)
+prod_value = 1
+for n in numbers:
+    prod_value *= n
+return sum_value, prod_value",True,All assertions passed,"sum_value = 0
+prod_value = functools.reduce(lambda x, y: x * y, numbers, 1)
+return sum_value, prod_value",False,Test error: name 'functools' is not defined,"sum_value = reduce(lambda x, y: x + y, numbers, 0)
+prod_value = reduce(lambda x, y: x * y, numbers, 1)
+return sum_value, prod_value",False,Test error: name 'reduce' is not defined,"sum_value = sum(numbers)
+prod_value = reduce((lambda x, y: x * y), numbers)
+return sum_value, prod_value",False,Test error: name 'reduce' is not defined,"sum_value = sum(numbers)
+prod_value = reduce((lambda x, y: x * y), numbers, 1)
+return sum_value, prod_value",False,Test error: name 'reduce' is not defined
+9,"    running_max = None
+    result = []
+
+    for n in numbers:
+        if running_max is None:
+            running_max = n
+        else:
+            running_max = max(running_max, n)
+
+        result.append(running_max)
+
+    return result
+",True,All assertions passed,"running_max = float('-inf')
+result = []
+
+for n in numbers:
+    running_max = max(running_max, n)
+    result.append(running_max)
+
+return result",True,All assertions passed,"result = []
+
+for i in range(len(numbers)):
+    result.append(max(numbers[:i+1]))
+
+return result",True,All assertions passed,"result = [max(numbers[:i+1]) for i in range(len(numbers))]
+
+return result",True,All assertions passed,"result = []
+
+for n in numbers:
+    result.append(n if result == [] else max(n, result[-1]))
+
+return result",True,All assertions passed,"result = []
+
+for n in numbers:
+    if not result or n > result[-1]:
+        result.append(n)
+    else:
+        result.append(result[-1])
+
+return result",True,All assertions passed
+10,"    if not string:
+        return ''
+
+    beginning_of_suffix = 0
+
+    while not is_palindrome(string[beginning_of_suffix:]):
+        beginning_of_suffix += 1
+
+    return string + string[:beginning_of_suffix][::-1]
+",False,Test error: name 'is_palindrome' is not defined,"def reverse_prefix(string):
+    if not string:
+        return ''
+
+    suffix_start = 0
+
+    while suffix_start < len(string) and not is_palindrome(string[suffix_start:]):
+        suffix_start += 1
+
+    return string + string[:suffix_start][::-1]",False,Assertion failed: ,"def append_prefix_reverse(string):
+    if not string:
+        return ''
+
+    for i in range(len(string)):
+        if is_palindrome(string[i:]):
+            return string + string[:i][::-1]
+
+    return string",False,Assertion failed: ,"def prefix_to_suffix(string):
+    if not string:
+        return ''
+
+    for i in range(len(string) + 1):
+        if is_palindrome(string[i:]):
+            return string + string[:i][::-1]
+
+    return string",False,Assertion failed: ,"def reverse_and_append(string):
+    if not string:
+        return ''
+
+    for i in range(len(string)):
+        if is_palindrome(string[i:]):
+            return string + string[:i][::-1]
+
+    return string",False,Assertion failed: ,"def add_reversed_prefix_to_palindrome(string):
+    if not string:
+        return ''
+
+    for i in range(len(string)):
+        if string[i:] == string[i:][::-1]:
+            return string + string[:i][::-1]
+
+    return string",False,Assertion failed: 
+11,"    def xor(i, j):
+        if i == j:
+            return '0'
+        else:
+            return '1'
+
+    return ''.join(xor(x, y) for x, y in zip(a, b))
+",True,All assertions passed,"def xor(i, j):
+    return str(int(i) ^ int(j))
+
+return ''.join(xor(x, y) for x, y in zip(a, b))",True,All assertions passed,"def xor(i, j):
+    return '1' if i != j else '0'
+
+return ''.join(xor(x, y) for x, y in zip(a, b))",True,All assertions passed,"def xor(i, j):
+    return '1' if (i == '1' and j == '0') or (i == '0' and j == '1') else '0'
+
+return ''.join(xor(x, y) for x, y in zip(a, b))",True,All assertions passed,"def xor(i, j):
+    return str(int(i) ^ int(j))
+
+result = []
+for x, y in zip(a, b):
+    result.append(xor(x, y))
+return ''.join(result)",True,All assertions passed,"def xor(i, j):
+    return '0' if i == j else '1'
+
+return ''.join(xor(x, y) for x, y in zip(a, b))",True,All assertions passed
+12,"    if not strings:
+        return None
+
+    maxlen = max(len(x) for x in strings)
+    for s in strings:
+        if len(s) == maxlen:
+            return s
+",True,All assertions passed,"if not strings:
+    return None
+
+maxlen = max(len(x) for x in strings)
+return next(s for s in strings if len(s) == maxlen)",True,All assertions passed,"if not strings:
+    return None
+
+return max(strings, key=len)",True,All assertions passed,"if not strings:
+    return None
+
+maxlen = max(len(x) for x in strings)
+for s in reversed(strings):
+    if len(s) == maxlen:
+        return s",False,Assertion failed: ,"if not strings:
+    return None
+
+maxlen = max(len(x) for x in strings)
+maxstr = None
+for s in strings:
+    if len(s) == maxlen:
+        maxstr = s
+        break
+return maxstr",True,All assertions passed,"if not strings:
+    return None
+
+maxlen = max(len(x) for x in strings)
+return [s for s in strings if len(s) == maxlen][0]",True,All assertions passed
+13,"    while b:
+        a, b = b, a % b
+    return a
+",True,All assertions passed,"def gcd(a, b):
+    while b:
+        a, b = b, a - (a // b) * b
+    return a",False,Assertion failed: ,"def gcd(a, b):
+    return a if b == 0 else gcd(b, a % b)",False,Assertion failed: ,"def gcd(a, b):
+    while a != b:
+        if a > b:
+            a -= b
+        else:
+            b -= a
+    return a",False,Assertion failed: ,"def gcd(a, b):
+    if a == 0:
+        return b
+    if b == 0:
+        return a
+    if a == b:
+        return a
+    if a % 2 == 0 and b % 2 == 0:
+        return 2 * gcd(a // 2, b // 2)
+    if a % 2 == 0:
+        return gcd(a // 2, b)
+    if b % 2 == 0:
+        return gcd(a, b // 2)
+    if a > b:
+        return gcd((a - b) // 2, b)
+    return gcd((b - a) // 2, a)",False,Assertion failed: ,"def gcd(a, b):
+    if b == 0:
+        return a
+    return gcd(b, a % b)",False,Assertion failed: 
+14,"    result = []
+
+    for i in range(len(string)):
+        result.append(string[:i+1])
+    return result
+",True,All assertions passed,"result = [string[:i+1] for i in range(len(string))]
+return result",True,All assertions passed,"result = []
+for i in range(len(string)):
+    result += [string[:i+1]]
+return result",True,All assertions passed,"result = []
+for i in range(len(string)):
+    result.extend([string[:i+1]])
+return result",True,All assertions passed,"result = list(map(lambda i: string[:i+1], range(len(string))))
+return result",True,All assertions passed,"result = [string[:i+1] for i in range(len(string)) if i % 2 == 0]
+return result",False,Assertion failed: 
+15,"    return ' '.join([str(x) for x in range(n + 1)])
+",True,All assertions passed,"return ' '.join(map(str, range(n + 1)))",True,All assertions passed,"result = ''
+for i in range(n + 1):
+    result += str(i) + ' '
+return result.strip()",True,All assertions passed,"return ' '.join([f""{x}"" for x in range(n + 1)])",True,All assertions passed,return ' '.join(str(x) for x in range(n+1)),True,All assertions passed,return ' '.join(str(i) for i in range(n + 1)),True,All assertions passed
+16,"    return len(set(string.lower()))
+",True,All assertions passed,return len(set(string.lower().strip())),True,All assertions passed,"return len(set(string.lower().replace(' ', '')))",False,Assertion failed: ,"return len(set(string.lower().translate(str.maketrans('', '', string.punctuation))))",False,Test error: 'str' object has no attribute 'punctuation',return len(set(string.lower().split())),False,Assertion failed: ,return len({char for char in string.lower() if char.isalnum()}),False,Assertion failed: 
+17,"    note_map = {'o': 4, 'o|': 2, '.|': 1}
+    return [note_map[x] for x in music_string.split(' ') if x]
+",True,All assertions passed,"note_map = {'o': 4, 'o|': 2, '.|': 1}
+return [note_map[x] for x in music_string.split(' ') if x != '']",True,All assertions passed,"note_map = {'o': 4, 'o|': 2, '.|': 1}
+result = []
+for x in music_string.split(' '):
+    if x:
+        result.append(note_map[x])
+return result",True,All assertions passed,"note_map = {'o': 4, 'o|': 2, '.|': 1}
+return [note_map[x] for x in music_string.split(' ') if x and x != ' ']",True,All assertions passed,"note_map = {'o': 4, 'o|': 2, '.|': 1}
+music_list = music_string.split(' ')
+filtered_list = [x for x in music_list if x]
+return [note_map[x] for x in filtered_list]",True,All assertions passed,"note_map = {'o': 4, 'o|': 2, '.|': 1}
+return [note_map[x] for x in music_string.split(' ') if x.strip()]",True,All assertions passed
+18,"    times = 0
+
+    for i in range(len(string) - len(substring) + 1):
+        if string[i:i+len(substring)] == substring:
+            times += 1
+
+    return times
+",True,All assertions passed,"def count_substring(string, substring):
+    return string.count(substring)",False,Assertion failed: ,"def count_substring(string, substring):
+    times = 0
+    for i in range(len(string)):
+        if string[i:].startswith(substring):
+            times += 1
+    return times",False,Assertion failed: ,"def count_substring(string, substring):
+    times = 0
+    start = 0
+    while True:
+        start = string.find(substring, start)
+        if start == -1: break
+        times += 1
+        start += 1
+    return times",False,Assertion failed: ,"def count_substring(string, substring):
+    times = 0
+    i = 0
+    while i < len(string):
+        if string[i:i+len(substring)] == substring:
+            times += 1
+            i += len(substring)
+        else:
+            i += 1
+    return times",False,Assertion failed: ,"def count_substring(string, substring):
+    return sum(string[i:i+len(substring)] == substring for i in range(len(string) - len(substring) + 1))",False,Assertion failed: 
+19,"    value_map = {
+        'zero': 0,
+        'one': 1,
+        'two': 2,
+        'three': 3,
+        'four': 4,
+        'five': 5,
+        'six': 6,
+        'seven': 7,
+        'eight': 8,
+        'nine': 9
+    }
+    return ' '.join(sorted([x for x in numbers.split(' ') if x], key=lambda x: value_map[x]))
+",True,All assertions passed,"value_map = {
+    'zero': 0,
+    'one': 1,
+    'two': 2,
+    'three': 3,
+    'four': 4,
+    'five': 5,
+    'six': 6,
+    'seven': 7,
+    'eight': 8,
+    'nine': 9
+}
+return ' '.join(sorted(numbers.split(' '), key=lambda x: value_map.get(x, float('inf'))))",True,All assertions passed,"numbers_map = {
+    'zero': 0,
+    'one': 1,
+    'two': 2,
+    'three': 3,
+    'four': 4,
+    'five': 5,
+    'six': 6,
+    'seven': 7,
+    'eight': 8,
+    'nine': 9
+}
+return ' '.join(sorted(numbers.split(' '), key=lambda x: numbers_map[x]))",False,Test error: '',"mapping = {
+    'zero': 0,
+    'one': 1,
+    'two': 2,
+    'three': 3,
+    'four': 4,
+    'five': 5,
+    'six': 6,
+    'seven': 7,
+    'eight': 8,
+    'nine': 9
+}
+return ' '.join(sorted(numbers.split(' '), key=mapping.__getitem__))",False,Test error: '',"value_map = {
+    'zero': 0,
+    'one': 1,
+    'two': 2,
+    'three': 3,
+    'four': 4,
+    'five': 5,
+    'six': 6,
+    'seven': 7,
+    'eight': 8,
+    'nine': 9
+}
+return ' '.join(sorted(numbers.split(' '), key=lambda x: value_map.get(x, 10)))",True,All assertions passed,"value_map = {
+    'zero': 0,
+    'one': 1,
+    'two': 2,
+    'three': 3,
+    'four': 4,
+    'five': 5,
+    'six': 6,
+    'seven': 7,
+    'eight': 8,
+    'nine': 9
+}
+return ' '.join(sorted(numbers.split(' '), key=lambda x: value_map[x] if x in value_map else 10))",True,All assertions passed
+20,"    closest_pair = None
+    distance = None
+
+    for idx, elem in enumerate(numbers):
+        for idx2, elem2 in enumerate(numbers):
+            if idx != idx2:
+                if distance is None:
+                    distance = abs(elem - elem2)
+                    closest_pair = tuple(sorted([elem, elem2]))
+                else:
+                    new_distance = abs(elem - elem2)
+                    if new_distance < distance:
+                        distance = new_distance
+                        closest_pair = tuple(sorted([elem, elem2]))
+
+    return closest_pair
+",True,All assertions passed,"closest_pair = None
+distance = None
+
+for i in range(len(numbers)):
+    for j in range(i + 1, len(numbers)):
+        diff = abs(numbers[i] - numbers[j])
+        if distance is None or diff < distance:
+            distance = diff
+            closest_pair = tuple(sorted([numbers[i], numbers[j]]))
+
+return closest_pair",True,All assertions passed,"closest_pair = None
+min_diff = float('inf')
+
+for num1 in numbers:
+    for num2 in numbers:
+        if num1 != num2:
+            diff = abs(num1 - num2)
+            if diff < min_diff:
+                min_diff = diff
+                closest_pair = tuple(sorted([num1, num2]))
+
+return closest_pair",False,Assertion failed: ,"min_diff = float('inf')
+closest_pair = None
+
+for i, num1 in enumerate(numbers):
+    for j, num2 in enumerate(numbers):
+        if i != j:
+            diff = abs(num1 - num2)
+            if diff < min_diff:
+                min_diff = diff
+                closest_pair = tuple(sorted([num1, num2]))
+
+return closest_pair",True,All assertions passed,"closest_pair = None
+min_diff = float('inf')
+
+for num1, num2 in combinations(numbers, 2):
+    diff = abs(num1 - num2)
+    if diff < min_diff:
+        min_diff = diff
+        closest_pair = tuple(sorted([num1, num2]))
+
+return closest_pair",False,Test error: name 'combinations' is not defined,"closest_pair = None
+min_diff = float('inf')
+
+for i in range(len(numbers) - 1):
+    diff = abs(numbers[i] - numbers[i + 1])
+    if diff < min_diff:
+        min_diff = diff
+        closest_pair = tuple(sorted([numbers[i], numbers[i + 1]]))
+
+return closest_pair",False,Assertion failed: 
+21,"    min_number = min(numbers)
+    max_number = max(numbers)
+    return [(x - min_number) / (max_number - min_number) for x in numbers]
+",True,All assertions passed,"def normalize(numbers):
+    min_val = min(numbers)
+    max_val = max(numbers)
+    return [(x - min_val) / (max_val - min_val) for x in numbers]",False,Assertion failed: ,"def normalize_list(numbers):
+    min_num = min(numbers)
+    max_num = max(numbers)
+    return [(x - min_num) / (max_num - min_num) for x in numbers]",False,Assertion failed: ,"def scale_values(numbers):
+    min_val = min(numbers)
+    max_val = max(numbers)
+    return [(x - min_val) / (max_val - min_val) for x in numbers]",False,Assertion failed: ,"def rescale_numbers(numbers):
+    min_val = min(numbers)
+    max_val = max(numbers)
+    return [(x - min_val) / (max_val - min_val) for x in numbers]",False,Assertion failed: ,"def normalize_nums(numbers):
+    min_val = min(numbers)
+    max_val = max(numbers)
+    return [(x - min_val) / (max_val - min_val) for x in numbers]",False,Assertion failed: 
+22,"    return [x for x in values if isinstance(x, int)]
+",True,All assertions passed,"return list(filter(lambda x: isinstance(x, int), values))",True,All assertions passed,"result = []
+for x in values:
+    if isinstance(x, int):
+        result.append(x)
+return result",True,All assertions passed,return [x for x in values if type(x) is int],True,All assertions passed,"def is_int(value):
+    return isinstance(value, int)
+
+return list(filter(is_int, values))",True,All assertions passed,"return [x for x in values if isinstance(x, int) and not isinstance(x, bool)]",True,All assertions passed
+23,"    return len(string)
+",True,All assertions passed,len(string),False,Assertion failed: ,string.__len__(),False,Assertion failed: ,sum(1 for _ in string),False,Assertion failed: ,len([*string]),False,Assertion failed: ,sum(1 for _ in iter(string)),False,Assertion failed: 
+24,"    for i in reversed(range(n)):
+        if n % i == 0:
+            return i
+",True,All assertions passed,"for i in range(1, n + 1):
+    if n % i == 0:
+        return i",False,Assertion failed: ,"def find_smallest_divisor(n):
+    return next(i for i in range(1, n + 1) if n % i == 0)",False,Assertion failed: ,"def smallest_divisor(n):
+    return min(i for i in range(1, n + 1) if n % i == 0)",False,Assertion failed: ,"def get_smallest_divisor(n):
+    return next(i for i in range(n, 0, -1) if n % i == 0)",False,Assertion failed: ,"def smallest_div(n):
+    return next(i for i in range(2, n) if n % i == 0, 1)",False,"Syntax error: Generator expression must be parenthesized (<string>, line 4)"
+25,"    import math
+    fact = []
+    i = 2
+    while i <= int(math.sqrt(n) + 1):
+        if n % i == 0:
+            fact.append(i)
+            n //= i
+        else:
+            i += 1
+
+    if n > 1:
+        fact.append(n)
+    return fact
+",True,All assertions passed,"import math
+def prime_factors(n):
+    i = 2
+    factors = []
+    while i * i <= n:
+        if n % i:
+            i += 1
+        else:
+            n //= i
+            factors.append(i)
+    if n > 1:
+        factors.append(n)
+    return factors",False,Assertion failed: ,"def prime_factors(n):
+    factors = []
+    divisor = 2
+    while n >= divisor * divisor:
+        if n % divisor:
+            divisor += 1
+        else:
+            n //= divisor
+            factors.append(divisor)
+    if n > 1:
+        factors.append(n)
+    return factors",False,Assertion failed: ,"import math
+def prime_factors(n):
+    factors = []
+    i = 2
+    while i <= int(math.sqrt(n)) + 1:
+        if n % i == 0:
+            factors.append(i)
+            n //= i
+        else:
+            i += 1
+    if n > 1:
+        factors.append(n)
+    return factors",False,Assertion failed: ,"def prime_factors(n):
+    factors = []
+    i = 2
+    while i * i <= n:
+        if n % i:
+            i += 1
+        else:
+            n //= i
+            factors.append(i)
+    if n > 1:
+        factors.append(n)
+    return factors",False,Assertion failed: ,"import math
+def prime_factors(n):
+    factors = []
+    i = 2
+    while i <= int(math.sqrt(n)) + 1:
+        if n % i == 0:
+            factors.append(i)
+            n //= i
+        else:
+            i += 1
+    if n > 1:
+        factors.append(n)
+    return factors",False,Assertion failed: 
+26,"    import collections
+    c = collections.Counter(numbers)
+    return [n for n in numbers if c[n] <= 1]
+",True,All assertions passed,"import collections
+c = collections.Counter(numbers)
+return [n for n in numbers if c[n] == 1]",True,All assertions passed,"from collections import Counter
+c = Counter(numbers)
+return [n for n in numbers if c[n] <= 1]",True,All assertions passed,"import collections as col
+c = col.Counter(numbers)
+return [n for n in numbers if c[n] <= 1]",True,All assertions passed,"import collections
+c = collections.Counter(numbers)
+return [n for n in numbers if c[n] != 0]",False,Assertion failed: ,"import collections
+c = collections.Counter(numbers)
+return [n for n in numbers if c[n] < 2]",True,All assertions passed
+27,"    return string.swapcase()
+",True,All assertions passed,return string.swapcase(),True,All assertions passed,return string[::-1].swapcase(),False,Assertion failed: ,return ''.join(char.swapcase() for char in string),True,All assertions passed,return string.upper().swapcase(),False,Assertion failed: ,return ''.join([char.swapcase() if char.isalpha() else char for char in string]),True,All assertions passed
+28,"    return ''.join(strings)
+",True,All assertions passed,"def concatenate_strings(strings):
+    result = ''
+    for string in strings:
+        result += string
+    return result",False,Assertion failed: ,"from functools import reduce
+
+def concatenate_strings(strings):
+    return reduce(lambda x, y: x + y, strings)",False,Assertion failed: ,"def concatenate_strings(strings):
+    return ''.join(map(str, strings))",False,Assertion failed: ,"def concatenate_strings(strings):
+    result = ''
+    i = 0
+    while i < len(strings):
+        result += strings[i]
+        i += 1
+    return result",False,Assertion failed: ,"def concatenate_strings(strings):
+    return ''.join(filter(None, strings))",False,Assertion failed: 
+29,"    return [x for x in strings if x.startswith(prefix)]
+",True,All assertions passed,"def filter_strings(strings, prefix):
+    return [s for s in strings if s.startswith(prefix)]",False,Assertion failed: ,"def filter_strings(strings, prefix):
+    return filter(lambda x: x.startswith(prefix), strings)",False,Assertion failed: ,"def filter_strings(strings, prefix):
+    return list(filter(lambda s: s.startswith(prefix), strings))",False,Assertion failed: ,"def filter_strings(strings, prefix):
+    return [x for x in strings if x[:len(prefix)] == prefix]",False,Assertion failed: ,"def filter_strings(strings, prefix):
+    return list(filter(lambda x: x.startswith(prefix), strings))",False,Assertion failed: 
+30,"    return [e for e in l if e > 0]
+",True,All assertions passed,"return list(filter(lambda x: x > 0, l))",True,All assertions passed,return [e for e in l if e >= 0],False,Assertion failed: ,"result = []
+for e in l:
+    if e > 0:
+        result.append(e)
+return result",True,All assertions passed,"return [e for e in l if e > 0] if all(isinstance(x, int) for x in l) else filter(lambda x: x > 0, l)",True,All assertions passed,"def positive_elements(lst):
+    return [e for e in lst if e > 0]
+
+return positive_elements(l)",True,All assertions passed
+31,"    if n < 2:
+        return False
+    for k in range(2, n - 1):
+        if n % k == 0:
+            return False
+    return True
+",True,All assertions passed,"def is_prime(n):
+    if n < 2:
+        return False
+    for k in range(2, n):
+        if n % k == 0:
+            return False
+    return True",False,Assertion failed: ,"from sympy import isprime
+
+def is_prime(n):
+    return isprime(n)",False,Assertion failed: ,"def is_prime(n):
+    if n < 2:
+        return False
+    return all(n % k != 0 for k in range(2, int(n**0.5) + 1))",False,Assertion failed: ,"def is_prime(n):
+    if n < 2:
+        return False
+    return not any(n % k == 0 for k in range(2, int(n**0.5) + 1))",False,Assertion failed: ,"def is_prime(n):
+    if n < 2:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True",False,Assertion failed: 
+32,"    begin, end = -1., 1.
+    while poly(xs, begin) * poly(xs, end) > 0:
+        begin *= 2.0
+        end *= 2.0
+    while end - begin > 1e-10:
+        center = (begin + end) / 2.0
+        if poly(xs, center) * poly(xs, begin) > 0:
+            begin = center
+        else:
+            end = center
+    return begin
+",False,Test error: find_zero() missing 1 required positional argument: 'x',"begin, end = -1., 1.
+while poly(xs, begin) * poly(xs, end) > 0:
+    begin *= 2.0
+    end *= 2.0
+while end - begin > 1e-10:
+    center = (begin + end) / 2.0
+    if poly(xs, center) * poly(xs, begin) > 0:
+        begin = center
+    else:
+        end = center
+return begin",False,Test error: find_zero() missing 1 required positional argument: 'x',"begin, end = -1., 1.
+while poly(xs, begin) * poly(xs, end) > 0:
+    begin /= 2.0
+    end /= 2.0
+while end - begin > 1e-10:
+    center = (begin + end) / 2.0
+    if poly(xs, center) * poly(xs, begin) > 0:
+        begin = center
+    else:
+        end = center
+return begin",False,Test error: find_zero() missing 1 required positional argument: 'x',"begin, end = -1., 1.
+while poly(xs, begin) * poly(xs, end) > 0:
+    begin *= 1.5
+    end *= 1.5
+while end - begin > 1e-10:
+    center = (begin + end) / 2.0
+    if poly(xs, center) * poly(xs, begin) > 0:
+        begin = center
+    else:
+        end = center
+return begin",False,Test error: find_zero() missing 1 required positional argument: 'x',"begin, end = -1., 1.
+while poly(xs, begin) * poly(xs, end) > 0:
+    begin *= 3.0
+    end *= 3.0
+while end - begin > 1e-10:
+    center = (begin + end) / 2.0
+    if poly(xs, center) * poly(xs, begin) > 0:
+        begin = center
+    else:
+        end = center
+return begin",False,Test error: find_zero() missing 1 required positional argument: 'x',"begin, end = -1., 1.
+while poly(xs, begin) * poly(xs, end) > 0:
+    begin *= 0.5
+    end *= 0.5
+while end - begin > 1e-10:
+    center = (begin + end) / 2.0
+    if poly(xs, center) * poly(xs, begin) > 0:
+        begin = center
+    else:
+        end = center
+return begin",False,Test error: find_zero() missing 1 required positional argument: 'x'
+33,"    l = list(l)
+    l[::3] = sorted(l[::3])
+    return l
+",False,Test error: name 'sort_third' is not defined,"l.sort()
+return l",False,Test error: name 'sort_third' is not defined,"l.sort(key=lambda x: (x % 3, x))
+return l",False,Test error: name 'sort_third' is not defined,"l = [x for _, x in sorted(enumerate(l), key=lambda x: (x[0] % 3, x[1]))]
+return l",False,Test error: name 'sort_third' is not defined,"for i in range(0, len(l), 3):
+    l[i:i+3] = sorted(l[i:i+3])
+return l",False,Test error: name 'sort_third' is not defined,"l.sort(key=lambda x: (x % 3, x % 10))
+return l",False,Test error: name 'sort_third' is not defined
+34,"    return sorted(list(set(l)))
+",True,All assertions passed,return list(dict.fromkeys(sorted(l))),True,All assertions passed,return sorted(set(l)),True,All assertions passed,return sorted(list(set(l))),True,All assertions passed,l = list(set(l)); l.sort(); return l,True,All assertions passed,return sorted(set(l)),True,All assertions passed
+35,"    m = l[0]
+    for e in l:
+        if e > m:
+            m = e
+    return m
+",True,All assertions passed,"m = l[0]
+for e in l:
+    if e > m:
+        m = e
+return m",True,All assertions passed,"m = max(l)
+return m",True,All assertions passed,"m = float('-inf')
+for e in l:
+    if e > m:
+        m = e
+return m",True,All assertions passed,"m = l[0]
+for e in l:
+    if e > m:
+        m = e
+return m",True,All assertions passed,"m = l[0]
+for e in l:
+    if e > m:
+        m = e
+return m",True,All assertions passed
+36,"    ns = []
+    for i in range(n):
+        if i % 11 == 0 or i % 13 == 0:
+            ns.append(i)
+    s = ''.join(list(map(str, ns)))
+    ans = 0
+    for c in s:
+        ans += (c == '7')
+    return ans
+",True,All assertions passed,"ns = [i for i in range(n) if i % 11 == 0 or i % 13 == 0]
+s = ''.join(map(str, ns))
+ans = sum(c == '7' for c in s)",False,Assertion failed: ,"ns = filter(lambda i: i % 11 == 0 or i % 13 == 0, range(n))
+s = ''.join(map(str, ns))
+ans = sum(c == '7' for c in s)",False,Assertion failed: ,"ns = [i for i in range(n) if not (i % 11 and i % 13)]
+s = ''.join(map(str, ns))
+ans = sum(c == '7' for c in s)",False,Assertion failed: ,"ns = list(filter(lambda i: i % 11 == 0 or i % 13 == 0, range(n)))
+s = ''.join(map(str, ns))
+ans = sum(c == '7' for c in s)",False,Assertion failed: ,"ns = [i for i in range(n) if (i % 11 == 0 or i % 13 == 0) and (i % 2 != 0)]
+s = ''.join(map(str, ns))
+ans = sum(c == '7' for c in s)",False,Assertion failed: 
+37,"    evens = l[::2]
+    odds = l[1::2]
+    evens.sort()
+    ans = []
+    for e, o in zip(evens, odds):
+        ans.extend([e, o])
+    if len(evens) > len(odds):
+        ans.append(evens[-1])
+    return ans
+",True,All assertions passed,"evens = sorted(l[::2])
+    odds = l[1::2]
+    ans = [x for pair in zip(evens, odds) for x in pair]
+    if len(evens) > len(odds):
+        ans.append(evens[-1])
+    return ans",False,"Syntax error: unexpected indent (<string>, line 4)","evens = l[::2]
+    odds = l[1::2]
+    evens.sort()
+    ans = [x for y in zip(evens, odds) for x in y]
+    if len(evens) > len(odds):
+        ans.append(evens[-1])
+    return ans",False,"Syntax error: unexpected indent (<string>, line 4)","evens = sorted(l[::2])
+    odds = l[1::2]
+    ans = []
+    for e, o in zip(evens, odds):
+        ans.extend([e, o])
+    if len(evens) > len(odds):
+        ans.append(evens[-1])
+    return ans",False,"Syntax error: unexpected indent (<string>, line 4)","evens = l[::2]
+    odds = l[1::2]
+    evens.sort()
+    ans = [y for x in zip(evens, odds) for y in x]
+    if len(evens) > len(odds):
+        ans.append(evens[-1])
+    return ans",False,"Syntax error: unexpected indent (<string>, line 4)","evens = sorted(l[::2])
+    odds = l[1::2]
+    ans = [x for y in zip(evens, odds) for x in y]
+    if len(evens) > len(odds):
+        ans.append(evens[-1])
+    return ans",False,"Syntax error: unexpected indent (<string>, line 4)"
+38,"    return encode_cyclic(encode_cyclic(s))
+",False,Test error: name 'encode_cyclic' is not defined,"def encode_twice(s):
+    return encode_cyclic(encode_cyclic(s))",False,Test error: name 'encode_cyclic' is not defined,"def double_encode(s):
+    return encode_cyclic(encode_cyclic(s))",False,Test error: name 'encode_cyclic' is not defined,"def apply_encode(s):
+    return encode_cyclic(encode_cyclic(s))",False,Test error: name 'encode_cyclic' is not defined,"def encode_loop(s):
+    return encode_cyclic(encode_cyclic(s))",False,Test error: name 'encode_cyclic' is not defined,"def repeat_encode(s):
+    return encode_cyclic(encode_cyclic(s))",False,Test error: name 'encode_cyclic' is not defined
+39,"    import math
+
+    def is_prime(p):
+        if p < 2:
+            return False
+        for k in range(2, min(int(math.sqrt(p)) + 1, p - 1)):
+            if p % k == 0:
+                return False
+        return True
+    f = [0, 1]
+    while True:
+        f.append(f[-1] + f[-2])
+        if is_prime(f[-1]):
+            n -= 1
+        if n == 0:
+            return f[-1]
+",True,All assertions passed,"import math
+
+def is_prime(p):
+    if p < 2:
+        return False
+    for k in range(2, int(math.sqrt(p)) + 1):
+        if p % k == 0:
+            return False
+    return True
+
+f = [0, 1]
+while True:
+    f.append(f[-1] + f[-2])
+    if is_prime(f[-1]):
+        continue
+    if f[-1] > n:
+        return f[-2]",False,Assertion failed: ,"import math
+
+def is_prime(p):
+    if p < 2:
+        return False
+    for k in range(2, p - 1):
+        if p % k == 0:
+            return False
+    return True
+
+f = [0, 1]
+while True:
+    f.append(f[-1] + f[-2])
+    if is_prime(f[-1]):
+        n -= 1
+    if n <= 0:
+        return f[-1]",True,All assertions passed,"import math
+
+def is_prime(p):
+    if p < 2:
+        return False
+    for k in range(2, int(math.sqrt(p)) + 1):
+        if p % k == 0:
+            return False
+    return True
+
+f = [0, 1]
+while True:
+    f.append(f[-1] + f[-2])
+    if is_prime(f[-1]):
+        n -= 1
+    if n == 0:
+        return f[-1]",True,All assertions passed,"import math
+
+def is_prime(p):
+    if p < 2:
+        return False
+    for k in range(2, int(math.sqrt(p)) + 1):
+        if p % k == 0:
+            return False
+    return True
+
+f = [0, 1]
+while True:
+    f.append(f[-1] + f[-2])
+    if is_prime(f[-1]):
+        continue
+    if f[-1] > n:
+        return f[-2]",False,Assertion failed: ,"import math
+
+def is_prime(p):
+    if p < 2:
+        return False
+    for k in range(2, int(math.sqrt(p)) + 1):
+        if p % k == 0:
+            return False
+    return True
+
+f = [0, 1]
+while True:
+    f.append(f[-1] + f[-2])
+    if not is_prime(f[-1]):
+        n -= 1
+    if n == 0:
+        return f[-1]",False,Assertion failed: 
+40,"    for i in range(len(l)):
+        for j in range(i + 1, len(l)):
+            for k in range(j + 1, len(l)):
+                if l[i] + l[j] + l[k] == 0:
+                    return True
+    return False
+",True,All assertions passed,"def has_zero_sum_triplet(l):
+    l.sort()
+    n = len(l)
+    for i in range(n):
+        j, k = i + 1, n - 1
+        while j < k:
+            s = l[i] + l[j] + l[k]
+            if s == 0:
+                return True
+            elif s < 0:
+                j += 1
+            else:
+                k -= 1
+    return False",False,Assertion failed: ,"def has_zero_sum_triplet(l):
+    from itertools import combinations
+    for triplet in combinations(l, 3):
+        if sum(triplet) == 0:
+            return True
+    return False",False,Assertion failed: ,"def has_zero_sum_triplet(l):
+    s = set(l)
+    for i in range(len(l)):
+        for j in range(i + 1, len(l)):
+            target = -(l[i] + l[j])
+            if target in s:
+                return True
+    return False",False,Assertion failed: ,"def has_zero_sum_triplet(l):
+    l = list(l)
+    for i in range(len(l)):
+        for j in range(i + 1, len(l)):
+            for k in range(j + 1, len(l)):
+                if l[i] + l[j] + l[k] == 0:
+                    return True
+    return False",False,Assertion failed: ,"def has_zero_sum_triplet(l):
+    l = set(l)
+    for i in l:
+        for j in l:
+            if -i - j in l:
+                return True
+    return False",False,Assertion failed: 
+41,"    return n**2
+",True,All assertions passed,"def calculate_square(n):
+    result = 0
+    for i in range(n):
+        result += n
+    return result",False,Assertion failed: ,"def calculate_square(n):
+    return n * n",False,Assertion failed: ,"def calculate_square(n):
+    return pow(n, 2)",False,Assertion failed: ,"def calculate_square(n):
+    return n ** 2",False,Assertion failed: ,"def calculate_square(n):
+    return n * n",False,Assertion failed: 
+42,"    return [(e + 1) for e in l]
+",True,All assertions passed,"return list(map(lambda e: e + 1, l))",True,All assertions passed,"new_list = []
+for e in l:
+    new_list.append(e + 1)
+return new_list",True,All assertions passed,"return [sum([e, 1]) for e in l]",True,All assertions passed,return [e.__add__(1) for e in l],True,All assertions passed,"def increment(e):
+    return e + 1
+return list(map(increment, l))",True,All assertions passed
+43,"    for i, l1 in enumerate(l):
+        for j in range(i + 1, len(l)):
+            if l1 + l[j] == 0:
+                return True
+    return False
+",True,All assertions passed,"seen = set()
+    for l1 in l:
+        if -l1 in seen:
+            return True
+        seen.add(l1)
+    return False",False,"Syntax error: unexpected indent (<string>, line 4)","for i in range(len(l)):
+        for j in range(i + 1, len(l)):
+            if l[i] + l[j] == 0:
+                return True
+    return False",False,"Syntax error: unindent does not match any outer indentation level (<string>, line 7)","l1 = [x for x in l if x >= 0]
+    l2 = [-x for x in l if x < 0]
+    for x in l1:
+        if -x in l2:
+            return True
+    return False",False,"Syntax error: unexpected indent (<string>, line 4)","for i in range(len(l)):
+        for j in range(i + 1, len(l)):
+            if l[i] + l[j] == 0:
+                return True
+            if abs(l[i] + l[j]) < 1e-9:  # Handling floating-point precision
+                return True
+    return False",False,"Syntax error: unindent does not match any outer indentation level (<string>, line 9)","def contains_zero_sum_pair(l):
+    seen = set()
+    for num in l:
+        if -num in seen:
+            return True
+        seen.add(num)
+    return False",False,Assertion failed: 
+44,"    ret = """"
+    while x > 0:
+        ret = str(x % base) + ret
+        x //= base
+    return ret
+",True,All assertions passed,"def convert_to_base(x, base):
+    return """".join([str(x % base)] + [convert_to_base(x // base, base)] if x > 0 else [])",False,Assertion failed: ,"def convert_to_base(x, base):
+    if x == 0:
+        return """"
+    else:
+        return str(x % base) + convert_to_base(x // base, base)",False,Assertion failed: ,"def convert_to_base(x, base):
+    return """".join(str(x % base) + convert_to_base(x // base, base) for _ in range(x > 0))",False,Assertion failed: ,"def convert_to_base(x, base):
+    result = """"
+    while x > 0:
+        result = str(x % base) + result
+        x //= base
+    return result[::-1]",False,Assertion failed: ,"def convert_to_base(x, base):
+    return """".join(map(str, reversed([x % base] + [convert_to_base(x // base, base)] if x > 0 else [])))",False,Assertion failed: 
+45,"    return a * h / 2.0
+",True,All assertions passed,"def calculate_area(a, h):
+    return a * h / 2.0",False,Assertion failed: ,"from math import pi
+
+def calculate_area(a, h):
+    return a * h / 2.0",False,Assertion failed: ,"def area(a, h):
+    return a * h / 2.0",False,Assertion failed: ,"def compute_area(base, height):
+    return base * height / 2.0",False,Assertion failed: ,"def calc_area(b, h):
+    return b * h / 2.0",False,Assertion failed: 
+46,"    results = [0, 0, 2, 0]
+    if n < 4:
+        return results[n]
+
+    for _ in range(4, n + 1):
+        results.append(results[-1] + results[-2] + results[-3] + results[-4])
+        results.pop(0)
+
+    return results[-1]
+",True,All assertions passed,"results = [0, 0, 2, 0]
+if n < 4:
+    return results[n]
+
+for _ in range(4, n + 1):
+    results.append(sum(results[-4:]))
+    results.pop(0)
+
+return results[-1]",True,All assertions passed,"if n < 4:
+    return [0, 0, 2, 0][n]
+
+results = [0, 0, 2, 0]
+for _ in range(4, n + 1):
+    results.append(results[-1] + results[-2] + results[-3] + results[-4])
+    results.pop(0)
+
+return results[-1]",True,All assertions passed,"results = [0, 0, 2, 0]
+if n < 4:
+    return results[n]
+
+results += [results[-1] + results[-2] + results[-3] + results[-4] for _ in range(4, n + 1)]
+return results[n]",False,Assertion failed: ,"results = [0, 0, 2, 0]
+if n < 4:
+    return results[n]
+
+for _ in range(n - 3):
+    results.append(results[-1] + results[-2] + results[-3] + results[-4])
+    results.pop(0)
+
+return results[-1]",True,All assertions passed,"results = [0, 0, 2, 0]
+if n < 4:
+    return results[n]
+
+for _ in range(4, n + 1):
+    results.append(results[-1] + results[-2] + results[-3] + results[-4])
+    results = results[1:]
+
+return results[-1]",True,All assertions passed
+47,"    l = sorted(l)
+    if len(l) % 2 == 1:
+        return l[len(l) // 2]
+    else:
+        return (l[len(l) // 2 - 1] + l[len(l) // 2]) / 2.0
+",True,All assertions passed,"def median(l):
+        l.sort()
+        mid = len(l) // 2
+        return l[mid] if len(l) % 2 == 1 else (l[mid - 1] + l[mid]) / 2",False,Assertion failed: ,"from statistics import median
+
+    def find_median(l):
+        return median(l)",False,"Syntax error: unexpected indent (<string>, line 4)","def get_median(l):
+        l.sort()
+        n = len(l)
+        if n % 2 == 1:
+            return l[n // 2]
+        else:
+            return (l[n // 2 - 1] + l[n // 2]) / 2.0",False,Assertion failed: ,"l.sort()
+    return (l[len(l) // 2] + l[len(l) // 2 - 1]) / 2.0 if len(l) % 2 == 0 else l[len(l) // 2]",False,"Syntax error: unexpected indent (<string>, line 4)","def calculate_median(l):
+        l.sort()
+        mid = len(l) // 2
+        return l[mid] if len(l) % 2 != 0 else (l[mid - 1] + l[mid]) / 2",False,Assertion failed: 
+48,"    for i in range(len(text)):
+        if text[i] != text[len(text) - 1 - i]:
+            return False
+    return True
+",True,All assertions passed,"def is_palindrome(text):
+    return text == text[::-1]",False,Assertion failed: ,"def is_palindrome(text):
+    left, right = 0, len(text) - 1
+    while left < right:
+        if text[left] != text[right]:
+            return False
+        left += 1
+        right -= 1
+    return True",False,Assertion failed: ,"def is_palindrome(text):
+    n = len(text)
+    return all(text[i] == text[n - 1 - i] for i in range(n // 2))",False,Assertion failed: ,"def is_palindrome(text):
+    for i in range(len(text) // 2):
+        if text[i] != text[-(i + 1)]:
+            return False
+    return True",False,Assertion failed: ,"def is_palindrome(text):
+    return all(text[i] == text[len(text) - 1 - i] for i in range(len(text)))",False,Assertion failed: 
+49,"    ret = 1
+    for i in range(n):
+        ret = (2 * ret) % p
+    return ret
+",True,All assertions passed,"ret = 1
+for i in range(n):
+    ret = (ret << 1) % p
+return ret",True,All assertions passed,"ret = 1
+for i in range(n):
+    ret = ((ret << 1) + 1) % p
+return ret",False,Assertion failed: ,"ret = 1
+for i in range(n):
+    ret = (ret * 2) % p
+return ret",True,All assertions passed,"ret = 1
+for i in range(n):
+    ret = (ret << 1) % p
+    if ret == 0:
+        ret = 1
+return ret",True,All assertions passed,"ret = 1
+for i in range(n):
+    ret = (ret * 2) % p
+    ret = (ret * 2) % p
+return ret",False,Assertion failed: 
+50,"    return """".join([chr(((ord(ch) - 5 - ord(""a"")) % 26) + ord(""a"")) for ch in s])
+",False,Test error: name 'encode_shift' is not defined,"return """".join([chr(((ord(ch) - 5 - ord(""a"")) % 26) + ord(""a"")) for ch in s])",False,Test error: name 'encode_shift' is not defined,"return """".join([chr(((ord(ch) - 5 - ord(""A"")) % 26) + ord(""A"")) for ch in s])",False,Test error: name 'encode_shift' is not defined,"return """".join([chr(((ord(ch) - 5 - ord(""a"")) % 26) + ord(""A"")) for ch in s])",False,Test error: name 'encode_shift' is not defined,"return """".join([chr(((ord(ch) - 5 - ord(""A"")) % 26) + ord(""a"")) for ch in s])",False,Test error: name 'encode_shift' is not defined,"def rotate_left(s, n):
+    return s[n:] + s[:n]
+
+return rotate_left(s, 5)",False,Test error: name 'encode_shift' is not defined
+51,"    return """".join([s for s in text if s.lower() not in [""a"", ""e"", ""i"", ""o"", ""u""]])
+",True,All assertions passed,"def remove_vowels(text):
+    return """".join(filter(lambda x: x.lower() not in ""aeiou"", text))",False,Assertion failed: ,"def remove_vowels(text):
+    return """".join([char for char in text if char.lower() not in ""aeiou""])",False,Assertion failed: ,"def remove_vowels(text):
+    vowels = ""aeiou""
+    return """".join([char for char in text if char.lower() not in vowels])",False,Assertion failed: ,"def remove_vowels(text):
+    return """".join([c for c in text if c not in ""aeiouAEIOU""])",False,Assertion failed: ,"def remove_vowels(text):
+    return """".join([ch for ch in text if ch.lower() not in 'aeiou'])",False,Assertion failed: 
+52,"    for e in l:
+        if e >= t:
+            return False
+    return True
+",True,All assertions passed,"def check_elements(l, t):
+    return not any(e >= t for e in l)",False,Assertion failed: ,"def check_elements(l, t):
+    return all(map(lambda x: x < t, l))",False,Assertion failed: ,"def check_elements(l, t):
+    for e in l:
+        if e >= t:
+            return False
+    return True",False,Assertion failed: ,"def check_elements(l, t):
+    return not any(e >= t for e in l)",False,Assertion failed: ,"for e in l:
+    if e >= t:
+        return False
+return True",True,All assertions passed
+53,"    return x + y
+",True,All assertions passed,"def add(x, y):
+    return x + y",False,Assertion failed: ,"def calculate_sum(a, b):
+    return a + b",False,Assertion failed: ,"result = x + y
+return result",True,All assertions passed,"def sum_values(x, y):
+    return x + y",False,Assertion failed: ,"return sum([x, y])",True,All assertions passed
+54,"    return set(s0) == set(s1)
+",True,All assertions passed,"def are_sets_equal(s0, s1):
+    return s0 == s1",False,Assertion failed: ,"def are_sets_equal(s0, s1):
+    return len(s0) == len(s1) and all(item in s1 for item in s0) and all(item in s0 for item in s1)",False,Assertion failed: ,"def are_sets_equal(s0, s1):
+    return len(set(s0)) == len(set(s1)) and set(s0).issubset(set(s1)) and set(s1).issubset(set(s0))",False,Assertion failed: ,"def are_sets_equal(s0, s1):
+    return frozenset(s0) == frozenset(s1)",False,Assertion failed: ,"def are_sets_equal(s0, s1):
+    return not (s0 - s1) and not (s1 - s0)",False,Assertion failed: 
+55,"    if n == 0:
+        return 0
+    if n == 1:
+        return 1
+    return fib(n - 1) + fib(n - 2)
+",True,All assertions passed,"def fib(n):
+    if n == 0:
+        return 0
+    if n == 1:
+        return 1
+    a, b = 0, 1
+    for _ in range(2, n + 1):
+        a, b = b, a + b
+    return b",False,Assertion failed: ,"def fib(n):
+    if n <= 1:
+        return n
+    return fib(n - 1) + fib(n - 2)",False,Assertion failed: ,"def fib(n):
+    if n == 0:
+        return 0
+    elif n == 1:
+        return 1
+    else:
+        return fib(n - 1) + fib(n - 2)",False,Assertion failed: ,"from functools import lru_cache
+
+@lru_cache(maxsize=None)
+def fib(n):
+    if n == 0:
+        return 0
+    elif n == 1:
+        return 1
+    else:
+        return fib(n - 1) + fib(n - 2)",False,Assertion failed: ,"def fib(n):
+    if n == 0:
+        return 0
+    elif n == 1:
+        return 1
+    a, b = 0, 1
+    for _ in range(2, n + 1):
+        a, b = b, a + b
+    return b",False,Assertion failed: 
+56,"    depth = 0
+    for b in brackets:
+        if b == ""<"":
+            depth += 1
+        else:
+            depth -= 1
+        if depth < 0:
+            return False
+    return depth == 0
+",True,All assertions passed,"def is_balanced(brackets):
+    depth = 0
+    for b in brackets:
+        if b == ""("":
+            depth += 1
+        else:
+            depth -= 1
+        if depth < 0:
+            return False
+    return depth == 0",False,Assertion failed: ,"def check_balance(brackets):
+    stack = []
+    for b in brackets:
+        if b == ""<"":
+            stack.append(b)
+        else:
+            if not stack:
+                return False
+            stack.pop()
+    return not stack",False,Assertion failed: ,"def validate_brackets(brackets):
+    balance = 0
+    for b in brackets:
+        if b == ""["":
+            balance += 1
+        else:
+            balance -= 1
+        if balance < 0:
+            return False
+    return balance == 0",False,Assertion failed: ,"def is_well_formed(brackets):
+    count = 0
+    for b in brackets:
+        if b == ""{"":
+            count += 1
+        else:
+            count -= 1
+        if count < 0:
+            return False
+    return count == 0",False,Assertion failed: ,"def balanced_parentheses(brackets):
+    balance = 0
+    for b in brackets:
+        if b == ""<"":
+            balance += 1
+        else:
+            balance -= 1
+        if balance < 0:
+            return False
+    return balance == 0",False,Assertion failed: 
+57,"    if l == sorted(l) or l == sorted(l, reverse=True):
+        return True
+    return False
+",True,All assertions passed,"def is_sorted(l):
+    return all(l[i] <= l[i + 1] for i in range(len(l) - 1)) or all(l[i] >= l[i + 1] for i in range(len(l) - 1))",False,Assertion failed: ,"def is_sorted(l):
+    return l == sorted(l) or l == sorted(l)[::-1]",False,Assertion failed: ,"def is_sorted(l):
+    return l == sorted(l) or l == sorted(l, reverse=True)",False,Assertion failed: ,"def is_sorted(l):
+    return l == sorted(l) or l == sorted(l, reverse=True)",False,Assertion failed: ,"def is_sorted(l):
+    return l == sorted(l) or l == sorted(l, reverse=True)",False,Assertion failed: 
+58,"    ret = set()
+    for e1 in l1:
+        for e2 in l2:
+            if e1 == e2:
+                ret.add(e1)
+    return sorted(list(ret))
+",True,All assertions passed,"ret = [e for e1 in l1 for e2 in l2 if e1 == e2]
+return sorted(set(ret))",False,Test error: name 'e' is not defined,"def intersect(l1, l2):
+    return sorted(list(set(e for e1 in l1 for e2 in l2 if e1 == e2)))",False,Assertion failed: ,"from functools import reduce
+ret = sorted(list(reduce(lambda a, b: a & b, (set(l) for l in (l1, l2)))))",False,Assertion failed: ,"def intersect(l1, l2):
+    return sorted([x for x in set(l1) if x in l2])",False,Assertion failed: ,"ret = sorted(list({e for e1 in l1 for e2 in l2 if e1 == e2}))
+return ret",False,Test error: name 'e' is not defined
+59,"    def is_prime(k):
+        if k < 2:
+            return False
+        for i in range(2, k - 1):
+            if k % i == 0:
+                return False
+        return True
+    largest = 1
+    for j in range(2, n + 1):
+        if n % j == 0 and is_prime(j):
+            largest = max(largest, j)
+    return largest
+",True,All assertions passed,"def is_prime(k):
+    if k < 2:
+        return False
+    for i in range(2, k):
+        if k % i == 0:
+            return False
+    return True
+
+largest = 1
+for j in range(2, n + 1):
+    if n % j == 0 and is_prime(j):
+        largest = max(largest, j)
+return largest",True,All assertions passed,"def is_prime(k):
+    if k < 2:
+        return False
+    for i in range(2, k // 2 + 1):
+        if k % i == 0:
+            return False
+    return True
+
+largest = 1
+for j in range(2, n + 1):
+    if n % j == 0 and is_prime(j):
+        largest = max(largest, j)
+return largest",True,All assertions passed,"def is_prime(k):
+    if k < 2:
+        return False
+    for i in range(2, k - 1, 2):
+        if k % i == 0:
+            return False
+    return True
+
+largest = 1
+for j in range(2, n + 1):
+    if n % j == 0 and is_prime(j):
+        largest = max(largest, j)
+return largest",False,Assertion failed: ,"def is_prime(k):
+    if k < 2:
+        return False
+    for i in range(3, int(k**0.5) + 1, 2):
+        if k % i == 0:
+            return False
+    return True
+
+largest = 1
+for j in range(2, n + 1):
+    if n % j == 0 and is_prime(j):
+        largest = max(largest, j)
+return largest",False,Assertion failed: ,"def is_prime(k):
+    if k < 2:
+        return False
+    for i in range(2, int(k**0.5) + 1):
+        if k % i == 0:
+            return False
+    return True
+
+largest = 1
+for j in range(2, n + 1):
+    if n % j == 0 and is_prime(j):
+        largest = max(largest, j)
+return largest",True,All assertions passed
+60,"    return sum(range(n + 1))
+",True,All assertions passed,return sum([i for i in range(n + 1)]),True,All assertions passed,return sum((i for i in range(n + 1))),True,All assertions passed,"total = 0
+for i in range(n + 1):
+    total += i
+return total",True,All assertions passed,return (n * (n + 1)) // 2,True,All assertions passed,"def sum_range(n):
+    if n == 0:
+        return 0
+    else:
+        return n + sum_range(n - 1)",False,Assertion failed: 
+61,"    depth = 0
+    for b in brackets:
+        if b == ""("":
+            depth += 1
+        else:
+            depth -= 1
+        if depth < 0:
+            return False
+    return depth == 0
+",True,All assertions passed,"def is_balanced(brackets):
+    balance = 0
+    for char in brackets:
+        if char == '(':
+            balance += 1
+        else:
+            balance -= 1
+        if balance < 0:
+            return False
+    return balance == 0",False,Assertion failed: ,"def is_balanced(brackets):
+    stack = []
+    for char in brackets:
+        if char == '(':
+            stack.append(char)
+        else:
+            if not stack:
+                return False
+            stack.pop()
+    return not stack",False,Assertion failed: ,"def is_balanced(brackets):
+    depth = 0
+    for char in brackets:
+        depth += 1 if char == '(' else -1
+        if depth < 0:
+            return False
+    return depth == 0",False,Assertion failed: ,"def is_balanced(brackets):
+    balance = 0
+    for char in brackets:
+        balance += 1 if char == '(' else -1
+        if balance < 0:
+            return False
+    return balance == 0",False,Assertion failed: ,"def is_balanced(brackets):
+    balance = 0
+    for char in brackets:
+        balance += 1 if char == '(' else -1
+        if balance < 0:
+            return False
+    return balance == 0",False,Assertion failed: 
+62,"    return [(i * x) for i, x in enumerate(xs)][1:]
+",True,All assertions passed,"return [(i * x) for i, x in enumerate(xs)][1:]",True,All assertions passed,"return [x * (i + 1) for i, x in enumerate(xs)][1:]",False,Assertion failed: ,"result = []
+for i, x in enumerate(xs):
+    if i != 0:
+        result.append(i * x)
+return result",True,All assertions passed,"return [x * i for i, x in enumerate(xs, start=1)][1:]",False,Assertion failed: ,"return [x * i for i, x in enumerate(xs)][1:]",True,All assertions passed
+63,"    if n == 0:
+        return 0
+    if n == 1:
+        return 0
+    if n == 2:
+        return 1
+    return fibfib(n - 1) + fibfib(n - 2) + fibfib(n - 3)
+",True,All assertions passed,"def fibfib(n):
+    if n == 0:
+        return 0
+    if n == 1:
+        return 0
+    if n == 2:
+        return 1
+    if n == 3:
+        return 1
+    return fibfib(n - 1) + fibfib(n - 2) + fibfib(n - 3)",False,Assertion failed: ,"def fibfib(n):
+    if n in (0, 1):
+        return 0
+    if n == 2:
+        return 1
+    return fibfib(n - 1) + fibfib(n - 2) + fibfib(n - 3)",False,Assertion failed: ,"def fibfib(n):
+    if n < 3:
+        return [0, 0, 1][n]
+    return fibfib(n - 1) + fibfib(n - 2) + fibfib(n - 3)",False,Assertion failed: ,"def fibfib(n):
+    fibfib_vals = [0, 0, 1]
+    for i in range(3, n + 1):
+        fibfib_vals.append(fibfib_vals[i - 1] + fibfib_vals[i - 2] + fibfib_vals[i - 3])
+    return fibfib_vals[n]",False,Assertion failed: ,"def fibfib(n):
+    a, b, c = 0, 0, 1
+    for _ in range(n):
+        a, b, c = b, c, a + b + c
+    return a",False,Assertion failed: 
+64,"    vowels = ""aeiouAEIOU""
+    n_vowels = sum(c in vowels for c in s)
+    if s[-1] == 'y' or s[-1] == 'Y':
+        n_vowels += 1
+    return n_vowels
+",True,All assertions passed,"vowels = ""aeiouAEIOU""
+n_vowels = sum(c in vowels for c in s)
+if s.endswith('y') or s.endswith('Y'):
+    n_vowels += 1
+return n_vowels",True,All assertions passed,"vowels = set(""aeiouAEIOU"")
+n_vowels = sum(c in vowels for c in s)
+if s[-1].lower() == 'y':
+    n_vowels += 1
+return n_vowels",True,All assertions passed,"vowels = ""aeiouAEIOU""
+n_vowels = sum(c in vowels for c in s)
+if s[-1] in ['y', 'Y']:
+    n_vowels += 1
+return n_vowels",True,All assertions passed,"vowels = ""aeiouAEIOU""
+n_vowels = sum(c.lower() in vowels for c in s)
+if s[-1] == 'y':
+    n_vowels += 1
+return n_vowels",False,Assertion failed: Test 5,"vowels = ""aeiouAEIOU""
+n_vowels = sum(c in vowels for c in s)
+if s[-1].lower() == 'y':
+    n_vowels += 1
+return n_vowels",True,All assertions passed
+65,"    s = str(x)
+    if shift > len(s):
+        return s[::-1]
+    else:
+        return s[len(s) - shift:] + s[:len(s) - shift]
+",True,All assertions passed,"s = str(x)
+    return s[-shift:] + s[:-shift] if shift < len(s) else s[::-1]",False,"Syntax error: unexpected indent (<string>, line 4)","s = str(x)
+    return s[len(s) - shift:] + s[:len(s) - shift] if shift < len(s) else s[::-1]",False,"Syntax error: unexpected indent (<string>, line 4)","s = str(x)
+    shift %= len(s)
+    return s[len(s) - shift:] + s[:len(s) - shift]",False,"Syntax error: unexpected indent (<string>, line 4)","s = str(x)
+    if shift >= len(s):
+        return s[::-1]
+    else:
+        return s[-shift:] + s[:-shift]",False,"Syntax error: unexpected indent (<string>, line 4)","s = str(x)
+    return s[-shift:] + s[:-shift] if shift < len(s) else s[::-1]",False,"Syntax error: unexpected indent (<string>, line 4)"
+66,"    if s == """": return 0
+    return sum(ord(char) if char.isupper() else 0 for char in s)
+",True,All assertions passed,"def count_uppercase(s):
+    return sum(1 for char in s if char.isupper())",False,Assertion failed: Error,"def uppercase_count(s):
+    return len([char for char in s if char.isupper()])",False,Assertion failed: Error,"def num_upper(s):
+    return sum(1 if char.isupper() else 0 for char in s)",False,Assertion failed: Error,"def count_upper(s):
+    return sum(1 for char in s if char.isupper() and char.isalpha())",False,Assertion failed: Error,"def uppercase_counter(s):
+    return len(list(filter(str.isupper, s)))",False,Assertion failed: Error
+67,"    lis = list()
+    for i in s.split(' '):
+        if i.isdigit():
+            lis.append(int(i))
+    return n - sum(lis)
+",True,All assertions passed,"def solve(s, n):
+    lis = [int(i) for i in s.split(' ') if i.isdigit()]
+    return n - sum(lis)",False,Assertion failed: ,"def solve(s, n):
+    lis = list(filter(str.isdigit, s.split(' ')))
+    lis = [int(i) for i in lis]
+    return n - sum(lis)",False,Assertion failed: ,"def solve(s, n):
+    lis = [int(i) for i in s.split(' ') if i.isnumeric()]
+    return n - sum(lis)",False,Assertion failed: ,"def solve(s, n):
+    lis = list(map(int, [i for i in s.split(' ') if i.isdigit()]))
+    return n - sum(lis)",False,Assertion failed: ,"def solve(s, n):
+    lis = list(filter(lambda x: x.isdigit(), s.split(' ')))
+    lis = list(map(int, lis))
+    return n - sum(lis)",False,Assertion failed: 
+68,"    if(len(arr) == 0): return []
+    evens = list(filter(lambda x: x%2 == 0, arr))
+    if(evens == []): return []
+    return [min(evens), arr.index(min(evens))]
+",True,All assertions passed,"def find_min_even(arr):
+        evens = [x for x in arr if x % 2 == 0]
+        if not evens:
+            return []
+        min_even = min(evens)
+        index = arr.index(min_even)
+        return [min_even, index]",False,Assertion failed: Error,"def find_min_even(arr):
+        return [min(x for x in arr if x % 2 == 0), arr.index(min(x for x in arr if x % 2 == 0))]",False,Assertion failed: Error,"def find_min_even(arr):
+        evens = list(filter(lambda x: x % 2 == 0, arr))
+        return [min(evens), arr.index(min(evens))] if evens else []",False,Assertion failed: Error,"def find_min_even(arr):
+        evens = [x for x in arr if x % 2 == 0]
+        return [] if not evens else [min(evens), arr.index(min(evens))]",False,Assertion failed: Error,"def find_min_even(arr):
+        if not arr:
+            return []
+        evens = [x for x in arr if x % 2 == 0]
+        return [] if not evens else [min(evens), arr.index(min(evens))]",False,Assertion failed: Error
+69,"    frq = [0] * (max(lst) + 1)
+    for i in lst:
+        frq[i] += 1;
+
+    ans = -1
+    for i in range(1, len(frq)):
+        if frq[i] >= i:
+            ans = i
+    
+    return ans
+",True,All assertions passed,"frq = Counter(lst)
+ans = -1
+for i in range(1, len(frq) + 1):
+    if frq[i] >= i:
+        ans = i
+return ans",False,Test error: name 'Counter' is not defined,"frq = [0] * (max(lst) + 1)
+for i in lst:
+    frq[i] += 1
+
+ans = -1
+for i in range(1, len(frq)):
+    if frq[i] >= i:
+        ans = i
+return ans",True,All assertions passed,"frq = defaultdict(int)
+for i in lst:
+    frq[i] += 1
+
+ans = -1
+for i in range(1, len(frq) + 1):
+    if frq[i] >= i:
+        ans = i
+return ans",False,Test error: name 'defaultdict' is not defined,"frq = [0] * (max(lst) + 1)
+for i in lst:
+    frq[i] += 1
+
+ans = -1
+for i in range(len(frq) - 1, 0, -1):
+    if frq[i] >= i:
+        ans = i
+return ans",False,Assertion failed: ,"frq = Counter(lst)
+ans = -1
+for i in range(1, len(frq) + 1):
+    if frq[i] >= i:
+        ans = i
+return ans",False,Test error: name 'Counter' is not defined
+70,"    res, switch = [], True
+    while lst:
+        res.append(min(lst) if switch else max(lst))
+        lst.remove(res[-1])
+        switch = not switch
+    return res
+",True,All assertions passed,"res = []
+for i in range(len(lst)):
+    if i % 2 == 0:
+        res.append(min(lst))
+    else:
+        res.append(max(lst))
+    lst.remove(res[-1])
+return res",True,All assertions passed,"res = []
+i = 0
+while lst:
+    if i % 2 == 0:
+        res.append(min(lst))
+    else:
+        res.append(max(lst))
+    lst.remove(res[-1])
+    i += 1
+return res",True,All assertions passed,"res = []
+switch = True
+while lst:
+    if switch:
+        res.append(min(lst))
+    else:
+        res.append(max(lst))
+    lst.remove(res[-1])
+    switch = not switch
+return res",True,All assertions passed,"res = []
+for value in lst:
+    if value in lst:
+        if lst.index(value) % 2 == 0:
+            res.append(min(lst))
+        else:
+            res.append(max(lst))
+        lst.remove(value)
+return res",False,Assertion failed: ,"res = []
+i = 0
+while lst:
+    if i % 2 == 0:
+        res.append(min(lst))
+    else:
+        res.append(max(lst))
+    lst.remove(res[-1])
+    i += 1
+return res",True,All assertions passed
+71,"    if a + b <= c or a + c <= b or b + c <= a:
+        return -1 
+    s = (a + b + c)/2    
+    area = (s * (s - a) * (s - b) * (s - c)) ** 0.5
+    area = round(area, 2)
+    return area
+",True,All assertions passed,"def triangle_area(a, b, c):
+    if a + b <= c or a + c <= b or b + c <= a:
+        return -1 
+    s = (a + b + c) / 2    
+    area = (s * (s - a) * (s - b) * (s - c)) ** 0.5
+    return round(area, 2)",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"from math import sqrt
+
+def calculate_triangle_area(a, b, c):
+    if a + b <= c or a + c <= b or b + c <= a:
+        return -1 
+    s = (a + b + c) / 2    
+    area = sqrt(s * (s - a) * (s - b) * (s - c))
+    return round(area, 2)",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"import math
+
+def find_triangle_area(a, b, c):
+    if a + b <= c or a + c <= b or b + c <= a:
+        return -1 
+    s = (a + b + c) / 2    
+    area = math.sqrt(s * (s - a) * (s - b) * (s - c))
+    return round(area, 2)",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"from math import pow
+
+def get_triangle_area(a, b, c):
+    if a + b <= c or a + c <= b or b + c <= a:
+        return -1 
+    s = (a + b + c) / 2    
+    area = pow(s * (s - a) * (s - b) * (s - c), 0.5)
+    return round(area, 2)",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"def compute_area(a, b, c):
+    if a + b <= c or a + c <= b or b + c <= a:
+        return -1 
+    s = (a + b + c) / 2    
+    area = (s * (s - a) * (s - b) * (s - c)) ** 0.5
+    return round(area, 2)",False,Assertion failed: This prints if this assert fails 1 (good for debugging!)
+72,"    if sum(q) > w:
+        return False
+
+    i, j = 0, len(q)-1
+    while i<j:
+        if q[i] != q[j]:
+            return False
+        i+=1
+        j-=1
+    return True
+",True,All assertions passed,"def is_symmetric(q, w):
+    if sum(q) > w:
+        return False
+    n = len(q)
+    for i in range(n // 2):
+        if q[i] != q[n - i - 1]:
+            return False
+    return True",False,Assertion failed: ,"def is_symmetric(q, w):
+    if sum(q) > w:
+        return False
+    return all(q[i] == q[-i-1] for i in range(len(q) // 2))",False,Assertion failed: ,"def is_symmetric(q, w):
+    if sum(q) > w:
+        return False
+    i, j = 0, len(q) - 1
+    while i < j:
+        if q[i] != q[j]:
+            return False
+        i += 1
+        j -= 1
+    return True",False,Assertion failed: ,"def is_symmetric(q, w):
+    if sum(q) > w:
+        return False
+    mid = len(q) // 2
+    return q[:mid] == q[:mid-1:-1]",False,Assertion failed: ,"def check_palindrome(q, w):
+    if sum(q) > w:
+        return False
+
+    for i in range(len(q)//2):
+        if q[i] != q[-(i+1)]:
+            return False
+    return True",False,Assertion failed: 
+73,"    ans = 0
+    for i in range(len(arr) // 2):
+        if arr[i] != arr[len(arr) - i - 1]:
+            ans += 1
+    return ans
+",True,All assertions passed,"def count_mismatches(arr):
+    return sum(1 for i in range(len(arr) // 2) if arr[i] != arr[-i-1])
+return count_mismatches(arr)",True,All assertions passed,"ans = 0
+for i in range(len(arr) // 2):
+    if arr[i] != arr[len(arr) - i - 1]:
+        ans += 1
+return ans",True,All assertions passed,"def get_mismatch_count(arr):
+    mismatch_count = 0
+    for i in range(len(arr) // 2):
+        if arr[i] != arr[-i-1]:
+            mismatch_count += 1
+    return mismatch_count
+return get_mismatch_count(arr)",True,All assertions passed,"ans = len([i for i in range(len(arr) // 2) if arr[i] != arr[-i-1]])
+return ans",True,All assertions passed,"ans = 0
+for i in range(len(arr) // 2):
+    if arr[i] != arr[-(i+1)]:
+        ans += 1
+return ans",True,All assertions passed
+74,"    l1 = 0
+    for st in lst1:
+        l1 += len(st)
+    
+    l2 = 0
+    for st in lst2:
+        l2 += len(st)
+    
+    if l1 <= l2:
+        return lst1
+    else:
+        return lst2
+",True,All assertions passed,"l1 = sum(len(st) for st in lst1)
+l2 = sum(len(st) for st in lst2)
+
+if l1 <= l2:
+    return lst1
+else:
+    return lst2",True,All assertions passed,"total_length = lambda l: sum(len(st) for st in l)
+if total_length(lst1) <= total_length(lst2):
+    return lst1
+else:
+    return lst2",True,All assertions passed,"l1, l2 = sum(len(st) for st in lst1), sum(len(st) for st in lst2)
+if l1 <= l2:
+    return lst1
+else:
+    return lst2",True,All assertions passed,"lengths = lambda l: [len(st) for st in l]
+if sum(lengths(lst1)) <= sum(lengths(lst2)):
+    return lst1
+else:
+    return lst2",True,All assertions passed,"l1 = sum(map(len, lst1))
+l2 = sum(map(len, lst2))
+
+if l1 <= l2:
+    return lst1
+else:
+    return lst2",True,All assertions passed
+75,"    def is_prime(n):
+        for j in range(2,n):
+            if n%j == 0:
+                return False
+        return True
+
+    for i in range(2,101):
+        if not is_prime(i): continue
+        for j in range(2,101):
+            if not is_prime(j): continue
+            for k in range(2,101):
+                if not is_prime(k): continue
+                if i*j*k == a: return True
+    return False
+",True,All assertions passed,"def is_prime(n):
+    if n <= 1:
+        return False
+    if n <= 3:
+        return True
+    if n % 2 == 0 or n % 3 == 0:
+        return False
+    i = 5
+    while i * i <= n:
+        if n % i == 0 or n % (i + 2) == 0:
+            return False
+        i += 6
+    return True
+
+for i in range(2, 101):
+    if not is_prime(i):
+        continue
+    for j in range(2, 101):
+        if not is_prime(j):
+            continue
+        for k in range(2, 101):
+            if not is_prime(k):
+                continue
+            if i * j * k == a:
+                return True
+return False",True,All assertions passed,"def is_prime(n):
+    return n > 1 and all(n % i != 0 for i in range(2, int(n**0.5) + 1))
+
+for i in range(2, 101):
+    if not is_prime(i):
+        continue
+    for j in range(2, 101):
+        if not is_prime(j):
+            continue
+        for k in range(2, 101):
+            if not is_prime(k):
+                continue
+            if i * j * k == a:
+                return True
+return False",True,All assertions passed,"def is_prime(n):
+    if n <= 1:
+        return False
+    if n <= 3:
+        return True
+    if n % 2 == 0 or n % 3 == 0:
+        return False
+    i = 5
+    while i * i <= n:
+        if n % i == 0 or n % (i + 2) == 0:
+            return False
+        i += 6
+    return True
+
+def find_product(a):
+    for i in range(2, 101):
+        if not is_prime(i):
+            continue
+        for j in range(2, 101):
+            if not is_prime(j):
+                continue
+            for k in range(2, 101):
+                if not is_prime(k):
+                    continue
+                if i * j * k == a:
+                    return True
+    return False
+
+result = find_product(a)",False,Assertion failed: ,"def is_prime(n):
+    if n <= 1:
+        return False
+    if n <= 3:
+        return True
+    if n % 2 == 0 or n % 3 == 0:
+        return False
+    i = 5
+    while i * i <= n:
+        if n % i == 0 or n % (i + 2) == 0:
+            return False
+        i += 6
+    return True
+
+def find_product(a):
+    primes = [i for i in range(2, 101) if is_prime(i)]
+    for i in primes:
+        for j in primes:
+            for k in primes:
+                if i * j * k == a:
+                    return True
+    return False
+
+result = find_product(a)",False,Assertion failed: ,"def is_prime(n):
+    if n <= 1:
+        return False
+    if n <= 3:
+        return True
+    if n % 2 == 0 or n % 3 == 0:
+        return False
+    i = 5
+    while i * i <= n:
+        if n % i == 0 or n % (i + 2) == 0:
+            return False
+        i += 6
+    return True
+
+def find_product(a):
+    primes = [i for i in range(2, 101) if is_prime(i)]
+    for i in range(len(primes)):
+        for j in range(i, len(primes)):
+            for k in range(j, len(primes)):
+                if primes[i] * primes[j] * primes[k] == a:
+                    return True
+    return False
+
+result = find_product(a)",False,Assertion failed: 
+76,"    if (n == 1): 
+        return (x == 1) 
+    power = 1
+    while (power < x): 
+        power = power * n 
+    return (power == x) 
+",True,All assertions passed,"def is_power_of_n(n, x):
+    if n == 1:
+        return x == 1
+    power = n
+    while power < x:
+        power *= n
+    return power == x",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"def is_power_of_n(n, x):
+    if n == 1:
+        return x == 1
+    power = n
+    while power < x:
+        power <<= 1
+    return power == x",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"def is_power_of_n(n, x):
+    if n == 1:
+        return x == 1
+    power = 1
+    while power <= x:
+        if power == x:
+            return True
+        power *= n
+    return False",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"def is_power_of_n(n, x):
+    if n == 1:
+        return x == 1
+    power = n
+    while power <= x:
+        power *= n
+    return power == x and power != x",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"def is_power_of_n(n, x):
+    if n == 1:
+        return x == 1
+    return x in {n**i for i in range(1, int(x**0.5) + 1)}",False,Assertion failed: This prints if this assert fails 1 (good for debugging!)
+77,"    a = abs(a)
+    return int(round(a ** (1. / 3))) ** 3 == a
+",True,All assertions passed,"a = abs(a)
+return round(a ** (1. / 3)) ** 3 == a",True,All assertions passed,"a = abs(a)
+cbrt = a ** (1. / 3)
+return round(cbrt) ** 3 == a",True,All assertions passed,"a = abs(a)
+cbrt = a ** (1. / 3)
+return int(round(cbrt)) ** 3 == a",True,All assertions passed,"a = abs(a)
+cbrt = a ** (1. / 3)
+if cbrt == int(cbrt):
+    return True
+return False",False,Assertion failed: Fourth test error: False,"a = abs(a)
+cbrt = round(a ** (1. / 3))
+return cbrt ** 3 == a",True,All assertions passed
+78,"    primes = ('2', '3', '5', '7', 'B', 'D')
+    total = 0
+    for i in range(0, len(num)):
+        if num[i] in primes:
+            total += 1
+    return total
+",True,All assertions passed,"primes = {'2', '3', '5', '7', 'B', 'D'}
+total = sum(1 for digit in num if digit in primes)
+return total",True,All assertions passed,"primes = {'2', '3', '5', '7', 'B', 'D'}
+total = 0
+for digit in num:
+    if digit in primes:
+        total += 1
+return total",True,All assertions passed,"primes = {'2', '3', '5', '7', 'B', 'D'}
+total = sum(map(lambda x: 1 if x in primes else 0, num))
+return total",True,All assertions passed,"primes = {'2', '3', '5', '7', 'B', 'D'}
+total = len([digit for digit in num if digit in primes])
+return total",True,All assertions passed,"primes = set('2357BD')
+total = sum(1 for char in num if char in primes)
+return total",True,All assertions passed
+79,"    return ""db"" + bin(decimal)[2:] + ""db""
+",True,All assertions passed,"def convert_to_binary(decimal):
+    return ""db"" + format(decimal, ""b"") + ""db""",False,Assertion failed: ,"def convert_to_binary(decimal):
+    return ""db"" + ""{:b}"".format(decimal) + ""db""",False,Assertion failed: ,"def convert_to_binary(decimal):
+    binary = """"
+    while decimal > 0:
+        binary = str(decimal % 2) + binary
+        decimal //= 2
+    return ""db"" + binary + ""db""",False,Assertion failed: ,"def convert_to_binary(decimal):
+    return ""db"" + """".join(format(decimal, ""b"")) + ""db""",False,Assertion failed: ,"def convert_to_binary(decimal):
+    return ""db"" + str(bin(decimal)[2:]) + ""db""",False,Assertion failed: 
+80,"    if len(s) < 3:
+      return False
+
+    for i in range(len(s) - 2):
+      
+      if s[i] == s[i+1] or s[i+1] == s[i+2] or s[i] == s[i+2]:
+        return False
+    return True
+",True,All assertions passed,"if len(s) < 3:
+    return False
+
+for i in range(len(s) - 1):
+    if s[i] == s[i + 1]:
+        return False
+return True",False,Assertion failed: iopaxioi,"if len(s) < 3:
+    return False
+
+return not any(s[i] == s[i + 1] or s[i + 1] == s[i + 2] or s[i] == s[i + 2] for i in range(len(s) - 2))",True,All assertions passed,"def check(s):
+    if len(s) < 3:
+        return False
+
+    for i in range(len(s) - 2):
+        if s[i] in [s[i + 1], s[i + 2]]:
+            return False
+    return True",False,Assertion failed: a,"def check(s):
+    if len(s) < 3:
+        return False
+
+    for i in range(len(s) - 2):
+        if s[i] == s[i + 1] or s[i + 1] == s[i + 2] or s[i] == s[i + 2]:
+            return False
+    return True",False,Assertion failed: a,"def check(s):
+    if len(s) < 3:
+        return False
+
+    for i in range(len(s) - 2):
+        if s[i] == s[i + 1] or s[i + 1] == s[i + 2]:
+            return False
+    return s[0] != s[-1]",False,Assertion failed: a
+81,"
+   
+    letter_grade = []
+    for gpa in grades:
+        if gpa == 4.0:
+            letter_grade.append(""A+"")
+        elif gpa > 3.7:
+            letter_grade.append(""A"")
+        elif gpa > 3.3:
+            letter_grade.append(""A-"")
+        elif gpa > 3.0:
+            letter_grade.append(""B+"")
+        elif gpa > 2.7:
+            letter_grade.append(""B"")
+        elif gpa > 2.3:
+            letter_grade.append(""B-"")
+        elif gpa > 2.0:
+            letter_grade.append(""C+"")
+        elif gpa > 1.7:
+            letter_grade.append(""C"")
+        elif gpa > 1.3:
+            letter_grade.append(""C-"")
+        elif gpa > 1.0:
+            letter_grade.append(""D+"")
+        elif gpa > 0.7:
+            letter_grade.append(""D"")
+        elif gpa > 0.0:
+            letter_grade.append(""D-"")
+        else:
+            letter_grade.append(""E"")
+    return letter_grade
+",True,All assertions passed,"letter_grade = [grade_map[gpa] for gpa in grades]
+grade_map = {
+    4.0: ""A+"",
+    (3.8, 4.0): ""A"",
+    (3.4, 3.8): ""A-"",
+    (3.1, 3.4): ""B+"",
+    (2.8, 3.1): ""B"",
+    (2.4, 2.8): ""B-"",
+    (2.1, 2.4): ""C+"",
+    (1.8, 2.1): ""C"",
+    (1.4, 1.8): ""C-"",
+    (1.1, 1.4): ""D+"",
+    (0.8, 1.1): ""D"",
+    (0.0, 0.8): ""D-"",
+    -1: ""E""
+}",False,Test error: cannot access free variable 'grade_map' where it is not associated with a value in enclosing scope,"letter_grade = list(map(lambda gpa: ""A+"" if gpa == 4.0 else 
+                      ""A"" if gpa > 3.7 else 
+                      ""A-"" if gpa > 3.3 else 
+                      ""B+"" if gpa > 3.0 else 
+                      ""B"" if gpa > 2.7 else 
+                      ""B-"" if gpa > 2.3 else 
+                      ""C+"" if gpa > 2.0 else 
+                      ""C"" if gpa > 1.7 else 
+                      ""C-"" if gpa > 1.3 else 
+                      ""D+"" if gpa > 1.0 else 
+                      ""D"" if gpa > 0.7 else 
+                      ""D-"" if gpa > 0.0 else ""E"", grades))",False,Assertion failed: ,"letter_grade = [next((k for k, v in grade_scale if gpa >= v), ""E"") for gpa in grades]
+grade_scale = [
+    (4.0, ""A+""),
+    (3.8, ""A""),
+    (3.4, ""A-""),
+    (3.1, ""B+""),
+    (2.8, ""B""),
+    (2.4, ""B-""),
+    (2.1, ""C+""),
+    (1.8, ""C""),
+    (1.4, ""C-""),
+    (1.1, ""D+""),
+    (0.8, ""D""),
+    (0.0, ""D-"")
+]",False,Test error: cannot access free variable 'grade_scale' where it is not associated with a value in enclosing scope,"letter_grade = [grade for gpa in grades for grade in [""A+"", ""A"", ""A-"", ""B+"", ""B"", ""B-"", ""C+"", ""C"", ""C-"", ""D+"", ""D"", ""D-"", ""E""] if gpa >= grade_scale[grade]]
+grade_scale = {
+    ""A+"": 4.0,
+    ""A"": 3.8,
+    ""A-"": 3.4,
+    ""B+"": 3.1,
+    ""B"": 2.8,
+    ""B-"": 2.4,
+    ""C+"": 2.1,
+    ""C"": 1.8,
+    ""C-"": 1.4,
+    ""D+"": 1.1,
+    ""D"": 0.8,
+    ""D-"": 0.0,
+    ""E"": -1
+}",False,Test error: cannot access free variable 'grade_scale' where it is not associated with a value in enclosing scope,"letter_grade = [next((v for k, v in grade_dict.items() if k >= gpa), ""E"") for gpa in grades]
+grade_dict = {4.0: ""A+"", 3.75: ""A"", 3.5: ""A-"", 3.25: ""B+"", 3.0: ""B"", 2.75: ""B-"", 2.5: ""C+"", 2.25: ""C"", 2.0: ""C-"", 1.75: ""D+"", 1.5: ""D"", 1.25: ""D-"", 1.0: ""E""}",False,Test error: cannot access free variable 'grade_dict' where it is not associated with a value in enclosing scope
+82,"    l = len(string)
+    if l == 0 or l == 1:
+        return False
+    for i in range(2, l):
+        if l % i == 0:
+            return False
+    return True
+",True,All assertions passed,"def is_prime(string): l = len(string) if l < 2: return False for i in range(2, int(l**0.5) + 1): if l % i == 0: return False return True",False,"Syntax error: invalid syntax (<string>, line 3)","def is_prime(string): l = len(string) return l > 1 and all(l % i != 0 for i in range(2, l))",False,"Syntax error: invalid syntax (<string>, line 3)",from sympy import isprime def is_prime(string): return isprime(len(string)),False,"Syntax error: invalid syntax (<string>, line 3)","def is_prime(string): l = len(string) if l < 2: return False for i in range(2, l): if l % i == 0: return False return True",False,"Syntax error: invalid syntax (<string>, line 3)","def is_prime(string): l = len(string) if l < 2: return False for i in range(2, l): if l % i == 0: return False return True",False,"Syntax error: invalid syntax (<string>, line 3)"
+83,"    if n == 1: return 1
+    return 18 * (10 ** (n - 2))
+",True,All assertions passed,"def calculate_number(n):
+    if n == 1: return 1
+    return 18 * (10 ** (n - 2))",False,Assertion failed: ,"def calculate_number(n):
+    return 18 * 10 ** (n - 2) if n > 1 else 1",False,Assertion failed: ,"def calculate_number(n):
+    return 18 * (10 ** (n - 2)) if n != 1 else 1",False,Assertion failed: ,"def calculate_number(n):
+    return 1 if n == 1 else 18 * (10 ** (n - 2))",False,Assertion failed: ,"def calculate_number(n):
+    if n == 1: 
+        return 1
+    else:
+        return 18 * (10 ** (n - 2))",False,Assertion failed: 
+84,"    return bin(sum(int(i) for i in str(N)))[2:]
+",True,All assertions passed,"def sum_of_digits_to_binary(N):
+    return bin(sum(map(int, str(N))))[2:]",False,Assertion failed: Error,"def sum_of_digits_to_binary(N):
+    total = 0
+    for char in str(N):
+        total += int(char)
+    return bin(total)[2:]",False,Assertion failed: Error,"def sum_of_digits_to_binary(N):
+    digits = [int(d) for d in str(N)]
+    binary_sum = bin(sum(digits))[2:]
+    return binary_sum",False,Assertion failed: Error,"def sum_of_digits_to_binary(N):
+    digit_sum = sum(int(i) for i in str(N))
+    return format(digit_sum, 'b')",False,Assertion failed: Error,"def sum_of_digits_to_binary(N):
+    digit_sum = sum(map(int, str(N)))
+    return ""{:b}"".format(digit_sum)",False,Assertion failed: Error
+85,"    return sum([lst[i] for i in range(1, len(lst), 2) if lst[i]%2 == 0])
+",True,All assertions passed,"return sum(x for i, x in enumerate(lst) if i % 2 == 1 and x % 2 == 0)",True,All assertions passed,"total = 0
+for i in range(1, len(lst), 2):
+    if lst[i] % 2 == 0:
+        total += lst[i]
+return total",True,All assertions passed,"return sum(filter(lambda x: x % 2 == 0, [lst[i] for i in range(1, len(lst), 2)]))",True,All assertions passed,"return sum(lst[i] for i in range(1, len(lst), 2)) if all(lst[i] % 2 == 0 for i in range(1, len(lst), 2)) else 0",False,Assertion failed: ,"total = 0
+for i in range(1, len(lst)):
+    if i % 2 != 0 and lst[i] % 2 == 0:
+        total += lst[i]
+return total",True,All assertions passed
+86,"    return ' '.join([''.join(sorted(list(i))) for i in s.split(' ')])
+",True,All assertions passed,return ' '.join([''.join(sorted(i)) for i in s.split(' ')]),True,All assertions passed,return ' '.join(''.join(sorted(i)) for i in s.split(' ')),True,All assertions passed,return ' '.join(''.join(sorted(list(w))) for w in s.split(' ')),True,All assertions passed,return ' '.join([''.join(sorted(w)) for w in s.split(' ')]),True,All assertions passed,return ' '.join(''.join(sorted(list(word))) for word in s.split(' ')),True,All assertions passed
+87,"    coords = [(i, j) for i in range(len(lst)) for j in range(len(lst[i])) if lst[i][j] == x]
+    return sorted(sorted(coords, key=lambda x: x[1], reverse=True), key=lambda x: x[0])
+",True,All assertions passed,"coords = [(i, j) for i in range(len(lst)) for j in range(len(lst[i])) if lst[i][j] == x]
+coords.sort(key=lambda x: (x[0], -x[1]))
+return coords",True,All assertions passed,"coords = [(i, j) for i, row in enumerate(lst) for j, value in enumerate(row) if value == x]
+coords.sort(key=lambda x: (-x[0], x[1]))
+return coords",False,Assertion failed: ,"coords = []
+for i in range(len(lst)):
+    for j in range(len(lst[i])):
+        if lst[i][j] == x:
+            coords.append((i, j))
+coords.sort(key=lambda x: (-x[0], x[1]))
+return coords",False,Assertion failed: ,"coords = [(i, j) for i, row in enumerate(lst) for j, value in enumerate(row) if value == x]
+coords.sort(key=lambda x: (-x[0], -x[1]))
+return coords",False,Assertion failed: ,"coords = [(i, j) for i in range(len(lst)) for j in range(len(lst[i])) if lst[i][j] == x]
+coords.sort(key=lambda x: (x[1], x[0]))
+return coords",False,Assertion failed: 
+88,"    return [] if len(array) == 0 else sorted(array, reverse= (array[0]+array[-1]) % 2 == 0) 
+",True,All assertions passed,"def sort_array(array):
+    return [] if len(array) == 0 else sorted(array, reverse=(array[0] + array[-1]) % 2 == 0)",False,Assertion failed: Error,"def sort_array(array):
+    return array if not array else sorted(array, reverse=(array[0] + array[-1]) % 2 == 0)",False,Assertion failed: Error,"def sort_array(array):
+    if len(array) == 0:
+        return []
+    return sorted(array, reverse=(array[0] + array[-1]) % 2 == 0)",False,Assertion failed: Error,"def sort_array(array):
+    if not array:
+        return []
+    return sorted(array, reverse=(array[0] + array[-1]) % 2 == 0)",False,Assertion failed: Error,"def sort_array(array):
+    return sorted(array, key=lambda x: x, reverse=(array[0] + array[-1]) % 2 == 0) if array else []",False,Assertion failed: Error
+89,"    d = 'abcdefghijklmnopqrstuvwxyz'
+    out = ''
+    for c in s:
+        if c in d:
+            out += d[(d.index(c)+2*2) % 26]
+        else:
+            out += c
+    return out
+",True,All assertions passed,"d = 'abcdefghijklmnopqrstuvwxyz'
+out = ''
+for c in s:
+    if c in d:
+        out += d[(d.index(c)+4) % 26]
+    else:
+        out += c
+out",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"d = 'abcdefghijklmnopqrstuvwxyz'
+out = ''
+for c in s:
+    if c in d:
+        out += d[(d.index(c)+6) % 26]
+    else:
+        out += c
+out",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"d = 'abcdefghijklmnopqrstuvwxyz'
+out = ''
+for c in s:
+    if c in d:
+        out += d[(d.index(c)+8) % 26]
+    else:
+        out += c
+out",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"d = 'abcdefghijklmnopqrstuvwxyz'
+out = ''
+for c in s:
+    if c in d:
+        out += d[(d.index(c)+10) % 26]
+    else:
+        out += c
+out",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"d = 'abcdefghijklmnopqrstuvwxyz'
+out = ''
+for c in s:
+    if c in d:
+        out += d[(d.index(c)+12) % 26]
+    else:
+        out += c
+out",False,Assertion failed: This prints if this assert fails 1 (good for debugging!)
+90,"    lst = sorted(set(lst))
+    return None if len(lst) < 2 else lst[1]
+",True,All assertions passed,"lst = sorted(set(lst))
+if len(lst) < 2:
+    return None
+else:
+    return lst[1]",True,All assertions passed,"lst = sorted(set(lst))
+if len(lst) < 2:
+    return None
+return lst[1]",True,All assertions passed,"lst = sorted(set(lst))
+if len(lst) < 2:
+    return None
+second_smallest = None
+for num in lst:
+    if second_smallest is None or num < second_smallest:
+        second_smallest = num
+return second_smallest",False,Assertion failed: ,"lst = sorted(set(lst))
+if len(lst) < 2:
+    return None
+return lst[1] if len(lst) > 1 else None",True,All assertions passed,"lst = sorted(set(lst))
+if len(lst) < 2:
+    return None
+return lst[1] if len(lst) >= 2 else None",True,All assertions passed
+91,"    import re
+    sentences = re.split(r'[.?!]\s*', S)
+    return sum(sentence[0:2] == 'I ' for sentence in sentences)
+",True,All assertions passed,"import re
+sentences = re.split(r'[.?!]\s*', S)
+return sum(sentence.startswith('I ') for sentence in sentences)",True,All assertions passed,"import re
+sentences = re.split(r'[.?!]\s*', S)
+return sum(sentence[:2] == 'I ' for sentence in sentences)",True,All assertions passed,"import re
+sentences = re.split(r'[.?!]\s*', S)
+return sum(sentence.lstrip().startswith('I ') for sentence in sentences)",True,All assertions passed,"import re
+sentences = re.split(r'[.?!]\s*', S)
+return sum(sentence.strip().startswith('I ') for sentence in sentences)",True,All assertions passed,"import re
+sentences = re.split(r'[.?!]\s*', S)
+return sum(sentence[2:4] == ' I' for sentence in sentences)",False,Assertion failed: Test 3
+92,"    
+    if isinstance(x,int) and isinstance(y,int) and isinstance(z,int):
+        if (x+y==z) or (x+z==y) or (y+z==x):
+            return True
+        return False
+    return False
+",True,All assertions passed,"def is_triangle(x, y, z):
+    if isinstance(x, int) and isinstance(y, int) and isinstance(z, int):
+        return (x + y > z) and (x + z > y) and (y + z > x)",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"def is_triangle(x, y, z):
+    if isinstance(x, int) and isinstance(y, int) and isinstance(z, int):
+        sides = sorted([x, y, z])
+        return sides[0] + sides[1] > sides[2]",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"def is_triangle(x, y, z):
+    if isinstance(x, int) and isinstance(y, int) and isinstance(z, int):
+        return abs(x - y) < z < x + y",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"def is_triangle(x, y, z):
+    if isinstance(x, int) and isinstance(y, int) and isinstance(z, int):
+        return (x + y) ** 2 > (x - y) ** 2 and (x + z) ** 2 > (x - z) ** 2 and (y + z) ** 2 > (y - z) ** 2",False,Assertion failed: This prints if this assert fails 1 (good for debugging!),"def is_triangle(x, y, z):
+    if isinstance(x, int) and isinstance(y, int) and isinstance(z, int):
+        return (x + y) * (x + z) * (y + z) > 0",False,Assertion failed: This prints if this assert fails 1 (good for debugging!)
+93,"    vowels = ""aeiouAEIOU""
+    vowels_replace = dict([(i, chr(ord(i) + 2)) for i in vowels])
+    message = message.swapcase()
+    return ''.join([vowels_replace[i] if i in vowels else i for i in message])
+",True,All assertions passed,"vowels = ""aeiouAEIOU""
+message = message.swapcase()
+return ''.join([chr(ord(i) + 2) if i in vowels else i for i in message])",True,All assertions passed,"vowels = ""aeiouAEIOU""
+message = message.swapcase()
+vowels_replace = {i: chr(ord(i) + 2) for i in vowels}
+return ''.join([vowels_replace.get(i, i) for i in message])",True,All assertions passed,"vowels = set(""aeiouAEIOU"")
+message = message.swapcase()
+return ''.join([chr(ord(i) + 2) if i in vowels else i for i in message])",True,All assertions passed,"vowels = ""aeiouAEIOU""
+message = message.swapcase()
+vowels_replace = dict(zip(vowels, [chr(ord(i) + 2) for i in vowels]))
+return ''.join([vowels_replace.get(i, i) for i in message])",True,All assertions passed,"vowels = ""aeiouAEIOU""
+message = message.swapcase()
+vowels_replace = {i: chr(ord(i) + 2) for i in vowels}
+return ''.join([vowels_replace[i] if i in vowels_replace else i for i in message])",True,All assertions passed
+94,"    def isPrime(n):
+        for i in range(2,int(n**0.5)+1):
+            if n%i==0:
+                return False
+
+        return True
+    maxx = 0
+    i = 0
+    while i < len(lst):
+        if(lst[i] > maxx and isPrime(lst[i])):
+            maxx = lst[i]
+        i+=1
+    result = sum(int(digit) for digit in str(maxx))
+    return result
+
+",True,All assertions passed,"def is_prime(n):
+    if n <= 1:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+maxx = 0
+for num in lst:
+    if num > maxx and is_prime(num):
+        maxx = num
+result = sum(int(digit) for digit in str(maxx))
+return result",True,All assertions passed,"def is_prime(n):
+    return all(n % i != 0 for i in range(2, int(n**0.5) + 1))
+
+maxx = max(filter(is_prime, lst), default=0)
+result = sum(int(digit) for digit in str(maxx))
+return result",True,All assertions passed,"def is_prime(n):
+    if n < 2:
+        return False
+    return all(n % i != 0 for i in range(2, int(n**0.5) + 1))
+
+maxx = max((num for num in lst if num > 1 and is_prime(num)), default=0)
+result = sum(int(digit) for digit in str(maxx))
+return result",True,All assertions passed,"def is_prime(n):
+    if n <= 1:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+max_prime = max((num for num in lst if is_prime(num)), default=0)
+result = sum(int(digit) for digit in str(max_prime))
+return result",True,All assertions passed,"def is_prime(n):
+    if n <= 1:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+max_prime = max(lst, key=lambda num: (is_prime(num), num), default=0)
+result = sum(int(digit) for digit in str(max_prime))
+return result",True,All assertions passed
+95,"    if len(dict.keys()) == 0:
+        return False
+    else:
+        state = ""start""
+        for key in dict.keys():
+
+            if isinstance(key, str) == False:
+                state = ""mixed""
+                break
+            if state == ""start"":
+                if key.isupper():
+                    state = ""upper""
+                elif key.islower():
+                    state = ""lower""
+                else:
+                    break
+            elif (state == ""upper"" and not key.isupper()) or (state == ""lower"" and not key.islower()):
+                    state = ""mixed""
+                    break
+            else:
+                break
+        return state == ""upper"" or state == ""lower"" 
+",True,All assertions passed,"def check_dict(input_dict):
+    if not input_dict:
+        return False
+    state = ""start""
+    for key in input_dict.keys():
+        if not isinstance(key, str):
+            return False
+        if state == ""start"":
+            if key.isupper():
+                state = ""upper""
+            elif key.islower():
+                state = ""lower""
+            else:
+                return False
+        elif state != ""mixed"" and (state == ""upper"" and not key.isupper()) or (state == ""lower"" and not key.islower()):
+            return False
+    return state in [""upper"", ""lower""]",False,Assertion failed: First test error: None,"def check_dict(d):
+    if len(d) == 0:
+        return False
+    state = ""start""
+    for k in d:
+        if not isinstance(k, str):
+            return False
+        if state == ""start"":
+            if k.isupper():
+                state = ""upper""
+            elif k.islower():
+                state = ""lower""
+            else:
+                return False
+        elif (state == ""upper"" and not k.isupper()) or (state == ""lower"" and not k.islower()):
+            state = ""mixed""
+            break
+    return state == ""upper"" or state == ""lower""",False,Assertion failed: First test error: None,"def check_dict(dictionary):
+    if not dictionary:
+        return False
+    state = ""start""
+    for key in dictionary:
+        if not isinstance(key, str):
+            return False
+        if state == ""start"":
+            if key.isupper():
+                state = ""upper""
+            elif key.islower():
+                state = ""lower""
+            else:
+                break
+        elif (state == ""upper"" and not key.isupper()) or (state == ""lower"" and not key.islower()):
+            state = ""mixed""
+            break
+    return state == ""upper"" or state == ""lower""",False,Assertion failed: First test error: None,"def check_dict(my_dict):
+    if len(my_dict) == 0:
+        return False
+    state = ""start""
+    for k in my_dict:
+        if not isinstance(k, str):
+            return False
+        if state == ""start"":
+            if k.isupper():
+                state = ""upper""
+            elif k.islower():
+                state = ""lower""
+            else:
+                break
+        elif (state == ""upper"" and not k.isupper()) or (state == ""lower"" and not k.islower()):
+            state = ""mixed""
+            break
+    return state in [""upper"", ""lower""]",False,Assertion failed: First test error: None,"def check_dict(dict):
+    if not dict:
+        return False
+    if not all(isinstance(key, str) for key in dict):
+        return False
+    if not all(key.isalpha() for key in dict):
+        return False
+    if not all(key.islower() for key in dict):
+        return True
+    if not all(key.isupper() for key in dict):
+        return True
+    return False",False,Assertion failed: First test error: None
+96,"    primes = []
+    for i in range(2, n):
+        is_prime = True
+        for j in range(2, i):
+            if i % j == 0:
+                is_prime = False
+                break
+        if is_prime:
+            primes.append(i)
+    return primes
+
+",True,All assertions passed,"primes = [i for i in range(2, n) if all(i % j != 0 for j in range(2, i))]",False,Assertion failed: ,"def is_prime(num):
+    return all(num % i != 0 for i in range(2, int(num**0.5) + 1))
+primes = [i for i in range(2, n) if is_prime(i)]",False,Assertion failed: ,"primes = []
+for i in range(2, n):
+    if all(i % j != 0 for j in range(2, int(i**0.5) + 1)):
+        primes.append(i)",False,Assertion failed: ,"def sieve_of_eratosthenes(n):
+    primes = [True for _ in range(n)]
+    p = 2
+    while p * p < n:
+        if primes[p]:
+            for i in range(p * p, n, p):
+                primes[i] = False
+        p += 1
+    return [p for p in range(2, n) if primes[p]]",False,Assertion failed: ,"primes = []
+for i in range(2, n):
+    if i > 2 and i % 2 == 0:
+        continue
+    if all(i % j != 0 for j in range(3, int(i**0.5) + 1, 2)):
+        primes.append(i)",False,Assertion failed: 
+97,"    return abs(a % 10) * abs(b % 10)
+",True,All assertions passed,"def multiply_last_digits(a, b): return (a % 10) * (b % 10)",False,Assertion failed: First test error: None,"def multiply_last_digits(a, b): return abs(a) % 10 * abs(b) % 10",False,Assertion failed: First test error: None,"def multiply_last_digits(a, b): return (int(a) % 10) * (int(b) % 10)",False,Assertion failed: First test error: None,"def multiply_last_digits(a, b): return abs(a % 10) * abs(b % 10) if a > 0 and b > 0 else (-a % 10) * (-b % 10)",False,Assertion failed: First test error: None,"def multiply_last_digits(a, b): return (a if a >= 0 else -a) % 10 * (b if b >= 0 else -b) % 10",False,Assertion failed: First test error: None
+98,"    count = 0
+    for i in range(0,len(s),2):
+        if s[i] in ""AEIOU"":
+            count += 1
+    return count
+",True,All assertions passed,"count = sum(1 for i in range(0, len(s), 2) if s[i] in ""AEIOU"")
+return count",True,All assertions passed,"count = len([i for i in range(0, len(s), 2) if s[i] in ""AEIOU""])
+return count",True,All assertions passed,"count = 0
+for i in range(0, len(s), 2):
+    if s[i].upper() in ""AEIOU"":
+        count += 1
+return count",False,Assertion failed: ,"count = sum(1 for i in range(0, len(s), 2) if s[i].upper() in ""AEIOU"")
+return count",False,Assertion failed: ,"count = 0
+for i in range(len(s)):
+    if s[i] in ""AEIOUaeiou"":
+        count += 1
+return count",False,Assertion failed: 
+99,"    from math import floor, ceil
+
+    if value.count('.') == 1:
+        # remove trailing zeros
+        while (value[-1] == '0'):
+            value = value[:-1]
+
+    num = float(value)
+    if value[-2:] == '.5':
+        if num > 0:
+            res = ceil(num)
+        else:
+            res = floor(num)
+    elif len(value) > 0:
+        res = int(round(num))
+    else:
+        res = 0
+
+    return res
+
+",True,All assertions passed,"from math import floor, ceil
+
+def convert_to_int(value):
+    if value.count('.') == 1:
+        value = value.rstrip('0').rstrip('.') if value.endswith('0') else value
+    num = float(value)
+    if value.endswith('.5'):
+        res = ceil(num) if num > 0 else floor(num)
+    else:
+        res = round(num)
+    return int(res)",False,Assertion failed: Test 1,"def convert_to_int(value):
+    num = float(value)
+    if value.endswith('.5'):
+        res = ceil(num) if num > 0 else floor(num)
+    elif value.rstrip('0').endswith('.'):
+        res = int(float(value.rstrip('0')))
+    else:
+        res = int(num)
+    return res",False,Assertion failed: Test 1,"from math import floor, ceil
+
+def convert_to_int(value):
+    num = float(value)
+    if value.endswith('.5'):
+        res = ceil(num) if num > 0 else floor(num)
+    else:
+        res = round(num)
+    return int(res)",False,Assertion failed: Test 1,"def convert_to_int(value):
+    num = float(value)
+    if value.endswith('.5'):
+        res = ceil(num) if num > 0 else floor(num)
+    else:
+        res = round(num)
+    return int(res)",False,Assertion failed: Test 1,"def convert_to_int(value):
+    num = float(value)
+    if value.endswith('.5'):
+        res = ceil(num) if num > 0 else floor(num)
+    else:
+        res = round(num)
+    return int(res)",False,Assertion failed: Test 1

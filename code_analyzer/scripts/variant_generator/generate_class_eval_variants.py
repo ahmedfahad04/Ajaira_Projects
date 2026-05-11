@@ -2,17 +2,17 @@
 
 '''
 Usage:
-    # Ollama (default - llama3.1:8b or qwen2.5-coder:7b recommended for best results)
-    python generate_class_eval_variants.py --provider ollama --model qwen2.5-coder:7b 1 --verbose
+    # Ollama (default - llama3.1:8b or qwen2.5-coder:7b, deepseek-r1:8b, starcoder2:7b recommended for best results)
+    python generate_class_eval_variants.py --provider ollama --model starcoder2:7b --start-id 0 --total 3
 
-    # Claude
-    python generate_class_eval_variants.py --provider claude 1
+    # Claude (process from ID 5, all remaining samples)
+    python generate_class_eval_variants.py --provider claude --start-id 5
 
-    # Gemini
-    python generate_class_eval_variants.py --provider gemini --model gemini-2.0-flash 1
+    # Gemini (process first 10 samples only)
+    python generate_class_eval_variants.py --provider gemini --model gemini-2.0-flash --total 10
     
-    # Groq
-    python generate_class_eval_variants.py --provider groq --model meta-llama/llama-3.3-70b-instruct 1
+    # Groq (process from ID 0, 50 samples)
+    python generate_class_eval_variants.py --provider groq --model meta-llama/llama-3.3-70b-instruct --start-id 0 --total 50
 '''
 
 import argparse
@@ -233,7 +233,7 @@ def generate_variants(code: str, provider, test_code: str, task_id: str,
             print(f"  [VERBOSE] {msg}", flush=True)
 
     def llm_call(prompt: str) -> str:
-        response = provider.generate(prompt, max_tokens=8192, temperature=0.7)
+        response = provider.generate(prompt, max_tokens=8192, temperature=0.8)
         return response.text
 
     # ── Step 1: Generate variants ──────────────────────────────────────────
@@ -372,8 +372,9 @@ def test_variant(variant_code: str, test_code: str, task_id: str, class_name: st
         return False, f"Exception: {str(e)[:100]}"
 
 
-def process_class_eval_dataset(provider, model_name: str, sample_size: str = "full",
-                               output_path: Path = None, verbose: bool = False):
+def process_class_eval_dataset(provider, model_name: str,
+                               output_path: Path = None, verbose: bool = False,
+                               start_id: int = None, total: int = None):
     if output_path is None:
         output_path = OUTPUT_PATH
 
@@ -383,22 +384,24 @@ def process_class_eval_dataset(provider, model_name: str, sample_size: str = "fu
     code_results = []
     label_results = []
 
-    total = len(class_eval)
+    total_rows = len(class_eval)
 
-    if sample_size != "full":
-        try:
-            sample_count = int(sample_size)
-            class_eval = class_eval.iloc[:sample_count]
-            sample_info = f" (sampling {sample_count} items)"
-        except ValueError:
-            sample_info = ""
+    if start_id is not None:
+        class_eval = class_eval[class_eval['task_id'] >= start_id]
+        range_info = f" from ID {start_id}"
     else:
-        sample_info = " (full dataset)"
+        range_info = " from start"
+
+    if total is not None:
+        class_eval = class_eval.iloc[:total]
+        range_info += f", total {total} samples"
+    else:
+        range_info += f", all remaining ({len(class_eval)} samples)"
 
     provider_name = provider.__class__.__name__.replace("Provider", "")
     print(f"\n{'='*70}")
-    print(f"Processing classEval.csv with provider: {provider_name}{sample_info}")
-    print(f"Total rows: {total}")
+    print(f"Processing classEval.csv with provider: {provider_name}{range_info}")
+    print(f"Total dataset rows: {total_rows}")
     if verbose:
         print(f"Verbose mode: ON")
     print(f"{'='*70}\n")
@@ -484,8 +487,10 @@ if __name__ == "__main__":
                         help="LLM provider (ollama, claude, gemini, groq, cerebras, aisuite)")
     parser.add_argument("--model", default="llama3",
                         help="Model name (for ollama) or provider-specific model id")
-    parser.add_argument("sample_size", nargs="?", default="full",
-                        help="Number of samples or 'full' (default: full)")
+    parser.add_argument("--start-id", type=int, default=None,
+                        help="Starting task ID number (default: process from start)")
+    parser.add_argument("--total", type=int, default=None,
+                        help="Total number of samples to process (default: all)")
     parser.add_argument("output_path", nargs="?", default=None,
                         help="Output directory path")
     parser.add_argument("--verbose", action="store_true",
@@ -496,4 +501,5 @@ if __name__ == "__main__":
     print(f"Using provider: {args.provider}, model: {args.model}")
 
     out = Path(args.output_path) if args.output_path else OUTPUT_PATH
-    process_class_eval_dataset(provider, args.model, args.sample_size, out, verbose=args.verbose)
+    process_class_eval_dataset(provider, args.model, out, verbose=args.verbose,
+                               start_id=args.start_id, total=args.total)
