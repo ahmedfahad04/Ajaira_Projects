@@ -1,0 +1,3795 @@
+task_id,base_code,base_code_test_passed,base_code_test_msg,variant_1,variant_1_test_passed,variant_1_test_msg,variant_2,variant_2_test_passed,variant_2_test_msg,variant_3,variant_3_test_passed,variant_3_test_msg,variant_4,variant_4_test_passed,variant_4_test_msg,variant_5,variant_5_test_passed,variant_5_test_msg
+RWPB/109,"import torch
+def rot_trans_geo(geometry, rot, trans):
+    rott_geo = torch.bmm(rot, geometry.permute(0, 2, 1)) + trans.view(-1, 3, 1)
+    return rott_geo.permute(0, 2, 1)
+",False,Execution error: name 'torch' is not defined,"
+def rot_trans_geo(geometry, rot, trans):
+    import torch
+    def rot_trans_geo(geometry, rot, trans):
+        """"""
+        Apply rotation and translation to geometry using batched matmul with rotated transpose.
+        geometry: [B, N, 3], rot: [B, 3, 3], trans: [B, 3]
+        """"""
+        # Rotate: multiply geometry by rot^T so that result[b,n,i] = sum_j geometry[b,n,j] * rot[b,i,j]
+        rotated = torch.matmul(geometry, rot.transpose(-2, -1))
+        # Translate: broadcast translation over points
+        return rotated + trans.unsqueeze(1)
+",False,Execution error: name 'torch' is not defined,"
+def rot_trans_geo(geometry, rot, trans):
+    import torch
+    def rot_trans_geo(geometry, rot, trans):
+        """"""
+        Apply rotation and translation using einsum.
+        """"""
+        # Use einsum to compute rotated points: y[b,n,i] = sum_j rot[b,i,j] * geometry[b,n,j]
+        rotated = torch.einsum('bij,bnj->bni', rot, geometry)
+        return rotated + trans[:, None, :]
+",False,Execution error: name 'torch' is not defined,"
+def rot_trans_geo(geometry, rot, trans):
+    import torch
+    def rot_trans_geo(geometry, rot, trans):
+        """"""
+        Apply rotation using batched matrix multiplication by permuting geometry, then translate.
+        """"""
+        # geometry: [B, N, 3] -> [B, 3, N] for bmm
+        geom_permuted = geometry.permute(0, 2, 1)  # [B, 3, N]
+        # rot: [B, 3, 3] @ geom_permuted: [B, 3, N]
+        rotated_permuted = torch.bmm(rot, geom_permuted)
+        # back to [B, N, 3]
+        rotated = rotated_permuted.permute(0, 2, 1)
+        return rotated + trans.unsqueeze(1)
+",False,Execution error: name 'torch' is not defined,"
+def rot_trans_geo(geometry, rot, trans):
+    import torch
+    def rot_trans_geo(geometry, rot, trans):
+        """"""
+        Apply rotation and translation using an explicit Python loop over batch dimension.
+        """"""
+        B = geometry.shape[0]
+        out_list = []
+        for b in range(B):
+            # rot[b]: [3,3], geometry[b]: [N,3]
+            # compute rot[b] @ geometry[b].T -> [3, N], transpose back to [N,3]
+            rotated_b = (rot[b] @ geometry[b].T).T
+            translated_b = rotated_b + trans[b].unsqueeze(0)
+            out_list.append(translated_b)
+        return torch.stack(out_list, dim=0)
+",False,Execution error: name 'torch' is not defined,"
+def rot_trans_geo(geometry, rot, trans):
+    import torch
+    def rot_trans_geo(geometry, rot, trans):
+        """"""
+        Apply rotation using broadcasting matmul by adding a points-dimension to rotation and using matmul.
+        """"""
+        # rot: [B, 3, 3] -> [B, 1, 3, 3]
+        rot_exp = rot.unsqueeze(1)
+        # geometry: [B, N, 3] -> [B, N, 3, 1]
+        geo_exp = geometry.unsqueeze(-1)
+        # matmul with broadcasting: result [B, N, 3, 1] -> squeeze to [B, N, 3]
+        rotated = torch.matmul(rot_exp, geo_exp).squeeze(-1)
+        return rotated + trans.unsqueeze(1)
+",False,Execution error: name 'torch' is not defined
+RWPB/54,"
+def get_crop_box(box, expand):
+    # Extract the coordinates from the original bounding box
+    x, y, x1, y1 = box
+    # Calculate the center of the original box
+    x_c, y_c = (x + x1) // 2, (y + y1) // 2
+    # Calculate width and height of the original box
+    w, h = x1 - x, y1 - y
+    # Calculate half of the size of the expanded box
+    s = int(max(w, h) // 2 * expand)
+    # Define the new expanded bounding box based on the center and size
+    crop_box = [x_c - s, y_c - s, x_c + s, y_c + s]
+    return crop_box, s
+",False,Execution error: name 'get_crop_box' is not defined,"
+def get_crop_box(box, expand):
+    def get_crop_box(box, expand):
+        x, y, x1, y1 = box
+        if expand < 0:
+            raise ValueError(""expand must be non-negative"")
+        # Normalize coordinates in case they're reversed
+        if x1 < x:
+            x, x1 = x1, x
+        if y1 < y:
+            y, y1 = y1, y
+        w = x1 - x
+        h = y1 - y
+        cx = (x + x1) / 2.0
+        cy = (y + y1) / 2.0
+        # Make square by using the larger side, then apply expand factor
+        s = max(w, h) * expand / 2.0
+        new_x = cx - s
+        new_y = cy - s
+        new_x1 = cx + s
+        new_y1 = cy + s
+        return [new_x, new_y, new_x1, new_y1], s
+",False,Execution error: name 'get_crop_box' is not defined,"
+def get_crop_box(box, expand):
+    import numpy as np
+    def get_crop_box(box, expand):
+        x, y, x1, y1 = box
+        if expand < 0:
+            raise ValueError(""expand must be non-negative"")
+        coords = np.array([x, y, x1, y1], dtype=float)
+        # Ensure ordering
+        if coords[2] < coords[0]:
+            coords[[0,2]] = coords[[2,0]]
+        if coords[3] < coords[1]:
+            coords[[1,3]] = coords[[3,1]]
+        center = np.array([(coords[0] + coords[2]) / 2.0, (coords[1] + coords[3]) / 2.0])
+        w, h = coords[2] - coords[0], coords[3] - coords[1]
+        half_size = max(w, h) * expand / 2.0
+        new_tl = center - half_size
+        new_br = center + half_size
+        new_box = [float(new_tl[0]), float(new_tl[1]), float(new_br[0]), float(new_br[1])]
+        return new_box, float(half_size)
+",False,Execution error: name 'get_crop_box' is not defined,"
+def get_crop_box(box, expand):
+    import math
+    def get_crop_box(box, expand):
+        x, y, x1, y1 = box
+        if expand < 0:
+            raise ValueError(""expand must be non-negative"")
+        # handle reversed coordinates
+        left = min(x, x1)
+        right = max(x, x1)
+        top = min(y, y1)
+        bottom = max(y, y1)
+        w = right - left
+        h = bottom - top
+        cx = (left + right) / 2.0
+        cy = (top + bottom) / 2.0
+        # ensure integer pixel coordinates for the returned box
+        s = max(w, h) * expand / 2.0
+        # round to nearest integer boundaries while keeping center aligned as integers
+        new_x = int(math.floor(cx - s + 0.5))
+        new_y = int(math.floor(cy - s + 0.5))
+        new_x1 = int(math.floor(cx + s + 0.5))
+        new_y1 = int(math.floor(cy + s + 0.5))
+        # Recompute half-size based on the integerized box to return consistent s
+        s_int = max(new_x1 - new_x, new_y1 - new_y) / 2.0
+        return [new_x, new_y, new_x1, new_y1], s_int
+",False,Execution error: name 'get_crop_box' is not defined,"
+def get_crop_box(box, expand):
+    def get_crop_box(box, expand):
+        x0, y0, x1, y1 = box
+        if expand < 0:
+            raise ValueError(""expand must be non-negative"")
+        # Normalize box
+        x_min = x0 if x0 <= x1 else x1
+        x_max = x1 if x1 >= x0 else x0
+        y_min = y0 if y0 <= y1 else y1
+        y_max = y1 if y1 >= y0 else y0
+        w = x_max - x_min
+        h = y_max - y_min
+        # If box has zero area, treat it as tiny point and give minimal size proportional to expand
+        if w == 0 and h == 0:
+            s = 0.5 * max(1.0, expand)
+        else:
+            s = max(w, h) * expand / 2.0
+        cx = (x_min + x_max) / 2.0
+        cy = (y_min + y_max) / 2.0
+        new_x = cx - s
+        new_y = cy - s
+        new_x1 = cx + s
+        new_y1 = cy + s
+        return [new_x, new_y, new_x1, new_y1], s
+",False,Execution error: name 'get_crop_box' is not defined,"
+def get_crop_box(box, expand):
+    def get_crop_box(box, expand):
+        # Functional-style implementation
+        x, y, x1, y1 = box
+        if expand < 0:
+            raise ValueError(""expand must be non-negative"")
+        # canonicalize
+        left, right = (x, x1) if x <= x1 else (x1, x)
+        top, bottom = (y, y1) if y <= y1 else (y1, y)
+        w = right - left
+        h = bottom - top
+        cx = (left + right) / 2.0
+        cy = (top + bottom) / 2.0
+        # compute expanded half-size and produce square crop
+        s = (max(w, h) * expand) / 2.0
+        new_box = [cx - s, cy - s, cx + s, cy + s]
+        return new_box, s
+",False,Execution error: name 'get_crop_box' is not defined
+RWPB/93,"
+def unsafeSub(x, y):
+    return (x - y) & MAX_VAL
+",False,Execution error: name 'unsafeSub' is not defined,"
+def unsafeSub(x, y):
+    MAX_VAL = (1 << 256) - 1
+    def unsafeSub(x, y):
+        return (x - y) & MAX_VAL
+",False,Execution error: name 'unsafeSub' is not defined,"
+def unsafeSub(x, y):
+    MAX_VAL = (1 << 256) - 1
+    BASE = MAX_VAL + 1
+    def unsafeSub(x, y):
+        return (x - y) % BASE
+",False,Execution error: name 'unsafeSub' is not defined,"
+def unsafeSub(x, y):
+    MAX_VAL = (1 << 256) - 1
+    BASE = MAX_VAL + 1
+    def unsafeSub(x, y):
+        if x >= y:
+            return x - y
+        else:
+            return (BASE - (y - x)) & MAX_VAL
+",False,Execution error: name 'unsafeSub' is not defined,"
+def unsafeSub(x, y):
+    MAX_VAL = (1 << 256) - 1
+    BASE = MAX_VAL + 1
+    def unsafeSub(x, y):
+        diff = x - y
+        _, r = divmod(diff, BASE)
+        return r
+",False,Execution error: name 'unsafeSub' is not defined,"
+def unsafeSub(x, y):
+    MAX_VAL = (1 << 256) - 1
+    BASE = MAX_VAL + 1
+    def unsafeSub(x, y):
+        return (x + BASE - y) % BASE
+",False,Execution error: name 'unsafeSub' is not defined
+RWPB/60,"import torch
+def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+    # Preserve the original dtype
+    dtype = x.dtype
+    # Upcast weight, bias, and x to float if necessary
+    if upcast:
+        weight = weight.float()
+        bias = bias.float() if bias is not None else None
+        x = x.float()
+        residual = residual.float() if residual is not None else residual
+    # Add residual to input if provided
+    if residual is not None:
+        x = (x + residual).to(x.dtype)
+    # Compute the reciprocal of the standard deviation of the input
+    rstd = 1 / torch.sqrt((x.square()).mean(dim=-1, keepdim=True) + eps)
+    # Apply normalization, weight, and bias
+    out = (x * rstd * weight) + bias if bias is not None else (x * rstd * weight)
+    # Cast the output back to the original dtype
+    out = out.to(dtype)
+    # Return the output only or the output with the original input if prenorm is True
+    return out if not prenorm else (out, x)
+",False,Execution error: name 'torch' is not defined,"
+def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+    import torch
+    def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+        orig_x = x
+        if upcast:
+            compute_dtype = torch.float32
+            x = x.to(compute_dtype)
+            weight = weight.to(compute_dtype) if weight is not None else None
+            bias = bias.to(compute_dtype) if bias is not None else None
+            residual = residual.to(compute_dtype) if residual is not None else None
+        # ensure weight/bias broadcastable to last dim
+        last = x.shape[-1]
+        if weight is not None and weight.ndim == 1:
+            w = weight.view(*([1] * (x.ndim - 1)), last)
+        else:
+            w = weight
+        if bias is not None and bias.ndim == 1:
+            b = bias.view(*([1] * (x.ndim - 1)), last)
+        else:
+            b = bias
+        ms = (x * x).mean(dim=-1, keepdim=True)
+        inv = torch.rsqrt(ms + eps)
+        normalized = x * inv
+        if w is not None:
+            out = normalized * w
+        else:
+            out = normalized
+        if b is not None:
+            out = out + b
+        if residual is not None:
+            # align residual dtype and shape
+            if residual.dtype != out.dtype:
+                residual = residual.to(out.dtype)
+            out = out + residual
+        if upcast:
+            out = out.to(orig_x.dtype)
+        if prenorm:
+            return out, orig_x
+        return out
+",False,Execution error: name 'torch' is not defined,"
+def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+    import torch
+    def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+        orig_x = x
+        device = x.device
+        if upcast:
+            x = x.to(torch.float32)
+            if weight is not None:
+                weight = weight.to(torch.float32)
+            if bias is not None:
+                bias = bias.to(torch.float32)
+            if residual is not None:
+                residual = residual.to(torch.float32)
+        n = x.shape[-1]
+        # compute l2 norm then convert to rms
+        l2 = torch.linalg.vector_norm(x, dim=-1, keepdim=True)
+        ms = (l2 * l2) / float(n)
+        inv = torch.rsqrt(ms + eps)
+        normalized = x * inv
+        # prepare parameters to broadcast
+        if weight is not None and weight.ndim == 1:
+            weight = weight.view(*([1] * (normalized.ndim - 1)), -1)
+        if bias is not None and bias.ndim == 1:
+            bias = bias.view(*([1] * (normalized.ndim - 1)), -1)
+        out = normalized * weight if weight is not None else normalized
+        if bias is not None:
+            out = out + bias
+        if residual is not None:
+            out = out + residual.to(out.dtype)
+        if upcast:
+            out = out.to(orig_x.dtype)
+        if prenorm:
+            return out, orig_x
+        return out
+",False,Execution error: name 'torch' is not defined,"
+def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+    import torch
+    def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+        orig_x = x
+        if upcast:
+            x = x.to(torch.float32)
+            weight = weight.to(torch.float32) if weight is not None else None
+            bias = bias.to(torch.float32) if bias is not None else None
+            residual = residual.to(torch.float32) if residual is not None else None
+        # flatten leading dims to do per-row computation (brute-force style)
+        leading = 1
+        for s in x.shape[:-1]:
+            leading *= s
+        d = x.shape[-1]
+        flat = x.contiguous().view(leading, d)
+        out_rows = []
+        for i in range(leading):
+            row = flat[i]
+            ms = float((row * row).mean().item())
+            inv = 1.0 / (ms + eps) ** 0.5
+            norm_row = row * inv
+            out_rows.append(norm_row)
+        out = torch.stack(out_rows, dim=0).view(*x.shape)
+        if weight is not None:
+            if weight.ndim == 1:
+                w = weight.view(*([1] * (x.ndim - 1)), -1)
+            else:
+                w = weight
+            out = out * w
+        if bias is not None:
+            if bias.ndim == 1:
+                b = bias.view(*([1] * (x.ndim - 1)), -1)
+            else:
+                b = bias
+            out = out + b
+        if residual is not None:
+            out = out + residual.to(out.dtype)
+        if upcast:
+            out = out.to(orig_x.dtype)
+        if prenorm:
+            return out, orig_x
+        return out
+",False,Execution error: name 'torch' is not defined,"
+def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+    import torch
+    def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+        orig_x = x
+        dtype_orig = x.dtype
+        if upcast:
+            x = x.to(torch.float32)
+            weight = weight.to(torch.float32) if weight is not None else None
+            bias = bias.to(torch.float32) if bias is not None else None
+            residual = residual.to(torch.float32) if residual is not None else None
+        # use einsum to compute mean of squares
+        d = x.shape[-1]
+        sumsq = torch.einsum('...d,...d->...', x, x).unsqueeze(-1)
+        ms = sumsq / float(d)
+        inv = torch.rsqrt(ms + eps)
+        normalized = x * inv
+        if weight is not None:
+            if weight.ndim == 1:
+                weight = weight.view(*([1] * (normalized.ndim - 1)), -1)
+            out = normalized * weight
+        else:
+            out = normalized
+        if bias is not None:
+            if bias.ndim == 1:
+                bias = bias.view(*([1] * (normalized.ndim - 1)), -1)
+            out = out + bias
+        if residual is not None:
+            out = out + residual.to(out.dtype)
+        if upcast:
+            out = out.to(dtype_orig)
+        if prenorm:
+            return out, orig_x
+        return out
+",False,Execution error: name 'torch' is not defined,"
+def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+    import torch
+    def rms_norm_ref(x, weight, bias, residual=None, eps=1e-6, prenorm=False, upcast=False):
+        orig_x = x
+        if upcast:
+            compute_dtype = torch.float32
+            x = x.to(compute_dtype)
+            weight = weight.to(compute_dtype) if weight is not None else None
+            bias = bias.to(compute_dtype) if bias is not None else None
+            residual = residual.to(compute_dtype) if residual is not None else None
+        # compute mean of squares using torch.mean and square
+        ms = torch.mean(torch.square(x), dim=-1, keepdim=True)
+        # use torch.sqrt then reciprocal for stability
+        denom = torch.sqrt(ms + eps)
+        normalized = x / denom
+        if weight is not None:
+            if weight.ndim == 1:
+                w = weight.view(*([1] * (x.ndim - 1)), -1)
+            else:
+                w = weight
+            out = normalized * w
+        else:
+            out = normalized
+        if bias is not None:
+            if bias.ndim == 1:
+                b = bias.view(*([1] * (x.ndim - 1)), -1)
+            else:
+                b = bias
+            out = out + b
+        if residual is not None:
+            out = out + residual.to(out.dtype)
+        if upcast:
+            out = out.to(orig_x.dtype)
+        if prenorm:
+            return out, orig_x
+        return out
+",False,Execution error: name 'torch' is not defined
+RWPB/31,"import torch
+import math
+def resize_to_batch_size(tensor, batch_size):
+    # Retrieve the initial batch size from the tensor
+    in_batch_size = tensor.shape[0]
+    # Return the tensor unchanged if the current batch size is already the desired size
+    if in_batch_size == batch_size:
+        return tensor
+    # Return only the required portion of the tensor if the desired batch size is less than or equal to 1
+    if batch_size <= 1:
+        return tensor[:batch_size]
+    # Create an empty tensor to store the output, maintaining the original data type and device
+    output = torch.empty([batch_size] + list(tensor.shape[1:]), dtype=tensor.dtype, device=tensor.device)
+    # Handle reduction of batch size
+    if batch_size < in_batch_size:
+        scale = (in_batch_size - 1) / (batch_size - 1)
+        for i in range(batch_size):
+            output[i] = tensor[min(round(i * scale), in_batch_size - 1)]
+    # Handle increase in batch size
+    else:
+        scale = in_batch_size / batch_size
+        for i in range(batch_size):
+            index = min(math.floor((i + 0.5) * scale), in_batch_size - 1)
+            output[i] = tensor[index]
+    return output
+",False,Execution error: name 'torch' is not defined,"
+def resize_to_batch_size(tensor, batch_size):
+    import torch
+    import math
+    def resize_to_batch_size(tensor, batch_size):
+        if not isinstance(tensor, torch.Tensor):
+            raise TypeError(""tensor must be a torch.Tensor"")
+        orig_bs = tensor.shape[0]
+        if batch_size == orig_bs:
+            return tensor
+        if orig_bs == 0:
+            raise ValueError(""original batch size is zero"")
+        device = tensor.device
+        # Positions in original index-space
+        pos = torch.linspace(0.0, float(orig_bs - 1), steps=batch_size, device=device, dtype=torch.float32)
+        idx0 = pos.floor().long().clamp(0, orig_bs - 1)
+        idx1 = pos.ceil().long().clamp(0, orig_bs - 1)
+        frac = (pos - idx0.to(pos.dtype)).to(torch.float32)
+        a = tensor[idx0]
+        b = tensor[idx1]
+        # expand frac to broadcast over remaining dims
+        expand_shape = (batch_size,) + (1,) * (tensor.dim() - 1)
+        w = frac.view(expand_shape)
+        a_f = a.to(torch.float32)
+        b_f = b.to(torch.float32)
+        out = a_f * (1.0 - w) + b_f * w
+        if tensor.dtype.is_floating_point:
+            return out.to(tensor.dtype)
+        else:
+            return out.round().to(tensor.dtype)
+",False,Execution error: name 'torch' is not defined,"
+def resize_to_batch_size(tensor, batch_size):
+    import torch
+    import torch.nn.functional as F
+    import math
+    def resize_to_batch_size(tensor, batch_size):
+        if not isinstance(tensor, torch.Tensor):
+            raise TypeError(""tensor must be a torch.Tensor"")
+        N = tensor.shape[0]
+        if batch_size == N:
+            return tensor
+        if N == 0:
+            raise ValueError(""original batch size is zero"")
+        # Flatten remaining dims into channel dimension for F.interpolate
+        rest_shape = tensor.shape[1:]
+        feat = 1
+        for s in rest_shape:
+            feat *= s
+        # reshape to (1, feat, N)
+        x = tensor.contiguous().view(N, feat).transpose(0, 1).unsqueeze(0)
+        # Use linear interpolation along the ""width"" (last) dimension
+        # align_corners=True to include endpoints (avoid extrapolation)
+        out = F.interpolate(x, size=batch_size, mode='linear', align_corners=True)
+        out = out.squeeze(0).transpose(0, 1).contiguous().view(batch_size, *rest_shape)
+        # cast back to original dtype if needed
+        if out.dtype != tensor.dtype:
+            if tensor.dtype.is_floating_point:
+                out = out.to(tensor.dtype)
+            else:
+                out = out.round().to(tensor.dtype)
+        return out
+",False,Execution error: name 'torch' is not defined,"
+def resize_to_batch_size(tensor, batch_size):
+    import torch
+    import math
+    def resize_to_batch_size(tensor, batch_size):
+        if not isinstance(tensor, torch.Tensor):
+            raise TypeError(""tensor must be a torch.Tensor"")
+        N = tensor.shape[0]
+        if batch_size == N:
+            return tensor
+        if N == 0:
+            raise ValueError(""original batch size is zero"")
+        device = tensor.device
+        out_list = []
+        for i in range(batch_size):
+            pos = i * (N - 1) / max(batch_size - 1, 1)
+            i0 = int(math.floor(pos))
+            i1 = int(math.ceil(pos))
+            w = pos - i0
+            a = tensor[i0].to(torch.float32)
+            b = tensor[i1].to(torch.float32)
+            sample = a * (1.0 - w) + b * w
+            if not tensor.dtype.is_floating_point:
+                sample = sample.round()
+                sample = sample.to(tensor.dtype)
+            out_list.append(sample)
+        return torch.stack(out_list, dim=0)
+",False,Execution error: name 'torch' is not defined,"
+def resize_to_batch_size(tensor, batch_size):
+    import torch
+    import math
+    def resize_to_batch_size(tensor, batch_size):
+        if not isinstance(tensor, torch.Tensor):
+            raise TypeError(""tensor must be a torch.Tensor"")
+        N = tensor.shape[0]
+        if batch_size == N:
+            return tensor
+        if N == 0:
+            raise ValueError(""original batch size is zero"")
+        device = tensor.device
+        # Compute fractional positions
+        pos = torch.linspace(0.0, float(N - 1), steps=batch_size, device=device, dtype=torch.float32)
+        idx0 = pos.floor().long().clamp(0, N - 1)
+        idx1 = pos.ceil().long().clamp(0, N - 1)
+        frac = (pos - idx0.to(pos.dtype)).to(torch.float32)
+        a = tensor[idx0].to(torch.float32)
+        b = tensor[idx1].to(torch.float32)
+        # use torch.lerp for linear interpolation
+        # prepare frac to broadcast
+        shape = (batch_size,) + (1,) * (tensor.dim() - 1)
+        frac_b = frac.view(shape)
+        out = torch.lerp(a, b, frac_b)
+        if tensor.dtype.is_floating_point:
+            return out.to(tensor.dtype)
+        else:
+            return out.round().to(tensor.dtype)
+",False,Execution error: name 'torch' is not defined,"
+def resize_to_batch_size(tensor, batch_size):
+    import torch
+    import math
+    def resize_to_batch_size(tensor, batch_size):
+        if not isinstance(tensor, torch.Tensor):
+            raise TypeError(""tensor must be a torch.Tensor"")
+        N = tensor.shape[0]
+        if batch_size == N:
+            return tensor
+        if N == 0:
+            raise ValueError(""original batch size is zero"")
+        # If downsampling: pick indices evenly across the original batch (rounding)
+        if batch_size < N:
+            idx = torch.linspace(0, N - 1, steps=batch_size, device=tensor.device)
+            idx = idx.round().long().clamp(0, N - 1)
+            return tensor[idx]
+        # If upsampling: ensure every original element is represented by repeating elements
+        repeats = batch_size // N
+        rem = batch_size % N
+        pieces = []
+        for i in range(N):
+            r = repeats + (1 if i < rem else 0)
+            if r > 0:
+                pieces.append(tensor[i].unsqueeze(0).repeat(r, *([1] * (tensor.dim() - 1))))
+        return torch.cat(pieces, dim=0)
+",False,Execution error: name 'torch' is not defined
+RWPB/21,"import re
+def validate_user_id(user_id):
+    # Define the regex pattern for a valid user ID
+    pattern = r'^[A-Za-z][A-Za-z0-9_]*$'
+    # Check if the user_id matches the pattern and is an instance of str
+    if isinstance(user_id, str) and re.match(pattern, user_id):
+        return True
+    else:
+        return False
+",False,Execution error: name 'validate_user_id' is not defined,"
+def validate_user_id(user_id):
+    import re
+    def validate_user_id(user_id):
+        if not isinstance(user_id, str) or not user_id:
+            return False
+        return re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', user_id) is not None
+",False,Execution error: name 'validate_user_id' is not defined,"
+def validate_user_id(user_id):
+    import re
+    _pattern = re.compile(r'^[A-Za-z][A-Za-z0-9_]*$')
+    def validate_user_id(user_id):
+        if not isinstance(user_id, str):
+            return False
+        return bool(_pattern.match(user_id))
+",False,Execution error: name 'validate_user_id' is not defined,"
+def validate_user_id(user_id):
+    def validate_user_id(user_id):
+        if not isinstance(user_id, str):
+            return False
+        if len(user_id) == 0:
+            return False
+        first = user_id[0]
+        if not first.isalpha():
+            return False
+        for ch in user_id[1:]:
+            if not (ch.isalnum() or ch == '_'):
+                return False
+        return True
+",False,Execution error: name 'validate_user_id' is not defined,"
+def validate_user_id(user_id):
+    def validate_user_id(user_id):
+        if not isinstance(user_id, str) or user_id == '':
+            return False
+        it = iter(user_id)
+        first = next(it)
+        if not first.isalpha():
+            return False
+        return all((c.isalnum() or c == '_') for c in it)
+",False,Execution error: name 'validate_user_id' is not defined,"
+def validate_user_id(user_id):
+    def validate_user_id(user_id):
+        if not isinstance(user_id, str):
+            return False
+        if len(user_id) == 0:
+            return False
+        c = user_id[0]
+        if not ('A' <= c <= 'Z' or 'a' <= c <= 'z'):
+            return False
+        for ch in user_id[1:]:
+            if not (('0' <= ch <= '9') or ('A' <= ch <= 'Z') or ('a' <= ch <= 'z') or ch == '_'):
+                return False
+        return True
+",False,Execution error: name 'validate_user_id' is not defined
+RWPB/70,"import numpy as np
+def psnr_to_mse(psnr):
+    return np.exp(-0.1 * np.log(10.) * psnr)
+",False,Execution error: name 'psnr_to_mse' is not defined,"
+def psnr_to_mse(psnr):
+    import numpy as np
+    def psnr_to_mse(psnr):
+        psnr_arr = np.asarray(psnr)
+        result = np.exp(-0.1 * np.log(10.0) * psnr_arr)
+        if np.isscalar(psnr) or psnr_arr.ndim == 0:
+            return float(result)
+        return result
+",False,Execution error: name 'psnr_to_mse' is not defined,"
+def psnr_to_mse(psnr):
+    import math
+    def psnr_to_mse(psnr):
+        k = -0.1 * math.log(10.0)
+        # handle scalars
+        if isinstance(psnr, (int, float)):
+            return math.exp(k * psnr)
+        # handle iterables (lists, tuples, numpy arrays, etc.)
+        try:
+            iterator = iter(psnr)
+        except TypeError:
+            # fallback for unexpected types
+            return math.exp(k * psnr)
+        return [math.exp(k * float(x)) for x in iterator]
+",False,Execution error: name 'psnr_to_mse' is not defined,"
+def psnr_to_mse(psnr):
+    def psnr_to_mse(psnr):
+        try:
+            # try direct numeric / numpy-friendly power
+            return 10.0 ** (-psnr / 10.0)
+        except Exception:
+            # fallback for Python iterables (lists, tuples, etc.)
+            try:
+                return [10.0 ** (-float(x) / 10.0) for x in psnr]
+            except Exception:
+                # last resort: coerce to float
+                return float(10.0 ** (-float(psnr) / 10.0))
+",False,Execution error: name 'psnr_to_mse' is not defined,"
+def psnr_to_mse(psnr):
+    from decimal import Decimal, getcontext
+    def psnr_to_mse(psnr):
+        getcontext().prec = 50
+        D10 = Decimal(10)
+        def dec(val):
+            return float(D10 ** (Decimal(-val) / Decimal(10)))
+        # scalar
+        if isinstance(psnr, (int, float)):
+            return dec(psnr)
+        # iterable
+        try:
+            return [dec(float(x)) for x in psnr]
+        except Exception:
+            return dec(float(psnr))
+",False,Execution error: name 'psnr_to_mse' is not defined,"
+def psnr_to_mse(psnr):
+    import numpy as np
+    import math
+    def psnr_to_mse(psnr):
+        # use vectorize to support scalars, lists, tuples, numpy arrays uniformly
+        def scalar_calc(x):
+            return math.exp(-0.1 * math.log(10.0) * float(x))
+        vec = np.vectorize(scalar_calc, otypes=[float])
+        res = vec(psnr)
+        # if input was scalar, np.vectorize returns an array of shape () sometimes; convert
+        if hasattr(psnr, '__iter__') and not isinstance(psnr, (str, bytes)):
+            return res
+        return float(res)
+",False,Execution error: name 'psnr_to_mse' is not defined
+RWPB/83,"import math
+import cv2
+import numpy as np
+def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+    shape = list(sample[""disparity""].shape)
+    if shape[0] >= size[0] and shape[1] >= size[1]:
+        return sample
+    scale = [0, 0]
+    scale[0] = size[0] / shape[0]
+    scale[1] = size[1] / shape[1]
+    scale = max(scale)
+    shape[0] = math.ceil(scale * shape[0])
+    shape[1] = math.ceil(scale * shape[1])
+    # resize
+    sample[""image""] = cv2.resize(
+        sample[""image""], tuple(shape[::-1]), interpolation=image_interpolation_method
+    )
+    sample[""disparity""] = cv2.resize(
+        sample[""disparity""], tuple(shape[::-1]), interpolation=cv2.INTER_NEAREST
+    )
+    sample[""mask""] = cv2.resize(
+        sample[""mask""].astype(np.float32),
+        tuple(shape[::-1]),
+        interpolation=cv2.INTER_NEAREST,
+    )
+    sample[""mask""] = sample[""mask""].astype(bool)
+    return tuple(shape)
+",False,Execution error: name 'np' is not defined,"
+def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+    import math
+    import cv2
+    import numpy as np
+    def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+        if sample is None:
+            return (size[0], size[1])
+        target_h, target_w = size
+        img = sample.get(""image"", None)
+        disp = sample.get(""disparity"", None)
+        mask = sample.get(""mask"", None)
+        def _shape(arr):
+            if arr is None:
+                return None
+            if isinstance(arr, np.ndarray):
+                if arr.ndim >= 2:
+                    return arr.shape[0], arr.shape[1]
+            raise ValueError(""Unsupported array for shape"")
+        img_shape = _shape(img) if img is not None else None
+        base_shape = img_shape or _shape(disp) or _shape(mask)
+        if base_shape is None:
+            return (target_h, target_w)
+        h, w = base_shape
+        scale_h = float(target_h) / h if h < target_h else 1.0
+        scale_w = float(target_w) / w if w < target_w else 1.0
+        scale = max(scale_h, scale_w, 1.0)
+        if scale == 1.0:
+            return (h, w)
+        new_h = int(math.ceil(h * scale))
+        new_w = int(math.ceil(w * scale))
+        if img is not None:
+            interp = image_interpolation_method
+            sample[""image""] = cv2.resize(img, (new_w, new_h), interpolation=interp)
+        if disp is not None:
+            # use linear interpolation for disparity and scale disparity values
+            disp_dtype = disp.dtype
+            disp_resized = cv2.resize(disp, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+            # multiply disparity values by scale to keep metric meaning
+            if np.issubdtype(disp_resized.dtype, np.integer):
+                # convert to float for scaling then cast back
+                disp_resized = (disp_resized.astype(np.float32) * scale).astype(disp_dtype)
+            else:
+                disp_resized = disp_resized.astype(np.float32) * scale
+                if disp_dtype != disp_resized.dtype:
+                    try:
+                        disp_resized = disp_resized.astype(disp_dtype)
+                    except Exception:
+                        pass
+            sample[""disparity""] = disp_resized
+        if mask is not None:
+            # nearest to preserve binary regions
+            original_dtype = mask.dtype
+            mask_resized = cv2.resize(mask, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
+            if original_dtype != mask_resized.dtype:
+                try:
+                    mask_resized = mask_resized.astype(original_dtype)
+                except Exception:
+                    pass
+            sample[""mask""] = mask_resized
+        return (new_h, new_w)
+",False,Execution error: name 'cv2' is not defined,"
+def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+    import math
+    import cv2
+    import numpy as np
+    def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+        if not isinstance(sample, dict):
+            raise ValueError(""sample must be a dict"")
+        target_h, target_w = size
+        def get_hw(x):
+            if x is None:
+                return None
+            if isinstance(x, np.ndarray):
+                return x.shape[0], x.shape[1]
+            raise ValueError(""Unsupported type in sample"")
+        hws = [get_hw(sample.get(k)) for k in (""image"", ""disparity"", ""mask"")]
+        hws = [x for x in hws if x is not None]
+        if not hws:
+            return (target_h, target_w)
+        # pick the reference smallest one to guarantee all meet min
+        h, w = hws[0]
+        # compute required scale so both dims >= target
+        scale = max(float(target_h) / h, float(target_w) / w, 1.0)
+        if scale == 1.0:
+            return (h, w)
+        new_h = int(math.ceil(h * scale))
+        new_w = int(math.ceil(w * scale))
+        # choose interpolation dynamically: upscaling use cubic, downscaling use provided
+        def choose_interp(scale_factor, default):
+            return cv2.INTER_CUBIC if scale_factor > 1.0 else default
+        if sample.get(""image"") is not None:
+            img = sample[""image""]
+            interp = choose_interp(scale, image_interpolation_method)
+            sample[""image""] = cv2.resize(img, (new_w, new_h), interpolation=interp)
+        if sample.get(""disparity"") is not None:
+            d = sample[""disparity""]
+            # use nearest if discrete labels, else linear; detect integer dtype
+            interp = cv2.INTER_NEAREST if np.issubdtype(d.dtype, np.integer) else cv2.INTER_LINEAR
+            disp_resized = cv2.resize(d, (new_w, new_h), interpolation=interp)
+            # multiply by scale for true disparity values
+            if disp_resized.dtype.kind in ('u', 'i', 'f'):
+                disp_resized = (disp_resized.astype(np.float32) * scale).astype(d.dtype) if np.issubdtype(d.dtype, np.integer) else disp_resized.astype(np.float32) * scale
+            sample[""disparity""] = disp_resized
+        if sample.get(""mask"") is not None:
+            m = sample[""mask""]
+            mask_resized = cv2.resize(m, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
+            # ensure binary 0/1 if original was boolean-like
+            if m.dtype == np.bool_:
+                mask_resized = mask_resized > 0.5
+            else:
+                mask_resized = mask_resized.astype(m.dtype)
+            sample[""mask""] = mask_resized
+        return (new_h, new_w)
+",False,Execution error: name 'cv2' is not defined,"
+def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+    import math
+    import cv2
+    import numpy as np
+    def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+        if sample is None or not isinstance(sample, dict):
+            return (size[0], size[1])
+        target_h, target_w = size
+        # determine reference size as image if available else disparity else mask
+        ref = None
+        for k in (""image"", ""disparity"", ""mask""):
+            if k in sample and sample[k] is not None:
+                arr = sample[k]
+                if isinstance(arr, np.ndarray) and arr.ndim >= 2:
+                    ref = arr
+                    break
+        if ref is None:
+            return (target_h, target_w)
+        h, w = ref.shape[0], ref.shape[1]
+        # iterative doubling approach for large upscales for quality
+        scale_h = target_h / h if h < target_h else 1.0
+        scale_w = target_w / w if w < target_w else 1.0
+        final_scale = max(scale_h, scale_w, 1.0)
+        if final_scale == 1.0:
+            return (h, w)
+        # perform progressive scaling by factors of 2 until close, then final resize
+        current_img = None
+        new_h = h
+        new_w = w
+        scales = []
+        s = final_scale
+        while s > 2.0:
+            scales.append(2.0)
+            s /= 2.0
+        if s > 1.0:
+            scales.append(s)
+        # helper resize function
+        def _resize_once(arr, factor, interp):
+            if factor == 1.0:
+                return arr
+            nh = int(math.ceil(arr.shape[0] * factor))
+            nw = int(math.ceil(arr.shape[1] * factor))
+            return cv2.resize(arr, (nw, nh), interpolation=interp)
+        # apply progressive scaling for each component
+        # image with chosen interpolation but cubic for upscaling steps
+        if ""image"" in sample and sample[""image""] is not None:
+            arr = sample[""image""]
+            for factor in scales:
+                interp = cv2.INTER_CUBIC if factor > 1.0 else image_interpolation_method
+                arr = _resize_once(arr, factor, interp)
+            sample[""image""] = arr
+            new_h, new_w = arr.shape[0], arr.shape[1]
+        # disparity: scale values together with resizing (use linear)
+        if ""disparity"" in sample and sample[""disparity""] is not None:
+            arr = sample[""disparity""].astype(np.float32)
+            for factor in scales:
+                arr = _resize_once(arr, factor, cv2.INTER_LINEAR)
+                # after each resize, scale disparity values by that factor
+                arr = arr * factor
+            sample[""disparity""] = arr.astype(sample[""disparity""].dtype)
+        # mask: nearest interpolation in progressive steps
+        if ""mask"" in sample and sample[""mask""] is not None:
+            arr = sample[""mask""]
+            for factor in scales:
+                arr = _resize_once(arr, factor, cv2.INTER_NEAREST)
+            # preserve dtype
+            sample[""mask""] = arr.astype(sample[""mask""].dtype)
+        return (new_h, new_w)
+",False,Execution error: name 'cv2' is not defined,"
+def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+    import math
+    import cv2
+    import numpy as np
+    def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+        if not isinstance(sample, dict):
+            raise ValueError(""sample must be a dict"")
+        target_h, target_w = size
+        # find the maximum required scale among all present images so all reach min
+        def hw(x):
+            if x is None:
+                return None
+            if isinstance(x, np.ndarray):
+                return x.shape[0], x.shape[1]
+            return None
+        hw_list = [hw(sample.get(k)) for k in (""image"", ""disparity"", ""mask"")]
+        hw_list = [h for h in hw_list if h is not None]
+        if not hw_list:
+            return (target_h, target_w)
+        # compute per-array scale, take max to satisfy all
+        scales = []
+        for h, w in hw_list:
+            sh = float(target_h) / h if h < target_h else 1.0
+            sw = float(target_w) / w if w < target_w else 1.0
+            scales.append(max(sh, sw, 1.0))
+        overall_scale = max(scales)
+        if overall_scale == 1.0:
+            return hw_list[0]
+        new_h = int(math.ceil(hw_list[0][0] * overall_scale))
+        new_w = int(math.ceil(hw_list[0][1] * overall_scale))
+        # Resize each present entry with appropriate interpolation and post-processing
+        if sample.get(""image"") is not None:
+            img = sample[""image""]
+            interp = image_interpolation_method if overall_scale <= 1.0 else cv2.INTER_CUBIC
+            sample[""image""] = cv2.resize(img, (new_w, new_h), interpolation=interp)
+        if sample.get(""disparity"") is not None:
+            d = sample[""disparity""]
+            # if integer (discrete labels), use nearest and do NOT scale values
+            if np.issubdtype(d.dtype, np.integer):
+                d_res = cv2.resize(d, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
+                sample[""disparity""] = d_res.astype(d.dtype)
+            else:
+                d_res = cv2.resize(d, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+                # scale disparity values to match resized image metric
+                d_res = d_res.astype(np.float32) * overall_scale
+                sample[""disparity""] = d_res.astype(d.dtype)
+        if sample.get(""mask"") is not None:
+            m = sample[""mask""]
+            m_res = cv2.resize(m, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
+            # ensure mask remains binary if originally was boolean-like
+            if m.dtype == np.bool_:
+                sample[""mask""] = m_res > 0.5
+            else:
+                sample[""mask""] = m_res.astype(m.dtype)
+        return (new_h, new_w)
+",False,Execution error: name 'cv2' is not defined,"
+def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+    import math
+    import cv2
+    import numpy as np
+    def apply_min_size(sample, size, image_interpolation_method=cv2.INTER_AREA):
+        if sample is None:
+            return (size[0], size[1])
+        target_h, target_w = size
+        # helper: compute required new dims for an array
+        def required_dims(arr):
+            if arr is None:
+                return None
+            if not isinstance(arr, np.ndarray):
+                return None
+            h, w = arr.shape[:2]
+            sh = float(target_h) / h if h < target_h else 1.0
+            sw = float(target_w) / w if w < target_w else 1.0
+            s = max(sh, sw, 1.0)
+            return int(math.ceil(h * s)), int(math.ceil(w * s)), s
+        # determine the max new dims required by any present array
+        candidates = [required_dims(sample.get(k)) for k in (""image"", ""disparity"", ""mask"")]
+        candidates = [c for c in candidates if c is not None]
+        if not candidates:
+            return (target_h, target_w)
+        # choose dims that satisfy all (max of each)
+        new_h = max(c[0] for c in candidates)
+        new_w = max(c[1] for c in candidates)
+        # compute global scale relative to each array when needed
+        # resize image
+        if ""image"" in sample and sample[""image""] is not None:
+            img = sample[""image""]
+            interp = image_interpolation_method
+            sample[""image""] = cv2.resize(img, (new_w, new_h), interpolation=interp)
+        if ""disparity"" in sample and sample[""disparity""] is not None:
+            d = sample[""disparity""]
+            h, w = d.shape[:2]
+            if h == 0 or w == 0:
+                sample[""disparity""] = d
+            else:
+                scale_y = new_h / float(h)
+                scale_x = new_w / float(w)
+                # assume isotropic scaling for disparity values: use average scale
+                val_scale = (scale_x + scale_y) / 2.0
+                interp = cv2.INTER_LINEAR if not np.issubdtype(d.dtype, np.integer) else cv2.INTER_NEAREST
+                d_res = cv2.resize(d, (new_w, new_h), interpolation=interp)
+                if not np.issubdtype(d.dtype, np.integer):
+                    d_res = d_res.astype(np.float32) * val_scale
+                    try:
+                        d_res = d_res.astype(d.dtype)
+                    except Exception:
+                        pass
+                sample[""disparity""] = d_res
+        if ""mask"" in sample and sample[""mask""] is not None:
+            m = sample[""mask""]
+            m_res = cv2.resize(m, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
+            # if original was boolean, convert back
+            if m.dtype == np.bool_:
+                sample[""mask""] = m_res > 0.5
+            else:
+                sample[""mask""] = m_res.astype(m.dtype)
+        return (new_h, new_w)
+",False,Execution error: name 'cv2' is not defined
+RWPB/44,"import torch
+def interleave(tensor1, tensor2):
+    # Stack the tensors alternately along a new dimension (dim=1)
+    res1 = torch.stack((tensor1, tensor2), dim=1).flatten(0, 1)  # Flatten across original and new dimension
+    res2 = torch.stack((tensor2, tensor1), dim=1).flatten(0, 1)  # Start with the second tensor
+    return res1, res2
+",False,Execution error: name 'interleave' is not defined,"
+def interleave(tensor1, tensor2):
+    import torch
+    def interleave(tensor1, tensor2):
+        # Ensure same device/dtype and compatible shapes
+        if tensor1.shape[1:] != tensor2.shape[1:]:
+            # allow scalar inputs (0-d) by treating as length-1
+            if tensor1.dim() == 0 and tensor2.dim() == 0:
+                t1 = tensor1.unsqueeze(0)
+                t2 = tensor2.unsqueeze(0)
+            else:
+                raise ValueError(""Input tensors must have the same shape except for the first dimension."")
+        else:
+            t1 = tensor1
+            t2 = tensor2
+        # If inputs are 0-d, we already unsqueezed; otherwise keep as-is
+        if t1.dim() == 0:
+            t1 = t1.unsqueeze(0)
+            t2 = t2.unsqueeze(0)
+        n = t1.size(0)
+        out_shape = (2 * n,) + t1.shape[1:]
+        out1 = torch.empty(out_shape, dtype=t1.dtype, device=t1.device)
+        out2 = torch.empty_like(out1)
+        out1[0::2] = t1
+        out1[1::2] = t2
+        out2[0::2] = t2
+        out2[1::2] = t1
+        return out1, out2
+",False,Execution error: name 'interleave' is not defined,"
+def interleave(tensor1, tensor2):
+    import torch
+    def interleave(tensor1, tensor2):
+        # Handle scalar 0-d tensors by promoting to 1-d
+        scalar_mode = False
+        if tensor1.dim() == 0 and tensor2.dim() == 0:
+            t1 = tensor1.unsqueeze(0)
+            t2 = tensor2.unsqueeze(0)
+            scalar_mode = True
+        else:
+            t1 = tensor1
+            t2 = tensor2
+        if t1.shape[1:] != t2.shape[1:]:
+            raise ValueError(""Shapes must match except for the first dimension"")
+        # Stack along new dim 0 as (2, n, ...)
+        stacked = torch.stack((t1, t2), dim=0)  # shape (2, n, ...)
+        # Transpose to (n, 2, ...) then reshape to (2*n, ...)
+        trans = stacked.transpose(0, 1).contiguous()
+        interleaved1 = trans.view(-1, *t1.shape[1:])
+        # Build second by stacking reversed order
+        stacked_rev = torch.stack((t2, t1), dim=0)
+        trans_rev = stacked_rev.transpose(0, 1).contiguous()
+        interleaved2 = trans_rev.view(-1, *t1.shape[1:])
+        return interleaved1, interleaved2
+",False,Execution error: name 'interleave' is not defined,"
+def interleave(tensor1, tensor2):
+    import torch
+    def interleave(tensor1, tensor2):
+        # Brute-force assemble using list of slices then cat
+        if tensor1.dim() == 0 and tensor2.dim() == 0:
+            t1 = tensor1.unsqueeze(0)
+            t2 = tensor2.unsqueeze(0)
+        else:
+            t1 = tensor1
+            t2 = tensor2
+        if t1.shape[1:] != t2.shape[1:]:
+            raise ValueError(""Shapes must match except for the first dimension"")
+        n = t1.size(0)
+        pieces1 = []
+        pieces2 = []
+        for i in range(n):
+            pieces1.append(t1[i:i+1])
+            pieces1.append(t2[i:i+1])
+            pieces2.append(t2[i:i+1])
+            pieces2.append(t1[i:i+1])
+        interleaved1 = torch.cat(pieces1, dim=0)
+        interleaved2 = torch.cat(pieces2, dim=0)
+        return interleaved1, interleaved2
+",False,Execution error: name 'interleave' is not defined,"
+def interleave(tensor1, tensor2):
+    import torch
+    def interleave(tensor1, tensor2):
+        # Use concatenation then fancy indexing
+        if tensor1.dim() == 0 and tensor2.dim() == 0:
+            t1 = tensor1.unsqueeze(0)
+            t2 = tensor2.unsqueeze(0)
+        else:
+            t1 = tensor1
+            t2 = tensor2
+        if t1.shape[1:] != t2.shape[1:]:
+            raise ValueError(""Shapes must match except for the first dimension"")
+        n = t1.size(0)
+        concat = torch.cat((t1, t2), dim=0)  # first block t1(0..n-1), then t2(n..2n-1)
+        idx = torch.arange(n, device=concat.device)
+        idx1 = torch.stack((idx, idx + n), dim=1).view(-1)
+        idx2 = torch.stack((idx + n, idx), dim=1).view(-1)
+        interleaved1 = concat.index_select(0, idx1)
+        interleaved2 = concat.index_select(0, idx2)
+        return interleaved1, interleaved2
+",False,Execution error: name 'interleave' is not defined,"
+def interleave(tensor1, tensor2):
+    import torch
+    def interleave(tensor1, tensor2):
+        # Use scatter to place elements into preallocated output
+        if tensor1.dim() == 0 and tensor2.dim() == 0:
+            t1 = tensor1.unsqueeze(0)
+            t2 = tensor2.unsqueeze(0)
+        else:
+            t1 = tensor1
+            t2 = tensor2
+        if t1.shape[1:] != t2.shape[1:]:
+            raise ValueError(""Shapes must match except for the first dimension"")
+        n = t1.size(0)
+        out_shape = (2 * n,) + t1.shape[1:]
+        device = t1.device
+        dtype = t1.dtype
+        out1 = torch.empty(out_shape, device=device, dtype=dtype)
+        out2 = torch.empty_like(out1)
+        # indices for placement
+        idx1 = torch.arange(0, 2 * n, 2, device=device)
+        idx2 = torch.arange(1, 2 * n, 2, device=device)
+        out1.index_copy_(0, idx1, t1)
+        out1.index_copy_(0, idx2, t2)
+        out2.index_copy_(0, idx1, t2)
+        out2.index_copy_(0, idx2, t1)
+        return out1, out2
+",False,Execution error: name 'interleave' is not defined
+RWPB/15,"import numpy as np
+def cosine_distance(a, b):
+    if a.shape[-1] != b.shape[-1]:
+        return ValueError
+    dist = np.dot(a, b.T) / (np.linalg.norm(a, axis=-1) * np.linalg.norm(b, axis=-1))
+    return dist
+",False,Execution error: name 'cosine_distance' is not defined,"
+def cosine_distance(a, b):
+    import numpy as np
+    def cosine_distance(a, b):
+        a = np.asarray(a, dtype=float).ravel()
+        b = np.asarray(b, dtype=float)
+        if a.ndim != 1:
+            a = a.ravel()
+        if b.ndim == 1:
+            if a.size != b.size:
+                raise KeyError(""Length mismatch between a and b"")
+            dot = float(np.dot(a, b))
+            na = np.linalg.norm(a)
+            nb = np.linalg.norm(b)
+            if na == 0 or nb == 0:
+                return 1.0
+            cos = dot / (na * nb)
+            return float(1.0 - np.clip(cos, -1.0, 1.0))
+        elif b.ndim == 2:
+            if a.size != b.shape[1]:
+                raise KeyError(""Length mismatch between a and b"")
+            dots = b.dot(a)
+            na = np.linalg.norm(a)
+            nb = np.linalg.norm(b, axis=1)
+            denom = na * nb
+            with np.errstate(divide='ignore', invalid='ignore'):
+                cos = np.where(denom == 0, 0.0, dots / denom)
+            cos = np.clip(cos, -1.0, 1.0)
+            return 1.0 - cos
+        else:
+            raise KeyError(""b must be a vector or a 2D matrix"")
+",False,Execution error: name 'cosine_distance' is not defined,"
+def cosine_distance(a, b):
+    import numpy as np
+    def cosine_distance(a, b):
+        a = np.asarray(a, dtype=float).flatten()
+        b = np.asarray(b, dtype=float)
+        if b.ndim == 0:
+            b = b.reshape(-1)
+        if b.ndim == 1:
+            if a.shape[0] != b.shape[0]:
+                raise KeyError(""Length mismatch between a and b"")
+            dot = 0.0
+            na2 = 0.0
+            nb2 = 0.0
+            for i in range(a.shape[0]):
+                dot += a[i] * b[i]
+                na2 += a[i] * a[i]
+                nb2 += b[i] * b[i]
+            if na2 == 0 or nb2 == 0:
+                return 1.0
+            return 1.0 - (dot / ((na2**0.5) * (nb2**0.5)))
+        elif b.ndim == 2:
+            if a.shape[0] != b.shape[1]:
+                raise KeyError(""Length mismatch between a and b"")
+            results = []
+            for row in b:
+                dot = 0.0
+                na2 = 0.0
+                nb2 = 0.0
+                for i in range(a.shape[0]):
+                    dot += a[i] * row[i]
+                    na2 += a[i] * a[i]
+                    nb2 += row[i] * row[i]
+                if na2 == 0 or nb2 == 0:
+                    results.append(1.0)
+                else:
+                    results.append(1.0 - (dot / ((na2**0.5) * (nb2**0.5))))
+            return np.array(results)
+        else:
+            raise KeyError(""b must be vector or 2D matrix"")
+",False,Execution error: name 'cosine_distance' is not defined,"
+def cosine_distance(a, b):
+    import numpy as np
+    def cosine_distance(a, b):
+        a = np.asarray(a, dtype=float).ravel()
+        b = np.asarray(b, dtype=float)
+        if b.ndim == 1:
+            if a.size != b.size:
+                raise KeyError(""Length mismatch between a and b"")
+            num = np.einsum('i,i->', a, b)
+            na = np.sqrt(np.einsum('i,i->', a, a))
+            nb = np.sqrt(np.einsum('i,i->', b, b))
+            if na == 0 or nb == 0:
+                return 1.0
+            cos = num / (na * nb)
+            return float(1.0 - np.clip(cos, -1.0, 1.0))
+        elif b.ndim == 2:
+            if a.size != b.shape[1]:
+                raise KeyError(""Length mismatch between a and b"")
+            num = np.einsum('i,ji->j', a, b)
+            na = np.sqrt(np.einsum('i,i->', a, a))
+            nb = np.sqrt(np.einsum('ji,ji->j', b, b))
+            denom = na * nb
+            with np.errstate(divide='ignore', invalid='ignore'):
+                cos = np.where(denom == 0, 0.0, num / denom)
+            cos = np.clip(cos, -1.0, 1.0)
+            return 1.0 - cos
+        else:
+            raise KeyError(""b must be 1D or 2D array"")
+",False,Execution error: name 'cosine_distance' is not defined,"
+def cosine_distance(a, b):
+    import numpy as np
+    def cosine_distance(a, b):
+        a = np.asarray(a, dtype=float).reshape(-1)
+        b = np.asarray(b, dtype=float)
+        if b.ndim == 1:
+            if a.shape[0] != b.shape[0]:
+                raise KeyError(""Length mismatch between a and b"")
+            na = np.linalg.norm(a)
+            nb = np.linalg.norm(b)
+            if na == 0 or nb == 0:
+                return 1.0
+            an = a / na
+            bn = b / nb
+            cos = np.dot(an, bn)
+            return float(1.0 - np.clip(cos, -1.0, 1.0))
+        elif b.ndim == 2:
+            if a.shape[0] != b.shape[1]:
+                raise KeyError(""Length mismatch between a and b"")
+            na = np.linalg.norm(a)
+            if na == 0:
+                return np.ones(b.shape[0])
+            an = a / na
+            bn = b / np.linalg.norm(b, axis=1, keepdims=True)
+            bn = np.where(np.isfinite(bn), bn, 0.0)
+            cos = bn.dot(an)
+            cos = np.clip(cos, -1.0, 1.0)
+            return 1.0 - cos
+        else:
+            raise KeyError(""b must be a vector or 2D matrix"")
+",False,Execution error: name 'cosine_distance' is not defined,"
+def cosine_distance(a, b):
+    import numpy as np
+    import math
+    def cosine_distance(a, b):
+        a = np.asarray(a, dtype=float).ravel()
+        b = np.asarray(b, dtype=float)
+        if b.ndim == 1:
+            if a.size != b.size:
+                raise KeyError(""Length mismatch between a and b"")
+            na = math.sqrt((a * a).sum())
+            nb = math.sqrt((b * b).sum())
+            if na == 0 or nb == 0:
+                return 1.0
+            cos = float((a * b).sum()) / (na * nb)
+            cos = max(-1.0, min(1.0, cos))
+            return 1.0 - cos
+        elif b.ndim >= 2:
+            if a.size != b.shape[-1]:
+                raise KeyError(""Length mismatch between a and b"")
+            flat = b.reshape(-1, b.shape[-1])
+            na = math.sqrt((a * a).sum())
+            dots = (flat * a).sum(axis=1)
+            nbs = np.sqrt((flat * flat).sum(axis=1))
+            res = []
+            for d, nb in zip(dots, nbs):
+                if na == 0 or nb == 0:
+                    res.append(1.0)
+                else:
+                    c = d / (na * nb)
+                    c = max(-1.0, min(1.0, c))
+                    res.append(1.0 - c)
+            out = np.array(res)
+            return out.reshape(b.shape[:-1])
+        else:
+            raise KeyError(""b must be vector or have last dimension equal to len(a)"")
+",False,Execution error: name 'cosine_distance' is not defined
+RWPB/119,"import math
+import numpy as np
+def rotate_about_x_axis(vector, theta):
+        return np.dot(np.array([
+    [1, 0, 0],
+    [0, np.cos(theta), -np.sin(theta)],
+    [0, np.sin(theta), np.cos(theta)]        
+    ]), vector)
+",False,Execution error: name 'np' is not defined,"
+def rotate_about_x_axis(vector, theta):
+    import math
+    import numpy as np
+    def rotate_about_x_axis(vector, theta):
+        """"""
+        Rotate a 3D vector about the x-axis by angle theta (radians).
+        """"""
+        v = np.asarray(vector, dtype=float)
+        if v.shape != (3,):
+            v = v.ravel()
+            if v.shape[0] != 3:
+                raise ValueError(""vector must have length 3"")
+        x = v[0]
+        y = v[1]
+        z = v[2]
+        c = math.cos(theta)
+        s = math.sin(theta)
+        y_new = y * c - z * s
+        z_new = y * s + z * c
+        return np.array([x, y_new, z_new], dtype=float)
+",False,Execution error: name 'np' is not defined,"
+def rotate_about_x_axis(vector, theta):
+    import numpy as np
+    def rotate_about_x_axis(vector, theta):
+        v = np.asarray(vector, dtype=float)
+        if v.size != 3:
+            raise ValueError(""Input must be a 3-element vector."")
+        # Rotation matrix for rotation about x-axis
+        c = np.cos(theta)
+        s = np.sin(theta)
+        R = np.array([[1.0, 0.0, 0.0],
+                      [0.0,   c,  -s],
+                      [0.0,   s,   c]], dtype=float)
+        return R.dot(v)
+",False,Execution error: name 'np' is not defined,"
+def rotate_about_x_axis(vector, theta):
+    import numpy as np
+    def rotate_about_x_axis(vector, theta):
+        v = np.asarray(vector, dtype=float).reshape(3,)
+        if v.shape != (3,):
+            raise ValueError(""vector must be length 3"")
+        # Use Rodrigues' rotation formula with axis k = (1,0,0)
+        k = np.array([1.0, 0.0, 0.0], dtype=float)
+        cos_t = np.cos(theta)
+        sin_t = np.sin(theta)
+        v_cos = v * cos_t
+        k_cross_v = np.cross(k, v) * sin_t
+        k_dot_v = np.dot(k, v)
+        k_term = k * (k_dot_v * (1.0 - cos_t))
+        return v_cos + k_cross_v + k_term
+",False,Execution error: name 'np' is not defined,"
+def rotate_about_x_axis(vector, theta):
+    import numpy as np
+    def rotate_about_x_axis(vector, theta):
+        v = np.asarray(vector, dtype=float)
+        if v.size != 3:
+            raise ValueError(""Input must be a 3-element vector."")
+        x = float(v[0])
+        # rotate the complex number y + i*z by e^{i*theta}
+        y = float(v[1])
+        z = float(v[2])
+        comp = complex(y, z) * complex(np.cos(theta), np.sin(theta))
+        return np.array([x, comp.real, comp.imag], dtype=float)
+",False,Execution error: name 'np' is not defined,"
+def rotate_about_x_axis(vector, theta):
+    import math
+    import numpy as np
+    def rotate_about_x_axis(vector, theta):
+        arr = np.asarray(vector, dtype=float)
+        if arr.shape not in [(3,), (3,1), (1,3)]:
+            if arr.size == 3:
+                arr = arr.ravel()
+            else:
+                raise ValueError(""vector must be length 3"")
+        # Build rotation matrix by components and multiply with explicit loops
+        c = math.cos(theta)
+        s = math.sin(theta)
+        R = [[1.0, 0.0, 0.0],
+             [0.0,   c,  -s],
+             [0.0,   s,   c]]
+        res = [0.0, 0.0, 0.0]
+        for i in range(3):
+            acc = 0.0
+            for j in range(3):
+                acc += R[i][j] * float(arr[j])
+            res[i] = acc
+        return np.array(res, dtype=float)
+",False,Execution error: name 'np' is not defined
+RWPB/139,"import torch
+import numpy as np
+def rotate_normalmap_by_angle_torch(normal_map, angle):
+    # Convert the angle from degrees to radians and move it to the same device as the normal_map
+    angle = torch.tensor(angle / 180 * np.pi).to(normal_map.device)
+    # Define the rotation matrix for rotating around the y-axis
+    R = torch.tensor([
+        [torch.cos(angle), 0, torch.sin(angle)],  # X' = X*cos(theta) + Z*sin(theta)
+        [0, 1, 0],                                # Y' = Y (no change)
+        [-torch.sin(angle), 0, torch.cos(angle)]  # Z' = -X*sin(theta) + Z*cos(theta)
+    ]).to(normal_map.device)
+    # Apply the rotation matrix to each normal vector in the normal map
+    # Reshape the normal map from (H, W, 3) to (H*W, 3) for matrix multiplication, then reshape back to (H, W, 3)
+    return torch.matmul(normal_map.view(-1, 3), R.T).view(normal_map.shape)
+",False,Execution error: name 'torch' is not defined,"
+def rotate_normalmap_by_angle_torch(normal_map, angle):
+    import torch
+    import numpy as np
+    def rotate_normalmap_by_angle_torch(normal_map, angle):
+        if not isinstance(normal_map, torch.Tensor):
+            raise TypeError(""normal_map must be a torch.Tensor"")
+        orig_dtype = normal_map.dtype
+        device = normal_map.device
+        nm = normal_map.to(torch.get_default_dtype()).to(device)
+        if nm.dim() == 3 and nm.shape[2] == 3:
+            H, W, C = nm.shape
+            reshaped = nm.reshape(-1, 3)
+            theta = torch.tensor(angle * np.pi / 180.0, device=device, dtype=reshaped.dtype)
+            c = torch.cos(theta)
+            s = torch.sin(theta)
+            R = torch.tensor([[c, 0.0, s],
+                              [0.0, 1.0, 0.0],
+                              [-s, 0.0, c]], device=device, dtype=reshaped.dtype)
+            rotated = reshaped @ R.t()
+            eps = torch.finfo(rotated.dtype).eps
+            norm = torch.linalg.norm(rotated, dim=1, keepdim=True).clamp_min(eps)
+            rotated = rotated / norm
+            return rotated.reshape(H, W, 3).to(orig_dtype)
+        elif nm.dim() == 3 and nm.shape[0] == 3:
+            nm = nm.permute(1, 2, 0)
+            return rotate_normalmap_by_angle_torch(nm, angle).permute(2, 0, 1).to(orig_dtype)
+        else:
+            raise ValueError(""normal_map must have shape (H,W,3) or (3,H,W)"")
+",False,Execution error: name 'torch' is not defined,"
+def rotate_normalmap_by_angle_torch(normal_map, angle):
+    import torch
+    import numpy as np
+    def rotate_normalmap_by_angle_torch(normal_map, angle):
+        if not isinstance(normal_map, torch.Tensor):
+            raise TypeError(""normal_map must be a torch.Tensor"")
+        device = normal_map.device
+        dtype = normal_map.dtype
+        nm = normal_map.to(torch.get_default_dtype()).to(device)
+        if nm.dim() == 3 and nm.shape[2] == 3:
+            theta = angle * np.pi / 180.0
+            c = float(np.cos(theta))
+            s = float(np.sin(theta))
+            x = nm[..., 0]
+            y = nm[..., 1]
+            z = nm[..., 2]
+            x_new = c * x + s * z
+            y_new = y
+            z_new = -s * x + c * z
+            out = torch.stack((x_new, y_new, z_new), dim=-1)
+            eps = torch.finfo(out.dtype).eps
+            norm = torch.sqrt((out ** 2).sum(dim=-1, keepdim=True)).clamp_min(eps)
+            out = out / norm
+            return out.to(dtype)
+        elif nm.dim() == 3 and nm.shape[0] == 3:
+            nm = nm.permute(1, 2, 0)
+            return rotate_normalmap_by_angle_torch(nm, angle).permute(2, 0, 1).to(dtype)
+        else:
+            raise ValueError(""normal_map must have shape (H,W,3) or (3,H,W)"")
+",False,Execution error: name 'torch' is not defined,"
+def rotate_normalmap_by_angle_torch(normal_map, angle):
+    import torch
+    import numpy as np
+    def rotate_normalmap_by_angle_torch(normal_map, angle):
+        if not isinstance(normal_map, torch.Tensor):
+            raise TypeError(""normal_map must be a torch.Tensor"")
+        device = normal_map.device
+        dtype = normal_map.dtype
+        nm = normal_map.cpu().to(torch.get_default_dtype())
+        permuted_back = False
+        if nm.dim() == 3 and nm.shape[0] == 3:
+            nm = nm.permute(1, 2, 0)
+            permuted_back = True
+        if not (nm.dim() == 3 and nm.shape[2] == 3):
+            raise ValueError(""normal_map must have shape (H,W,3) or (3,H,W)"")
+        arr = nm.numpy()
+        theta = np.deg2rad(angle)
+        c = np.cos(theta)
+        s = np.sin(theta)
+        R = np.array([[c, 0.0, s],
+                      [0.0, 1.0, 0.0],
+                      [-s, 0.0, c]], dtype=arr.dtype)
+        flat = arr.reshape(-1, 3)
+        rotated = flat @ R.T
+        norms = np.linalg.norm(rotated, axis=1, keepdims=True)
+        norms = np.maximum(norms, np.finfo(rotated.dtype).eps)
+        rotated = rotated / norms
+        rotated = rotated.reshape(arr.shape)
+        out = torch.from_numpy(rotated).to(device=device, dtype=dtype)
+        if permuted_back:
+            out = out.permute(2, 0, 1)
+        return out
+",False,Execution error: name 'torch' is not defined,"
+def rotate_normalmap_by_angle_torch(normal_map, angle):
+    import torch
+    import numpy as np
+    def rotate_normalmap_by_angle_torch(normal_map, angle):
+        if not isinstance(normal_map, torch.Tensor):
+            raise TypeError(""normal_map must be a torch.Tensor"")
+        device = normal_map.device
+        dtype = normal_map.dtype
+        nm = normal_map.to(torch.get_default_dtype()).to(device)
+        if nm.dim() == 3 and nm.shape[2] == 3:
+            theta = torch.tensor(angle * np.pi / 180.0, device=device, dtype=nm.dtype)
+            c = torch.cos(theta)
+            s = torch.sin(theta)
+            R = torch.stack([
+                torch.stack([c, torch.tensor(0., device=device, dtype=nm.dtype), s]),
+                torch.stack([torch.tensor(0., device=device, dtype=nm.dtype), torch.tensor(1., device=device, dtype=nm.dtype), torch.tensor(0., device=device, dtype=nm.dtype)]),
+                torch.stack([-s, torch.tensor(0., device=device, dtype=nm.dtype), c])
+            ], dim=0)
+            out = torch.einsum('ij,hwj->hwi', R, nm)
+            eps = torch.finfo(out.dtype).eps
+            norm = torch.sqrt((out ** 2).sum(dim=-1, keepdim=True)).clamp_min(eps)
+            out = out / norm
+            return out.to(dtype)
+        elif nm.dim() == 3 and nm.shape[0] == 3:
+            nm = nm.permute(1, 2, 0)
+            return rotate_normalmap_by_angle_torch(nm, angle).permute(2, 0, 1).to(dtype)
+        else:
+            raise ValueError(""normal_map must have shape (H,W,3) or (3,H,W)"")
+",False,Execution error: name 'torch' is not defined,"
+def rotate_normalmap_by_angle_torch(normal_map, angle):
+    import torch
+    import numpy as np
+    def rotate_normalmap_by_angle_torch(normal_map, angle):
+        if not isinstance(normal_map, torch.Tensor):
+            raise TypeError(""normal_map must be a torch.Tensor"")
+        orig_dtype = normal_map.dtype
+        device = normal_map.device
+        nm = normal_map.to(torch.get_default_dtype()).to(device)
+        if nm.dim() == 3 and nm.shape[2] == 3:
+            H, W, _ = nm.shape
+            flat = nm.reshape(-1, 3)
+            theta = angle * np.pi / 180.0
+            c = torch.tensor(np.cos(theta), device=device, dtype=flat.dtype)
+            s = torch.tensor(np.sin(theta), device=device, dtype=flat.dtype)
+            R = torch.stack([torch.stack([c, torch.zeros(1, device=device, dtype=flat.dtype)[0], s]),
+                             torch.stack([torch.zeros(1, device=device, dtype=flat.dtype)[0], torch.ones(1, device=device, dtype=flat.dtype)[0], torch.zeros(1, device=device, dtype=flat.dtype)[0]]),
+                             torch.stack([-s, torch.zeros(1, device=device, dtype=flat.dtype)[0], c])], dim=0)
+            R = R.expand(flat.shape[0], 3, 3)
+            flat = flat.unsqueeze(1)
+            rotated = torch.bmm(flat, R).squeeze(1)
+            eps = torch.finfo(rotated.dtype).eps
+            norm = torch.linalg.vector_norm(rotated, dim=1, keepdim=True).clamp_min(eps)
+            rotated = rotated / norm
+            return rotated.reshape(H, W, 3).to(orig_dtype)
+        elif nm.dim() == 3 and nm.shape[0] == 3:
+            nm = nm.permute(1, 2, 0)
+            return rotate_normalmap_by_angle_torch(nm, angle).permute(2, 0, 1).to(orig_dtype)
+        else:
+            raise ValueError(""normal_map must have shape (H,W,3) or (3,H,W)"")
+",False,Execution error: name 'torch' is not defined
+RWPB/97,"import numpy as np
+import torch
+def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+    if image.ndim == 3:
+        image = image.transpose((2, 0, 1))  # HxWxC to CxHxW
+    elif image.ndim == 2:
+        image = image[None]  # add channel axis
+    else:
+        return ValueError
+    return torch.tensor(image / 255.0, dtype=torch.float)
+",False,Execution error: name 'np' is not defined,"
+def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+    import numpy as np
+    import torch
+    def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+        if not isinstance(image, np.ndarray):
+            raise ValueError(""Input is not a NumPy array"")
+        if image.ndim == 3:
+            if image.shape[0] == 0 or image.shape[1] == 0 or image.shape[2] == 0:
+                raise ValueError(""Invalid image shape"")
+            arr = image.astype(np.float32, copy=False) / 255.0
+            arr = np.transpose(arr, (2, 0, 1))
+        elif image.ndim == 2:
+            if image.shape[0] == 0 or image.shape[1] == 0:
+                raise ValueError(""Invalid image shape"")
+            arr = image.astype(np.float32, copy=False) / 255.0
+            arr = np.expand_dims(arr, 0)
+        else:
+            raise ValueError(""Input is not a valid 2D or 3D image array"")
+        arr = np.ascontiguousarray(arr)
+        return torch.from_numpy(arr).to(dtype=torch.float)
+",False,Execution error: name 'np' is not defined,"
+def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+    import numpy as np
+    import torch
+    def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+        try:
+            arr = np.asarray(image)
+        except Exception:
+            raise ValueError(""Unable to convert input to numpy array"")
+        if arr.ndim == 2:
+            out = np.expand_dims(arr, axis=0).astype(np.float32) / 255.0
+            return torch.as_tensor(out, dtype=torch.float)
+        if arr.ndim == 3:
+            if arr.shape[0] <= 0 or arr.shape[1] <= 0 or arr.shape[2] <= 0:
+                raise ValueError(""Invalid image dimensions"")
+            out = np.moveaxis(arr.astype(np.float32), -1, 0) / 255.0
+            return torch.as_tensor(out, dtype=torch.float)
+        raise ValueError(""Input is not a valid image (expected 2D or 3D array)"")
+",False,Execution error: name 'np' is not defined,"
+def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+    import numpy as np
+    import torch
+    def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+        if not isinstance(image, np.ndarray):
+            raise ValueError(""Input must be a numpy.ndarray"")
+        if image.ndim == 3:
+            h, w, c = image.shape
+            if h <= 0 or w <= 0 or c <= 0:
+                raise ValueError(""Invalid image shape"")
+            tmp = image.astype(np.float32) / 255.0
+            t = torch.from_numpy(tmp)
+            t = t.permute(2, 0, 1).contiguous().to(dtype=torch.float)
+            return t
+        elif image.ndim == 2:
+            h, w = image.shape
+            if h <= 0 or w <= 0:
+                raise ValueError(""Invalid image shape"")
+            tmp = image.astype(np.float32) / 255.0
+            t = torch.from_numpy(tmp)
+            t = t.unsqueeze(0).contiguous().to(dtype=torch.float)
+            return t
+        else:
+            raise ValueError(""Not a valid image array (expected 2D or 3D)"")
+",False,Execution error: name 'np' is not defined,"
+def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+    import numpy as np
+    import torch
+    def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+        arr = np.array(image, copy=False)
+        if arr.ndim == 2:
+            H, W = arr.shape
+            if H == 0 or W == 0:
+                raise ValueError(""Invalid image"")
+            arr2 = np.empty((1, H, W), dtype=np.float32)
+            arr2[0] = arr.astype(np.float32) / 255.0
+            return torch.from_numpy(arr2)
+        if arr.ndim == 3:
+            H, W, C = arr.shape
+            if H == 0 or W == 0 or C == 0:
+                raise ValueError(""Invalid image"")
+            arr2 = np.empty((C, H, W), dtype=np.float32)
+            for i in range(C):
+                arr2[i] = arr[:, :, i].astype(np.float32) / 255.0
+            return torch.from_numpy(arr2)
+        raise ValueError(""Input is not a valid image (must be 2D or 3D numpy array)"")
+",False,Execution error: name 'np' is not defined,"
+def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+    import numpy as np
+    import torch
+    def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
+        if not isinstance(image, np.ndarray):
+            raise ValueError(""Input must be a numpy array"")
+        dims = image.ndim
+        if dims == 2:
+            if 0 in image.shape:
+                raise ValueError(""Invalid image"")
+            norm = (image.astype(np.float32) / 255.0).reshape(1, image.shape[0], image.shape[1])
+            return torch.tensor(norm, dtype=torch.float)
+        if dims == 3:
+            if 0 in image.shape:
+                raise ValueError(""Invalid image"")
+            H, W, C = image.shape
+            norm = image.astype(np.float32) / 255.0
+            norm = norm.reshape(H, W, C).transpose(2, 0, 1).copy()
+            return torch.tensor(norm, dtype=torch.float)
+        raise ValueError(""Not a valid image: expected 2D (H,W) or 3D (H,W,C) array"")
+",False,Execution error: name 'np' is not defined
+RWPB/8,"import numpy as np
+import torch
+def cvimg2torch(img):
+    img = img.astype(float) / 255.0
+    img = img.transpose(2, 0, 1) # NHWC -> NCHW
+    img = np.expand_dims(img, 0)
+    img = torch.from_numpy(img).float()
+    return img
+",False,Execution error: name 'np' is not defined,"
+def cvimg2torch(img):
+    import numpy as np
+    import torch
+    def cvimg2torch(img):
+        """"""
+        Convert a img to tensor
+        input:
+            img -> ndarray uint8 HxWxC or HxW
+        return
+            tensor -> torch.tensor BxCxHxW (float32 normalized 0..1)
+        """"""
+        arr = np.asarray(img)
+        if arr.ndim == 2:
+            # H x W -> H x W x 1
+            arr = arr[:, :, None]
+        if arr.ndim != 3:
+            raise ValueError(""img must be HxW or HxWxC"")
+        # ensure contiguous
+        arr = np.ascontiguousarray(arr)
+        # HWC -> CHW
+        arr = arr.transpose(2, 0, 1)
+        tensor = torch.from_numpy(arr).float().div(255.0)
+        # add batch dim
+        tensor = tensor.unsqueeze(0)
+        return tensor
+",False,Execution error: name 'np' is not defined,"
+def cvimg2torch(img):
+    import numpy as np
+    import torch
+    def cvimg2torch(img):
+        """"""
+        Convert a img to tensor
+        input:
+            img -> ndarray uint8 HxWxC or HxW
+        return
+            tensor -> torch.tensor BxCxHxW (float32 normalized 0..1)
+        This variant uses torch.tensor constructor (copies) and handles batched input.
+        """"""
+        arr = np.asarray(img)
+        # If batch of images given: B x H x W x C
+        if arr.ndim == 4:
+            # move to B x C x H x W
+            out = np.moveaxis(arr, -1, 1)
+            t = torch.tensor(out, dtype=torch.float32).div(255.0)
+            return t
+        if arr.ndim == 2:
+            arr = arr[:, :, None]
+        if arr.ndim != 3:
+            raise ValueError(""img must be HxW, HxWxC, or batch BxHxWxC"")
+        # HWC -> CHW
+        chw = np.moveaxis(arr, -1, 0)
+        t = torch.tensor(chw, dtype=torch.float32).div(255.0)
+        return t.unsqueeze(0)
+",False,Execution error: name 'np' is not defined,"
+def cvimg2torch(img):
+    import numpy as np
+    import torch
+    def cvimg2torch(img):
+        """"""
+        Convert a img to tensor
+        input:
+            img -> ndarray uint8 HxWxC or HxW
+        return
+            tensor -> torch.tensor BxCxHxW
+        This variant preserves dtype if not uint8, otherwise converts to float32 normalized.
+        """"""
+        arr = np.asarray(img)
+        if arr.ndim == 2:
+            arr = arr[:, :, None]
+        if arr.ndim == 3:
+            # HWC -> CHW
+            arr_chw = np.moveaxis(arr, -1, 0).copy()
+            if arr_chw.dtype == np.uint8:
+                t = torch.from_numpy(arr_chw).to(torch.float32).div(255.0)
+            else:
+                t = torch.from_numpy(arr_chw).to(torch.float32)
+            return t.unsqueeze(0)
+        elif arr.ndim == 4:
+            # assume batch B x H x W x C -> B x C x H x W
+            arr_bc = np.moveaxis(arr, -1, 1).copy()
+            if arr_bc.dtype == np.uint8:
+                t = torch.from_numpy(arr_bc).to(torch.float32).div(255.0)
+            else:
+                t = torch.from_numpy(arr_bc).to(torch.float32)
+            return t
+        else:
+            raise ValueError(""Unsupported image shape"")
+",False,Execution error: name 'np' is not defined,"
+def cvimg2torch(img):
+    import numpy as np
+    import torch
+    def cvimg2torch(img):
+        """"""
+        Convert a img to tensor
+        input:
+            img -> ndarray uint8 HxWxC or HxW
+        return
+            tensor -> torch.tensor BxCxHxW (float32 normalized 0..1)
+        This variant converts BGR->RGB for 3-channel images.
+        """"""
+        arr = np.asarray(img)
+        if arr.ndim == 2:
+            arr = arr[:, :, None]
+        if arr.ndim != 3:
+            raise ValueError(""img must be HxW or HxWxC"")
+        # If 3 channels, assume BGR and convert to RGB
+        if arr.shape[2] == 3:
+            arr = arr[..., ::-1]
+        # HWC -> CHW
+        chw = arr.transpose(2, 0, 1).copy()
+        tensor = torch.from_numpy(chw).float().div(255.0).unsqueeze(0)
+        return tensor
+",False,Execution error: name 'np' is not defined,"
+def cvimg2torch(img):
+    import numpy as np
+    import torch
+    def cvimg2torch(img):
+        """"""
+        Convert a img to tensor
+        input:
+            img -> ndarray uint8 HxWxC or HxW
+        return
+            tensor -> torch.tensor BxCxHxW (float32, not normalized)
+        This variant returns float32 image in range [0,255] without dividing by 255.
+        """"""
+        arr = np.asarray(img)
+        if arr.ndim == 2:
+            arr = arr[:, :, None]
+        if arr.ndim == 3:
+            # HWC -> CHW
+            chw = np.ascontiguousarray(np.transpose(arr, (2, 0, 1)))
+            t = torch.from_numpy(chw).to(torch.float32)
+            return t.unsqueeze(0)
+        elif arr.ndim == 4:
+            # B x H x W x C -> B x C x H x W
+            bc = np.ascontiguousarray(np.transpose(arr, (0, 3, 1, 2)))
+            return torch.from_numpy(bc).to(torch.float32)
+        else:
+            raise ValueError(""Unsupported image dimensions"")
+",False,Execution error: name 'np' is not defined
+RWPB/35,"
+def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+    items = []
+    for k, v in d.items():
+        # Generate the new key by concatenating the current key with the parent key using the separator
+        new_key = f""{parent_key}{sep}{k}"" if parent_key else k
+        if isinstance(v, dict):
+            # Recursively flatten the dictionary and extend the list items
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            # Add the key-value pair to the items list
+            items.append((new_key, v))
+    return dict(items)
+",False,Execution error: name 'flatten_dict' is not defined,"
+def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+    def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+        result = {}
+        if not isinstance(d, dict):
+            return {parent_key: d} if parent_key else {}
+        for k, v in d.items():
+            key = f""{parent_key}{sep}{k}"" if parent_key else str(k)
+            if isinstance(v, dict) and v:
+                result.update(flatten_dict(v, key, sep))
+            else:
+                result[key] = v
+        return result
+",False,Execution error: name 'flatten_dict' is not defined,"
+def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+    def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+        if not isinstance(d, dict):
+            return {parent_key: d} if parent_key else {}
+        result = {}
+        stack = [(d, parent_key)]
+        while stack:
+            current, base = stack.pop()
+            for k, v in current.items():
+                new_key = base + sep + str(k) if base else str(k)
+                if isinstance(v, dict) and v:
+                    stack.append((v, new_key))
+                else:
+                    result[new_key] = v
+        return result
+",False,Execution error: name 'flatten_dict' is not defined,"
+def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+    def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+        def _gen(obj, base):
+            if not isinstance(obj, dict):
+                if base:
+                    yield base, obj
+                return
+            for k, v in obj.items():
+                new = base + sep + str(k) if base else str(k)
+                if isinstance(v, dict) and v:
+                    yield from _gen(v, new)
+                else:
+                    yield new, v
+        return dict(_gen(d, parent_key))
+",False,Execution error: name 'flatten_dict' is not defined,"
+def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+    from collections import deque
+    def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+        result = {}
+        if not isinstance(d, dict):
+            return {parent_key: d} if parent_key else {}
+        q = deque()
+        q.append((d, parent_key))
+        while q:
+            cur, base = q.popleft()
+            for k, v in cur.items():
+                new_key = base + sep + str(k) if base else str(k)
+                if isinstance(v, dict) and v:
+                    q.append((v, new_key))
+                else:
+                    result[new_key] = v
+        return result
+",False,Execution error: name 'flatten_dict' is not defined,"
+def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+    from collections.abc import Mapping
+    def flatten_dict(d: dict, parent_key: str = """", sep: str = ""/"") -> dict:
+        result = {}
+        def _flatten(obj, base):
+            if not isinstance(obj, Mapping):
+                if base:
+                    result[base] = obj
+                return
+            if not obj and base:
+                result[base] = obj
+                return
+            for k, v in obj.items():
+                key = base + sep + str(k) if base else str(k)
+                _flatten(v, key)
+        _flatten(d, parent_key)
+        return result
+",False,Execution error: name 'flatten_dict' is not defined
+RWPB/64,"import numpy as np
+def moving_average(arr, window_size):
+    # Pad the input array with zeros at the beginning to handle the boundary effect
+    arr_padded = np.pad(arr, (window_size - 1, 0), ""constant"")
+    # Calculate the moving average using a convolution with a uniform kernel (i.e., np.ones(window_size))
+    smoothed_arr = np.convolve(arr_padded, np.ones(window_size), ""valid"") / window_size
+    # Calculate residuals by subtracting the smoothed array from the original array
+    residuals = arr - smoothed_arr
+    return [smoothed_arr, residuals]
+",False,Execution error: name 'moving_average' is not defined,"
+def moving_average(arr, window_size):
+    import numpy as np
+    def moving_average(arr, window_size):
+        arr = np.asarray(arr, dtype=float)
+        if window_size <= 0:
+            raise ValueError(""window_size must be a positive integer"")
+        if arr.size == 0:
+            return [np.array([]), np.array([])]
+        kernel = np.ones(window_size, dtype=float) / float(window_size)
+        smoothed = np.convolve(arr, kernel, mode='same')
+        residuals = arr - smoothed
+        return [smoothed, residuals]
+",False,Execution error: name 'moving_average' is not defined,"
+def moving_average(arr, window_size):
+    import numpy as np
+    def moving_average(arr, window_size):
+        arr = np.asarray(arr, dtype=float)
+        if window_size <= 0:
+            raise ValueError(""window_size must be > 0"")
+        n = arr.size
+        if n == 0:
+            return [np.array([]), np.array([])]
+        if window_size >= n:
+            ma = np.full(n, arr.mean(), dtype=float)
+            return [ma, arr - ma]
+        cumsum = np.concatenate(([0.0], arr.cumsum()))
+        valid = (cumsum[window_size:] - cumsum[:-window_size]) / float(window_size)
+        m = valid.size
+        left = (window_size - 1) // 2
+        right = n - m - left
+        if left < 0:
+            left = 0
+        if right < 0:
+            right = 0
+        ma = np.concatenate((np.full(left, valid[0], dtype=float), valid, np.full(right, valid[-1], dtype=float)))
+        residuals = arr - ma
+        return [ma, residuals]
+",False,Execution error: name 'moving_average' is not defined,"
+def moving_average(arr, window_size):
+    import numpy as np
+    def moving_average(arr, window_size):
+        arr = np.asarray(arr, dtype=float)
+        if window_size <= 0:
+            raise ValueError(""window_size must be positive"")
+        n = arr.size
+        if n == 0:
+            return [np.array([]), np.array([])]
+        if window_size >= n:
+            ma = np.full(n, arr.mean(), dtype=float)
+            return [ma, arr - ma]
+        ma = np.empty(n, dtype=float)
+        left_shift = (window_size - 1) // 2
+        for i in range(n):
+            start = i - left_shift
+            if start < 0:
+                start = 0
+            end = start + window_size
+            if end > n:
+                end = n
+                start = n - window_size
+            ma[i] = arr[start:end].mean()
+        residuals = arr - ma
+        return [ma, residuals]
+",False,Execution error: name 'moving_average' is not defined,"
+def moving_average(arr, window_size):
+    import numpy as np
+    def moving_average(arr, window_size):
+        arr = np.asarray(arr, dtype=float)
+        if window_size <= 0:
+            raise ValueError(""window_size must be > 0"")
+        n = arr.size
+        if n == 0:
+            return [np.array([]), np.array([])]
+        if window_size >= n:
+            ma = np.full(n, arr.mean(), dtype=float)
+            return [ma, arr - ma]
+        try:
+            from numpy.lib.stride_tricks import sliding_window_view
+            windows = sliding_window_view(arr, window_size)
+            valid = windows.mean(axis=1)
+        except Exception:
+            cumsum = np.concatenate(([0.0], arr.cumsum()))
+            valid = (cumsum[window_size:] - cumsum[:-window_size]) / float(window_size)
+        m = valid.size
+        left = (window_size - 1) // 2
+        right = n - m - left
+        ma = np.concatenate((np.full(left, valid[0], dtype=float), valid, np.full(right, valid[-1], dtype=float)))
+        residuals = arr - ma
+        return [ma, residuals]
+",False,Execution error: name 'moving_average' is not defined,"
+def moving_average(arr, window_size):
+    import numpy as np
+    def moving_average(arr, window_size):
+        arr = np.asarray(arr, dtype=float)
+        if window_size <= 0:
+            raise ValueError(""window_size must be positive"")
+        n = arr.size
+        if n == 0:
+            return [np.array([]), np.array([])]
+        ma = np.empty(n, dtype=float)
+        low_half = (window_size - 1) // 2
+        high_half = window_size // 2
+        for i in range(n):
+            start = max(0, i - low_half)
+            end = min(n, i + high_half + 1)
+            ma[i] = arr[start:end].mean()
+        residuals = arr - ma
+        return [ma, residuals]
+",False,Execution error: name 'moving_average' is not defined
+RWPB/50,"import torch
+def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+    # Extract original and current dimensions
+    original_height, original_width = original_size
+    _, current_height, current_width = tensor.shape
+    # Calculate aspect ratios
+    original_aspect_ratio = original_width / original_height
+    current_aspect_ratio = current_width / current_height
+    # Determine how to adjust tensor to match original aspect ratio
+    if original_aspect_ratio > current_aspect_ratio:
+        # Original is wider than current: adjust height
+        scale_factor = current_width / original_width
+        new_height = int(original_height * scale_factor)
+        vertical_padding = (current_height - new_height) // 2
+        # Crop vertically
+        unpadded_tensor = tensor[:, vertical_padding:vertical_padding + new_height, :]
+    else:
+        # Original is taller than current: adjust width
+        scale_factor = current_height / original_height
+        new_width = int(original_width * scale_factor)
+        horizontal_padding = (current_width - new_width) // 2
+        # Crop horizontally
+        unpadded_tensor = tensor[:, :, horizontal_padding:horizontal_padding + new_width]
+    return unpadded_tensor
+",False,Execution error: name 'torch' is not defined,"
+def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+    import torch
+    def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+        if tensor is None:
+            return tensor
+        h0, w0 = original_size
+        t = tensor
+        if t.dim() == 4:
+            n, c, H, W = t.shape
+            top = max((H - h0) // 2, 0)
+            left = max((W - w0) // 2, 0)
+            bottom = top + min(h0, H)
+            right = left + min(w0, W)
+            cropped = t[:, :, top:bottom, left:right]
+            if cropped.shape[2] != h0 or cropped.shape[3] != w0:
+                pad_top = max(0, (h0 - cropped.shape[2]) // 2)
+                pad_bottom = h0 - cropped.shape[2] - pad_top
+                pad_left = max(0, (w0 - cropped.shape[3]) // 2)
+                pad_right = w0 - cropped.shape[3] - pad_left
+                padded = torch.nn.functional.pad(cropped, (pad_left, pad_right, pad_top, pad_bottom))
+                return padded
+            return cropped
+        elif t.dim() == 3:
+            c, H, W = t.shape
+            top = max((H - h0) // 2, 0)
+            left = max((W - w0) // 2, 0)
+            bottom = top + min(h0, H)
+            right = left + min(w0, W)
+            cropped = t[:, top:bottom, left:right]
+            if cropped.shape[1] != h0 or cropped.shape[2] != w0:
+                pad_top = max(0, (h0 - cropped.shape[1]) // 2)
+                pad_bottom = h0 - cropped.shape[1] - pad_top
+                pad_left = max(0, (w0 - cropped.shape[2]) // 2)
+                pad_right = w0 - cropped.shape[2] - pad_left
+                padded = torch.nn.functional.pad(cropped, (pad_left, pad_right, pad_top, pad_bottom))
+                return padded
+            return cropped
+        else:
+            raise ValueError(""Unsupported tensor shape. Expected CHW or NCHW."")
+",False,Execution error: name 'torch' is not defined,"
+def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+    import torch
+    import torch.nn.functional as F
+    def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+        h0, w0 = original_size
+        t = tensor
+        if t.dim() == 3:
+            c, H, W = t.shape
+            top = (H - h0) // 2 if H > h0 else 0
+            left = (W - w0) // 2 if W > w0 else 0
+            height = min(h0, H)
+            width = min(w0, W)
+            out = t[:, top:top+height, left:left+width]
+            if out.shape[1] < h0 or out.shape[2] < w0:
+                pad_h = h0 - out.shape[1]
+                pad_w = w0 - out.shape[2]
+                pad_top = pad_h // 2
+                pad_bottom = pad_h - pad_top
+                pad_left = pad_w // 2
+                pad_right = pad_w - pad_left
+                out = F.pad(out, (pad_left, pad_right, pad_top, pad_bottom))
+            return out
+        elif t.dim() == 4:
+            n, c, H, W = t.shape
+            top = (H - h0) // 2 if H > h0 else 0
+            left = (W - w0) // 2 if W > w0 else 0
+            height = min(h0, H)
+            width = min(w0, W)
+            out = t[:, :, top:top+height, left:left+width]
+            if out.shape[2] < h0 or out.shape[3] < w0:
+                pad_h = h0 - out.shape[2]
+                pad_w = w0 - out.shape[3]
+                pad_top = pad_h // 2
+                pad_bottom = pad_h - pad_top
+                pad_left = pad_w // 2
+                pad_right = pad_w - pad_left
+                out = F.pad(out, (pad_left, pad_right, pad_top, pad_bottom))
+            return out
+        else:
+            raise ValueError(""Expected 3D (C,H,W) or 4D (N,C,H,W) tensor"")
+",False,Execution error: name 'torch' is not defined,"
+def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+    import torch
+    import torch.nn.functional as F
+    def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+        h0, w0 = original_size
+        t = tensor
+        if t.dim() == 3:
+            c, H, W = t.shape
+            if H < h0 or W < w0:
+                pad_h = max(0, h0 - H)
+                pad_w = max(0, w0 - W)
+                pad_top = pad_h // 2
+                pad_bottom = pad_h - pad_top
+                pad_left = pad_w // 2
+                pad_right = pad_w - pad_left
+                t = F.pad(t, (pad_left, pad_right, pad_top, pad_bottom))
+                c, H, W = t.shape
+            top = (H - h0) // 2
+            left = (W - w0) // 2
+            return t[:, top:top+h0, left:left+w0]
+        elif t.dim() == 4:
+            n, c, H, W = t.shape
+            if H < h0 or W < w0:
+                pad_h = max(0, h0 - H)
+                pad_w = max(0, w0 - W)
+                pad_top = pad_h // 2
+                pad_bottom = pad_h - pad_top
+                pad_left = pad_w // 2
+                pad_right = pad_w - pad_left
+                t = F.pad(t, (pad_left, pad_right, pad_top, pad_bottom))
+                n, c, H, W = t.shape
+            top = (H - h0) // 2
+            left = (W - w0) // 2
+            return t[:, :, top:top+h0, left:left+w0]
+        else:
+            raise ValueError(""Unsupported tensor shape"")
+",False,Execution error: name 'torch' is not defined,"
+def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+    import torch
+    import torch.nn.functional as F
+    def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+        h0, w0 = original_size
+        t = tensor
+        single = False
+        if t.dim() == 3:
+            single = True
+            t = t.unsqueeze(0)
+        if t.dim() != 4:
+            raise ValueError(""Expected 3D (C,H,W) or 4D (N,C,H,W) tensor"")
+        n, c, H, W = t.shape
+        target_aspect = h0 / float(w0)
+        current_aspect = H / float(W)
+        if abs(current_aspect - target_aspect) < 1e-6:
+            top = (H - h0) // 2
+            left = (W - w0) // 2
+            out = t[:, :, max(top,0):max(top,0)+min(h0,H), max(left,0):max(left,0)+min(w0,W)]
+        else:
+            if current_aspect > target_aspect:
+                new_H = int(round(W * target_aspect))
+                new_H = min(new_H, H)
+                top = (H - new_H) // 2
+                out = t[:, :, top:top+new_H, :]
+            else:
+                new_W = int(round(H / target_aspect))
+                new_W = min(new_W, W)
+                left = (W - new_W) // 2
+                out = t[:, :, :, left:left+new_W]
+            if out.shape[2] != h0 or out.shape[3] != w0:
+                dtype = out.dtype
+                device = out.device
+                was_int = dtype in (torch.uint8, torch.int8, torch.int16, torch.int32, torch.int64)
+                if was_int:
+                    out = out.float()
+                out = F.interpolate(out, size=(h0, w0), mode='bilinear', align_corners=False)
+                if was_int:
+                    out = out.to(dtype)
+        if single:
+            out = out.squeeze(0)
+        return out
+",False,Execution error: name 'torch' is not defined,"
+def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+    import torch
+    def unpad_image(tensor: torch.Tensor, original_size: tuple) -> torch.Tensor:
+        h0, w0 = original_size
+        t = tensor
+        if t.dim() == 4:
+            n, c, H, W = t.shape
+            outs = []
+            for i in range(n):
+                img = t[i]
+                while img.shape[1] > h0:
+                    top = 0
+                    bottom = img.shape[1]
+                    img = img[:, 1:bottom-1 if bottom-1>top else bottom]
+                while img.shape[2] > w0:
+                    left = 0
+                    right = img.shape[2]
+                    img = img[:, :, 1:right-1 if right-1>left else right]
+                if img.shape[1] < h0 or img.shape[2] < w0:
+                    pad_h = h0 - img.shape[1]
+                    pad_w = w0 - img.shape[2]
+                    pad_top = pad_h // 2
+                    pad_bottom = pad_h - pad_top
+                    pad_left = pad_w // 2
+                    pad_right = pad_w - pad_left
+                    img = torch.nn.functional.pad(img, (pad_left, pad_right, pad_top, pad_bottom))
+                outs.append(img)
+            return torch.stack(outs, dim=0)
+        elif t.dim() == 3:
+            img = t
+            while img.shape[1] > h0:
+                top = 0
+                bottom = img.shape[1]
+                img = img[:, 1:bottom-1 if bottom-1>top else bottom]
+            while img.shape[2] > w0:
+                left = 0
+                right = img.shape[2]
+                img = img[:, :, 1:right-1 if right-1>left else right]
+            if img.shape[1] < h0 or img.shape[2] < w0:
+                pad_h = h0 - img.shape[1]
+                pad_w = w0 - img.shape[2]
+                pad_top = pad_h // 2
+                pad_bottom = pad_h - pad_top
+                pad_left = pad_w // 2
+                pad_right = pad_w - pad_left
+                img = torch.nn.functional.pad(img, (pad_left, pad_right, pad_top, pad_bottom))
+            return img
+        else:
+            raise ValueError(""Unsupported tensor shape"")
+",False,Execution error: name 'torch' is not defined
+RWPB/11,"from typing import List
+def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+    padding = [pad_idx] * (max_seq_length - len(ls))
+    if pad_right:
+        result = ls + padding
+    else:
+        result = padding + ls
+    if check:
+        if len(result) != max_seq_length:
+            return ValueError
+    return result
+",False,Execution error: name 'pad_to_max_seq_length' is not defined,"
+def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+    from typing import List
+    def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+        if not isinstance(max_seq_length, int) or max_seq_length < 0:
+            raise ValueError(""max_seq_length must be a non-negative integer"")
+        if ls is None:
+            ls = []
+        n = len(ls)
+        if n == max_seq_length:
+            return list(ls)
+        if n > max_seq_length:
+            if check:
+                raise ValueError(""Input length is greater than max_seq_length"")
+            # when not checking, truncate
+            return list(ls[:max_seq_length]) if pad_right else list(ls[-max_seq_length:])
+        # need padding
+        pad_count = max_seq_length - n
+        pads = [pad_idx] * pad_count
+        return list(ls) + pads if pad_right else pads + list(ls)
+",False,Execution error: name 'List' is not defined,"
+def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+    from typing import List
+    from itertools import islice, chain, repeat
+    def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+        if ls is None:
+            ls = []
+        if not isinstance(max_seq_length, int) or max_seq_length < 0:
+            raise ValueError(""max_seq_length must be a non-negative integer"")
+        n = len(ls)
+        if n == max_seq_length:
+            return list(ls)
+        if n > max_seq_length:
+            if check:
+                raise ValueError(""Result length would not equal max_seq_length"")
+            # Truncate depending on pad direction convention
+            return list(islice(ls, max_seq_length)) if pad_right else list(ls[-max_seq_length:])
+        # n < max_seq_length: pad using itertools.repeat for efficiency
+        pad_iter = repeat(pad_idx, max_seq_length - n)
+        if pad_right:
+            return list(chain(ls, pad_iter))
+        else:
+            return list(chain(pad_iter, ls))
+",False,Execution error: name 'List' is not defined,"
+def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+    from typing import List
+    def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+        # Build result by computing indices mapping
+        if ls is None:
+            ls = []
+        if not isinstance(max_seq_length, int) or max_seq_length < 0:
+            raise ValueError(""max_seq_length must be a non-negative integer"")
+        n = len(ls)
+        if n > max_seq_length:
+            if check:
+                raise ValueError(""Input longer than max_seq_length"")
+            # truncate preserving side
+            if pad_right:
+                ls2 = ls[:max_seq_length]
+            else:
+                ls2 = ls[-max_seq_length:]
+            return list(ls2)
+        if n == max_seq_length:
+            return list(ls)
+        # build using direct indexing
+        if pad_right:
+            return [ls[i] if i < n else pad_idx for i in range(max_seq_length)]
+        else:
+            offset = max_seq_length - n
+            return [pad_idx if i < offset else ls[i - offset] for i in range(max_seq_length)]
+",False,Execution error: name 'List' is not defined,"
+def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+    from typing import List
+    def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+        if ls is None:
+            ls = []
+        if not isinstance(max_seq_length, int) or max_seq_length < 0:
+            raise ValueError(""max_seq_length must be non-negative integer"")
+        # recursive strategy for padding when shorter
+        def _pad_recursive(current):
+            if len(current) == max_seq_length:
+                return current
+            if len(current) > max_seq_length:
+                # shouldn't happen here
+                if check:
+                    raise ValueError(""Result length is not equal to max_seq_length"")
+                return current[:max_seq_length] if pad_right else current[-max_seq_length:]
+            # add one pad and recurse
+            if pad_right:
+                return _pad_recursive(current + [pad_idx])
+            else:
+                return _pad_recursive([pad_idx] + current)
+        if len(ls) > max_seq_length:
+            if check:
+                raise ValueError(""Input length greater than max_seq_length"")
+            return ls[:max_seq_length] if pad_right else ls[-max_seq_length:]
+        return _pad_recursive(list(ls))
+",False,Execution error: name 'List' is not defined,"
+def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+    from typing import List
+    def pad_to_max_seq_length(ls: List[int], max_seq_length: int, pad_idx: int=0, pad_right: bool=True, check: bool=True):
+        # Validate
+        if ls is None:
+            ls = []
+        if not isinstance(max_seq_length, int) or max_seq_length < 0:
+            raise ValueError(""max_seq_length must be a non-negative integer"")
+        length = len(ls)
+        # If longer than allowed
+        if length > max_seq_length:
+            if check:
+                raise ValueError(""Sequence longer than max_seq_length"")
+            # Truncate depending on padding side
+            return list(ls[:max_seq_length]) if pad_right else list(ls[-max_seq_length:])
+        # Compute pads quickly with multiplication
+        needed = max_seq_length - length
+        if needed == 0:
+            return list(ls)
+        pads = [pad_idx] * needed
+        if pad_right:
+            return ls + pads if isinstance(ls, list) else list(ls) + pads
+        else:
+            return pads + (ls if isinstance(ls, list) else list(ls))
+",False,Execution error: name 'List' is not defined
+RWPB/40,"import inspect
+from typing import Callable, List
+def extract_code_from_funct(funct: Callable) -> List[str]:
+    # Retrieve the source code of the function
+    source_code = inspect.getsource(funct)
+    # Split the source code into individual lines and remove the first line (function definition)
+    source_code_lines = source_code.splitlines()[1:]
+    # Calculate the number of characters of indentation in the first line of the function body
+    nident = len(source_code_lines[0]) - len(source_code_lines[0].lstrip())
+    # Adjust each line to remove the initial indentation and exclude the last line (usually a return statement)
+    return [line[nident:] for line in source_code_lines[:-1]]
+",False,Execution error: name 'extract_code_from_funct' is not defined,"
+def extract_code_from_funct(funct: Callable) -> List[str]:
+    import inspect
+    import ast
+    import textwrap
+    from typing import Callable, List
+    def extract_code_from_funct(funct: Callable) -> List[str]:
+        try:
+            src = inspect.getsource(funct)
+        except (OSError, TypeError):
+            return []
+        # Dedent to normalize indentation for AST source segments
+        dedented = textwrap.dedent(src)
+        try:
+            module = ast.parse(dedented)
+        except SyntaxError:
+            # Fall back to simple line-based extraction
+            lines = dedented.splitlines()
+            # find def line
+            idx = 0
+            for i, ln in enumerate(lines):
+                if ln.lstrip().startswith(""def "") or ln.lstrip().startswith(""async def ""):
+                    idx = i
+                    break
+            body = lines[idx+1:]
+            # trim common indent
+            min_indent = None
+            for ln in body:
+                if ln.strip():
+                    leading = len(ln) - len(ln.lstrip())
+                    if min_indent is None or leading < min_indent:
+                        min_indent = leading
+            if min_indent is None:
+                return []
+            out = [ln[min_indent:] for ln in body]
+            # remove trailing return line if present
+            for j in range(len(out)-1, -1, -1):
+                if out[j].strip() == """" or out[j].lstrip().startswith(""#""):
+                    continue
+                if out[j].lstrip().startswith(""return""):
+                    out = out[:j]
+                break
+            # strip leading/trailing blank lines
+            while out and out[0].strip()=="""":
+                out.pop(0)
+            while out and out[-1].strip()=="""":
+                out.pop()
+            return out
+        # find the FunctionDef/AsyncFunctionDef with matching name
+        target = None
+        for node in ast.walk(module):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == funct.__name__:
+                target = node
+                break
+        if target is None:
+            # fallback: first function in module
+            for node in module.body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    target = node
+                    break
+        if target is None:
+            return []
+        lines_out = []
+        # iterate over body nodes, skip final Return if present
+        body_nodes = list(target.body)
+        if body_nodes and isinstance(body_nodes[-1], ast.Return):
+            body_nodes = body_nodes[:-1]
+        for node in body_nodes:
+            seg = ast.get_source_segment(dedented, node)
+            if seg is None:
+                # try to reconstruct from lineno/end_lineno
+                start = getattr(node, ""lineno"", None)
+                end = getattr(node, ""end_lineno"", None)
+                if start is not None and end is not None:
+                    seg_lines = dedented.splitlines()[start-1:end]
+                    seg = ""\n"".join(seg_lines)
+                else:
+                    continue
+            # dedent each segment and collect non-empty lines
+            for ln in textwrap.dedent(seg).splitlines():
+                lines_out.append(ln)
+        # strip leading/trailing blank lines
+        while lines_out and lines_out[0].strip()=="""":
+            lines_out.pop(0)
+        while lines_out and lines_out[-1].strip()=="""":
+            lines_out.pop()
+        return lines_out
+",False,Execution error: name 'Callable' is not defined,"
+def extract_code_from_funct(funct: Callable) -> List[str]:
+    import inspect
+    import textwrap
+    from typing import Callable, List
+    def extract_code_from_funct(funct: Callable) -> List[str]:
+        try:
+            src = inspect.getsource(funct)
+        except (OSError, TypeError):
+            return []
+        # Normalize indentation
+        src = textwrap.dedent(src)
+        lines = src.splitlines()
+        # Find the function definition line
+        def_idx = None
+        for i, ln in enumerate(lines):
+            if ln.lstrip().startswith(""def "") or ln.lstrip().startswith(""async def ""):
+                def_idx = i
+                break
+        if def_idx is None:
+            return []
+        body_lines = lines[def_idx+1:]
+        # Determine minimal indentation among non-blank lines
+        min_indent = None
+        for ln in body_lines:
+            if ln.strip() == """":
+                continue
+            leading = len(ln) - len(ln.lstrip())
+            if min_indent is None or leading < min_indent:
+                min_indent = leading
+        if min_indent is None:
+            return []
+        # Strip the indentation
+        out = [ln[min_indent:] if len(ln) >= min_indent else """" for ln in body_lines]
+        # Remove trailing blank lines
+        while out and out[-1].strip() == """":
+            out.pop()
+        # Remove final return if present (simple one-line return)
+        if out and out[-1].lstrip().startswith(""return""):
+            out.pop()
+            # remove trailing blanks again
+            while out and out[-1].strip() == """":
+                out.pop()
+        # Remove leading blank lines
+        while out and out[0].strip() == """":
+            out.pop(0)
+        return out
+",False,Execution error: name 'Callable' is not defined,"
+def extract_code_from_funct(funct: Callable) -> List[str]:
+    import inspect
+    import textwrap
+    from typing import Callable, List
+    def extract_code_from_funct(funct: Callable) -> List[str]:
+        try:
+            src_lines, _ = inspect.getsourcelines(funct)
+        except (OSError, IOError, TypeError):
+            return []
+        # join and dedent
+        src = """".join(src_lines)
+        ded = textwrap.dedent(src)
+        lines = ded.splitlines()
+        # find def line index
+        def_i = None
+        for i, ln in enumerate(lines):
+            if ln.lstrip().startswith(""def "") or ln.lstrip().startswith(""async def ""):
+                def_i = i
+                break
+        if def_i is None:
+            return []
+        body = lines[def_i+1:]
+        # compute minimal indent
+        min_indent = None
+        for ln in body:
+            if ln.strip() == """":
+                continue
+            cur = len(ln) - len(ln.lstrip())
+            if min_indent is None or cur < min_indent:
+                min_indent = cur
+        if min_indent is None:
+            return []
+        out = [ln[min_indent:] if len(ln) >= min_indent else """" for ln in body]
+        # strip leading/trailing blank lines
+        while out and out[0].strip() == """":
+            out.pop(0)
+        while out and out[-1].strip() == """":
+            out.pop()
+        # If last meaningful line starts with 'return', remove the entire return expression possibly spanning multiple lines.
+        # We'll detect parentheses balance from that return line forward.
+        for j in range(len(out)-1, -1, -1):
+            if out[j].strip() == """" or out[j].lstrip().startswith(""#""):
+                continue
+            last_idx = j
+            break
+        else:
+            return out
+        if out[last_idx].lstrip().startswith(""return""):
+            # remove from last_idx forward based on parentheses balance
+            to_remove_start = last_idx
+            bal = 0
+            removed = 0
+            for k in range(last_idx, len(out)):
+                ln = out[k]
+                for ch in ln:
+                    if ch in ""([{"":
+                        bal += 1
+                    elif ch in "")]}"":
+                        if bal > 0:
+                            bal -= 1
+                removed += 1
+                # stop when we are reasonably balanced and the line does not end with backslash or an open continuation
+                if bal == 0 and not ln.rstrip().endswith(""\\""):
+                    break
+            out = out[:to_remove_start]
+            # trim trailing blanks again
+            while out and out[-1].strip() == """":
+                out.pop()
+        return out
+",False,Execution error: name 'Callable' is not defined,"
+def extract_code_from_funct(funct: Callable) -> List[str]:
+    import inspect
+    import re
+    import textwrap
+    from typing import Callable, List
+    def extract_code_from_funct(funct: Callable) -> List[str]:
+        try:
+            src = inspect.getsource(funct)
+        except (OSError, TypeError):
+            return []
+        # Remove leading decorator lines so we can locate def accurately
+        # But keep a copy for AST-style extraction
+        src = textwrap.dedent(src)
+        # Find the function signature using regex
+        m = re.search(r'^(?:async\s+def|def)\s+\w+\s*\(.*\)\s*:', src, flags=re.M | re.S)
+        if not m:
+            return []
+        sig_end = m.end()
+        body_text = src[sig_end:]
+        # Split into lines and compute indent of first non-blank line
+        body_lines = body_text.splitlines()
+        # If first line is empty due to newline after colon, skip until real body
+        start_idx = 0
+        while start_idx < len(body_lines) and body_lines[start_idx].strip() == """":
+            start_idx += 1
+        # Determine indentation
+        min_indent = None
+        for ln in body_lines[start_idx:]:
+            if ln.strip() == """":
+                continue
+            leading = len(ln) - len(ln.lstrip())
+            if min_indent is None or leading < min_indent:
+                min_indent = leading
+        if min_indent is None:
+            return []
+        out = []
+        for ln in body_lines[start_idx:]:
+            if len(ln) >= min_indent:
+                out.append(ln[min_indent:])
+            else:
+                out.append('')
+        # Remove trailing blank lines
+        while out and out[-1].strip() == """":
+            out.pop()
+        # Remove final return block by searching for the last top-level 'return'
+        for i in range(len(out)-1, -1, -1):
+            if out[i].strip() == """" or out[i].lstrip().startswith(""#""):
+                continue
+            if out[i].lstrip().startswith(""return""):
+                # Remove from i to end
+                out = out[:i]
+            break
+        # Strip leading blanks
+        while out and out[0].strip() == """":
+            out.pop(0)
+        return out
+",False,Execution error: name 'Callable' is not defined,"
+def extract_code_from_funct(funct: Callable) -> List[str]:
+    import inspect
+    import ast
+    import textwrap
+    from typing import Callable, List
+    def extract_code_from_funct(funct: Callable) -> List[str]:
+        try:
+            src = inspect.getsource(funct)
+        except (OSError, TypeError):
+            return []
+        ded = textwrap.dedent(src)
+        try:
+            mod = ast.parse(ded)
+        except SyntaxError:
+            # fallback: simple split approach
+            lines = ded.splitlines()
+            idx = 0
+            for i, ln in enumerate(lines):
+                if ln.lstrip().startswith(""def "") or ln.lstrip().startswith(""async def ""):
+                    idx = i
+                    break
+            body = lines[idx+1:]
+            # remove common indent
+            min_indent = None
+            for ln in body:
+                if ln.strip():
+                    lead = len(ln) - len(ln.lstrip())
+                    if min_indent is None or lead < min_indent:
+                        min_indent = lead
+            if min_indent is None:
+                return []
+            out = [ln[min_indent:] for ln in body]
+            while out and out[0].strip() == """":
+                out.pop(0)
+            while out and out[-1].strip() == """":
+                out.pop()
+            if out and out[-1].lstrip().startswith(""return""):
+                out.pop()
+            return out
+        # Find the correct function node (prefer one with matching name and smallest lineno)
+        func_nodes = [n for n in ast.walk(mod) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == funct.__name__]
+        func = None
+        if func_nodes:
+            func = min(func_nodes, key=lambda n: getattr(n, ""lineno"", 0))
+        else:
+            # fallback to first function in module
+            for n in mod.body:
+                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    func = n
+                    break
+        if func is None:
+            return []
+        out_lines: List[str] = []
+        # take all body nodes except trailing Return
+        body_nodes = list(func.body)
+        if body_nodes and isinstance(body_nodes[-1], ast.Return):
+            body_nodes = body_nodes[:-1]
+        src_lines = ded.splitlines()
+        for node in body_nodes:
+            # use node lineno/end_lineno to extract precise lines
+            start = getattr(node, ""lineno"", None)
+            end = getattr(node, ""end_lineno"", None)
+            if start is None or end is None:
+                # try ast.get_source_segment
+                seg = ast.get_source_segment(ded, node)
+                if seg:
+                    for ln in textwrap.dedent(seg).splitlines():
+                        out_lines.append(ln)
+                continue
+            seg_lines = src_lines[start-1:end]
+            seg = ""\n"".join(seg_lines)
+            for ln in textwrap.dedent(seg).splitlines():
+                out_lines.append(ln)
+        # Trim leading/trailing blank lines
+        while out_lines and out_lines[0].strip() == """":
+            out_lines.pop(0)
+        while out_lines and out_lines[-1].strip() == """":
+            out_lines.pop()
+        return out_lines
+",False,Execution error: name 'Callable' is not defined
+RWPB/74,"import math
+import numpy as np
+def arccos2(vector, value):
+    if vector[0] == 0:
+        if vector[1] >= 0:
+            return 0
+        else:
+            return np.pi
+    return -np.sign(vector[0]) * np.arccos(value)
+",False,Execution error: name 'arccos2' is not defined,"
+def arccos2(vector, value):
+    import math
+    import numpy as np
+    def arccos2(vector, value):
+        v = np.asarray(vector, dtype=float)
+        # Clamp value to valid domain
+        val = max(-1.0, min(1.0, float(value)))
+        base = math.acos(val)  # in [0, pi]
+        # If vector points to lower half-plane, take the reflex angle
+        if v.size != 2:
+            return base
+        y = float(v[1])
+        if math.isnan(y):
+            return base
+        if y < 0:
+            return 2 * math.pi - base
+        return base
+",False,Execution error: name 'arccos2' is not defined,"
+def arccos2(vector, value):
+    import math
+    import numpy as np
+    def arccos2(vector, value):
+        v = np.asarray(vector, dtype=float)
+        val = float(value)
+        if val > 1.0:
+            val = 1.0
+        elif val < -1.0:
+            val = -1.0
+        base = math.acos(val)
+        # Return signed angle in [-pi, pi]
+        if v.size != 2:
+            return base
+        y = float(v[1])
+        # if exactly on x-axis and pointing left, preserve sign of x to choose +/-pi
+        if abs(y) < 1e-12:
+            x = float(v[0])
+            if x < 0:
+                return math.copysign(math.pi, x)
+            else:
+                return base
+        return -base if y < 0 else base
+",False,Execution error: name 'arccos2' is not defined,"
+def arccos2(vector, value):
+    import math
+    import numpy as np
+    def _norm_angle(a):
+        return a % (2 * math.pi)
+    def _circular_dist(a, b):
+        d = abs(a - b) % (2 * math.pi)
+        return min(d, 2 * math.pi - d)
+    def arccos2(vector, value):
+        v = np.asarray(vector, dtype=float)
+        val = float(value)
+        val = max(-1.0, min(1.0, val))
+        base = math.acos(val)  # candidate angles: base and 2pi-base
+        if v.size != 2:
+            return base
+        vx, vy = float(v[0]), float(v[1])
+        vec_angle = _norm_angle(math.atan2(vy, vx))
+        c1 = _norm_angle(base)
+        c2 = _norm_angle(2 * math.pi - base)
+        # choose candidate closest to vector angle
+        if _circular_dist(vec_angle, c1) <= _circular_dist(vec_angle, c2):
+            return c1
+        else:
+            return c2
+",False,Execution error: name 'arccos2' is not defined,"
+def arccos2(vector, value):
+    import math
+    import numpy as np
+    from decimal import Decimal, getcontext, ROUND_HALF_UP
+    getcontext().prec = 28
+    def arccos2(vector, value):
+        v = np.asarray(vector, dtype=float)
+        val = float(value)
+        # robust clamp using Decimal to avoid tiny overflows
+        dv = Decimal(val)
+        if dv > Decimal(1):
+            dv = Decimal(1)
+        if dv < Decimal(-1):
+            dv = Decimal(-1)
+        base = float(Decimal(math.acos(float(dv))))
+        if v.size != 2:
+            return base
+        y = float(v[1])
+        # use sign of y (with tiny tolerance) to decide orientation; if negative -> -base
+        if y < -1e-12:
+            return -base
+        else:
+            return base
+",False,Execution error: name 'arccos2' is not defined,"
+def arccos2(vector, value):
+    import math
+    import numpy as np
+    def arccos2(vector, value):
+        v = np.asarray(vector, dtype=float)
+        val = float(value)
+        # clamp
+        if val > 1.0:
+            val = 1.0
+        elif val < -1.0:
+            val = -1.0
+        base = math.acos(val)
+        if v.size != 2:
+            return base
+        vx, vy = float(v[0]), float(v[1])
+        # construct candidate unit vector for +base and -base, pick by cross product sign
+        ux_pos = math.cos(base); uy_pos = math.sin(base)
+        # cross = v x candidate = vx*uy - vy*ux ; positive means candidate is CCW from v
+        cross_pos = vx * uy_pos - vy * ux_pos
+        if cross_pos < 0:
+            # candidate +base is clockwise from vector -> choose 2pi-base
+            return 2 * math.pi - base
+        else:
+            return base
+",False,Execution error: name 'arccos2' is not defined
+RWPB/25,"import numpy as np
+import cv2
+def hole_fill(img):
+    # Pad the image to avoid boundary issues during flood fill
+    img = np.pad(img[1:-1, 1:-1], pad_width=1, mode='constant', constant_values=0)
+    img_copy = img.copy()  # Create a copy of the image for later use
+    # Create a mask for flood fill operation, size needs to be 2 pixels bigger than the image
+    mask = np.zeros((img.shape[0] + 2, img.shape[1] + 2), dtype=np.uint8)
+    # Perform flood fill from the top-left corner (0,0) with the new value 255
+    cv2.floodFill(img, mask, (0, 0), 255)
+    # Create inverse of the flood filled image
+    img_inverse = cv2.bitwise_not(img)
+    # Combine the original copy and the inverse to fill the holes
+    dst = cv2.bitwise_or(img_copy, img_inverse)
+    return dst
+",False,Execution error: name 'hole_fill' is not defined,"
+def hole_fill(img):
+    import numpy as np
+    import cv2
+    def hole_fill(img):
+        """"""
+        FloodFill-based hole filling using OpenCV floodFill.
+        """"""
+        if img is None:
+            return img
+        # Work on grayscale / single channel
+        gray = img.copy()
+        if gray.ndim == 3:
+            gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
+        # Binarize: treat non-zero as foreground
+        _, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        # Invert image: holes become foreground for floodFill background marking
+        inv = cv2.bitwise_not(bw)
+        h, w = inv.shape
+        # Create mask for floodFill with 2 pixels padding
+        mask = np.zeros((h + 2, w + 2), dtype=np.uint8)
+        inv_copy = inv.copy()
+        # Flood fill from border pixels to mark background
+        for x in range(w):
+            if mask is None:
+                break
+        cv2.floodFill(inv_copy, mask, (0, 0), 255)
+        # Now inv_copy has background (connected to border) filled with 255
+        # Holes are foreground pixels in inv that are not part of inv_copy background
+        holes = cv2.bitwise_and(inv, cv2.bitwise_not(inv_copy))
+        # Combine holes into original binary image
+        filled = cv2.bitwise_or(bw, holes)
+        # Preserve original dtype
+        if img.ndim == 3:
+            # replicate to 3 channels
+            return cv2.cvtColor(filled, cv2.COLOR_GRAY2BGR)
+        return filled
+",False,Execution error: name 'hole_fill' is not defined,"
+def hole_fill(img):
+    import numpy as np
+    import cv2
+    def hole_fill(img):
+        """"""
+        Morphological closing based hole filling. Uses progressively larger kernels
+        to close small holes and then reconstructs the fill.
+        """"""
+        if img is None:
+            return img
+        gray = img.copy()
+        if gray.ndim == 3:
+            gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
+        _, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        bw = bw.astype(np.uint8)
+        # Use closing to fill small holes
+        h, w = bw.shape
+        # Kernel size relative to image size
+        k = max(3, int(min(h, w) * 0.02))  # 2% of smaller dimension
+        if k % 2 == 0:
+            k += 1
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k))
+        closed = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, kernel, iterations=2)
+        # To avoid overfilling, combine closed result with original using distance transform reconstruction
+        # Mark seeds where original is foreground
+        seeds = bw.copy()
+        prev = np.zeros_like(bw)
+        curr = seeds.copy()
+        # morphological reconstruction by dilation until stability, constrained by closed
+        while True:
+            dilated = cv2.dilate(curr, kernel)
+            curr = cv2.bitwise_and(dilated, closed)
+            if np.array_equal(curr, prev):
+                break
+            prev = curr.copy()
+        filled = curr
+        if img.ndim == 3:
+            return cv2.cvtColor(filled, cv2.COLOR_GRAY2BGR)
+        return filled
+",False,Execution error: name 'hole_fill' is not defined,"
+def hole_fill(img):
+    import numpy as np
+    import cv2
+    def hole_fill(img):
+        """"""
+        Connected components approach: invert image, label components, mark background
+        components touching border and fill remaining components (holes).
+        """"""
+        if img is None:
+            return img
+        gray = img.copy()
+        if gray.ndim == 3:
+            gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
+        _, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        bw = bw.astype(np.uint8)
+        inv = cv2.bitwise_not(bw)
+        # Label connected components in inverted image
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(inv, connectivity=8)
+        h, w = inv.shape
+        # Determine which labels touch the border -> background
+        border_labels = set()
+        # top and bottom rows
+        border_labels.update(np.unique(labels[0, :]))
+        border_labels.update(np.unique(labels[h-1, :]))
+        # left and right cols
+        border_labels.update(np.unique(labels[:, 0]))
+        border_labels.update(np.unique(labels[:, w-1]))
+        # Build background mask
+        background_mask = np.zeros_like(inv, dtype=np.uint8)
+        for lbl in border_labels:
+            if lbl == 0:
+                continue
+            background_mask[labels == lbl] = 255
+        # Holes are inverted components that are not background
+        holes_mask = cv2.bitwise_and(inv, cv2.bitwise_not(background_mask))
+        filled = cv2.bitwise_or(bw, holes_mask)
+        if img.ndim == 3:
+            return cv2.cvtColor(filled, cv2.COLOR_GRAY2BGR)
+        return filled
+",False,Execution error: name 'hole_fill' is not defined,"
+def hole_fill(img):
+    import numpy as np
+    import cv2
+    from collections import deque
+    def hole_fill(img):
+        """"""
+        Pure numpy flood fill from borders (BFS) to detect background, then fill holes.
+        """"""
+        if img is None:
+            return img
+        gray = img.copy()
+        if gray.ndim == 3:
+            gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
+        # binary threshold
+        _, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        bw = (bw > 0).astype(np.uint8)
+        h, w = bw.shape
+        visited = np.zeros((h, w), dtype=np.bool_)
+        bg = np.zeros((h, w), dtype=np.uint8)
+        dq = deque()
+        # push all border zeros (background candidates)
+        for x in range(w):
+            if bw[0, x] == 0:
+                dq.append((0, x)); visited[0, x] = True; bg[0, x] = 1
+            if bw[h-1, x] == 0:
+                dq.append((h-1, x)); visited[h-1, x] = True; bg[h-1, x] = 1
+        for y in range(h):
+            if bw[y, 0] == 0:
+                dq.append((y, 0)); visited[y, 0] = True; bg[y, 0] = 1
+            if bw[y, w-1] == 0:
+                dq.append((y, w-1)); visited[y, w-1] = True; bg[y, w-1] = 1
+        # BFS to mark background connected to border
+        while dq:
+            y, x = dq.popleft()
+            for ny, nx in ((y-1,x),(y+1,x),(y,x-1),(y,x+1)):
+                if 0 <= ny < h and 0 <= nx < w and not visited[ny, nx] and bw[ny, nx] == 0:
+                    visited[ny, nx] = True
+                    bg[ny, nx] = 1
+                    dq.append((ny, nx))
+        # Holes are zero pixels not marked as background
+        holes = np.logical_and(bw == 0, bg == 0)
+        filled = bw.copy()
+        filled[holes] = 1
+        filled = (filled * 255).astype(np.uint8)
+        if img.ndim == 3:
+            return cv2.cvtColor(filled, cv2.COLOR_GRAY2BGR)
+        return filled
+",False,Execution error: name 'hole_fill' is not defined,"
+def hole_fill(img):
+    import numpy as np
+    import cv2
+    def hole_fill(img):
+        """"""
+        Contour-based hole filling: find contours and use hierarchy to fill inner contours (holes).
+        """"""
+        if img is None:
+            return img
+        gray = img.copy()
+        if gray.ndim == 3:
+            gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
+        # Binary image
+        _, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        bwu = bw.copy()
+        # Find contours with hierarchy
+        contours, hierarchy = cv2.findContours(bwu, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+        if not contours or hierarchy is None:
+            if img.ndim == 3:
+                return cv2.cvtColor(bw, cv2.COLOR_GRAY2BGR)
+            return bw
+        hierarchy = hierarchy[0]
+        # Create mask to draw fills
+        mask = bw.copy()
+        for idx, hier in enumerate(hierarchy):
+            # hier = [next, prev, first_child, parent]
+            parent = hier[3]
+            # If contour has a parent, it's a hole (inner contour)
+            if parent != -1:
+                cv2.drawContours(mask, contours, idx, 255, thickness=cv2.FILLED)
+        # Also ensure outer contours remain
+        filled = cv2.bitwise_or(bw, mask)
+        if img.ndim == 3:
+            return cv2.cvtColor(filled, cv2.COLOR_GRAY2BGR)
+        return filled
+",False,Execution error: name 'hole_fill' is not defined
+RWPB/87,"import torch
+import numpy as np
+def rotate_x(a, device=None):
+    s, c = np.sin(a), np.cos(a)
+    return torch.tensor([[1,  0, 0, 0], 
+                         [0,  c, s, 0], 
+                         [0, -s, c, 0], 
+                         [0,  0, 0, 1]], dtype=torch.float32, device=device)
+",False,Execution error: name 'torch' is not defined,"
+def rotate_x(a, device=None):
+    import torch
+    import numpy as np
+    def rotate_x(a, device=None):
+        if device is not None:
+            device = torch.device(device)
+        c = np.cos(a)
+        s = np.sin(a)
+        mat = np.array([
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0,  c,  -s,  0.0],
+            [0.0,  s,   c,  0.0],
+            [0.0, 0.0, 0.0, 1.0]
+        ], dtype=np.float32)
+        return torch.tensor(mat, device=device)
+",False,Execution error: name 'torch' is not defined,"
+def rotate_x(a, device=None):
+    import torch
+    import numpy as np
+    def rotate_x(a, device=None):
+        if device is not None:
+            device = torch.device(device)
+        angle = torch.tensor(a, dtype=torch.float64, device=device)
+        ca = torch.cos(angle).item()
+        sa = torch.sin(angle).item()
+        mat = torch.eye(4, dtype=torch.float64, device=device)
+        mat[1,1] = ca
+        mat[1,2] = -sa
+        mat[2,1] = sa
+        mat[2,2] = ca
+        return mat.to(dtype=torch.float32)
+",False,Execution error: name 'torch' is not defined,"
+def rotate_x(a, device=None):
+    import torch
+    import numpy as np
+    def rotate_x(a, device=None):
+        if device is not None:
+            device = torch.device(device)
+        ca = np.cos(a).astype(np.float32)
+        sa = np.sin(a).astype(np.float32)
+        m = torch.zeros((4,4), dtype=torch.float32, device=device)
+        m[0,0] = 1.0
+        m[3,3] = 1.0
+        m[1,1] = ca
+        m[1,2] = -sa
+        m[2,1] = sa
+        m[2,2] = ca
+        return m
+",False,Execution error: name 'torch' is not defined,"
+def rotate_x(a, device=None):
+    import torch
+    import numpy as np
+    def rotate_x(a, device=None):
+        if device is not None:
+            device = torch.device(device)
+        ca = np.cos(a).astype(np.float32)
+        sa = np.sin(a).astype(np.float32)
+        rot2 = torch.tensor([[ca, -sa],[sa, ca]], dtype=torch.float32, device=device)
+        mat = torch.eye(4, dtype=torch.float32, device=device)
+        mat[1:3,1:3] = rot2
+        return mat
+",False,Execution error: name 'torch' is not defined,"
+def rotate_x(a, device=None):
+    import torch
+    import numpy as np
+    def rotate_x(a, device=None):
+        if device is not None:
+            device = torch.device(device)
+        c = np.cos(a)
+        s = np.sin(a)
+        arr = np.eye(4, dtype=np.float32)
+        arr[1,1] = c
+        arr[1,2] = -s
+        arr[2,1] = s
+        arr[2,2] = c
+        return torch.from_numpy(arr).to(device=device)
+",False,Execution error: name 'torch' is not defined
+RWPB/129,"import torch
+import torch.nn.functional as F
+def scale_masks(masks, shape, padding=True):
+    mh, mw = masks.shape[2:]
+    gain = min(mh / shape[0], mw / shape[1])  # gain  = old / new
+    pad = [mw - shape[1] * gain, mh - shape[0] * gain]  # wh padding
+    if padding:
+        pad[0] /= 2
+        pad[1] /= 2
+    top, left = (int(pad[1]), int(pad[0])) if padding else (0, 0)  # y, x
+    bottom, right = (int(mh - pad[1]), int(mw - pad[0]))
+    masks = masks[..., top:bottom, left:right]
+    masks = F.interpolate(masks, shape, mode=""bilinear"", align_corners=False)  # NCHW
+    return masks
+",False,Execution error: name 'torch' is not defined,"
+def scale_masks(masks, shape, padding=True):
+    import torch
+    import torch.nn.functional as F
+    def scale_masks(masks, shape, padding=True):
+        """"""
+        Rescale segment masks to shape.
+        masks: (N, C, H, W)
+        shape: (height, width)
+        """"""
+        if not isinstance(masks, torch.Tensor):
+            masks = torch.tensor(masks)
+        N, C, H, W = masks.shape
+        target_h, target_w = int(shape[0]), int(shape[1])
+        # If no padding assumption, simple resize
+        if not padding:
+            out = F.interpolate(masks.view(-1, 1, H, W), size=(target_h, target_w),
+                                mode='bilinear', align_corners=False)
+            return out.view(N, C, target_h, target_w)
+        # Assume YOLO-style letterbox: input was scaled so that max(shape) -> model size (H or W)
+        # Compute scale relative to max original side
+        max_orig = max(target_h, target_w)
+        # compute model padded size (assume square or either dimension)
+        model_h, model_w = H, W
+        # scale factor: how much original was scaled to get inside model dims
+        gain = float(max(model_h, model_w)) / float(max_orig)
+        # compute scaled original size in model coords
+        scaled_h = int(round(target_h * gain))
+        scaled_w = int(round(target_w * gain))
+        # compute padding (centered)
+        pad_h = max(model_h - scaled_h, 0)
+        pad_w = max(model_w - scaled_w, 0)
+        top = int(round(pad_h / 2.0))
+        left = int(round(pad_w / 2.0))
+        bottom = top + scaled_h
+        right = left + scaled_w
+        # clip to bounds
+        top = max(0, min(top, model_h))
+        left = max(0, min(left, model_w))
+        bottom = max(top, min(bottom, model_h))
+        right = max(left, min(right, model_w))
+        # crop the non-padded region
+        if bottom <= top or right <= left:
+            # fallback: resize entire mask to target
+            out = F.interpolate(masks.view(-1, 1, H, W), size=(target_h, target_w),
+                                mode='bilinear', align_corners=False)
+            return out.view(N, C, target_h, target_w)
+        cropped = masks[:, :, top:bottom, left:right]
+        out = F.interpolate(cropped.view(-1, 1, cropped.shape[-2], cropped.shape[-1]),
+                            size=(target_h, target_w), mode='bilinear', align_corners=False)
+        out = out.view(N, C, target_h, target_w)
+        # If original masks were boolean-like, threshold
+        if masks.dtype == torch.bool or masks.dtype == torch.uint8:
+            out = (out > 0.5).to(masks.dtype)
+        return out
+",False,Execution error: name 'torch' is not defined,"
+def scale_masks(masks, shape, padding=True):
+    import torch
+    import torch.nn.functional as F
+    def scale_masks(masks, shape, padding=True):
+        """"""
+        Alternate implementation handling fractional padding by computing symmetric padding
+        based on the minimum uniform scale that fits the original image into the mask grid.
+        """"""
+        if not isinstance(masks, torch.Tensor):
+            masks = torch.tensor(masks)
+        N, C, H, W = masks.shape
+        target_h, target_w = int(shape[0]), int(shape[1])
+        if not padding:
+            resized = F.interpolate(masks.view(-1, 1, H, W), size=(target_h, target_w),
+                                    mode='bilinear', align_corners=False)
+            return resized.view(N, C, target_h, target_w)
+        # Find uniform gain that was used when placing original image into padded mask grid
+        gain_y = H / float(target_h)
+        gain_x = W / float(target_w)
+        # Use the smaller of the two gains so that scaled original fits in model grid
+        gain = min(gain_y, gain_x)
+        # Compute the region that contains the scaled original image
+        scaled_h = int(round(target_h * gain))
+        scaled_w = int(round(target_w * gain))
+        pad_h = max(H - scaled_h, 0)
+        pad_w = max(W - scaled_w, 0)
+        # assume symmetric padding
+        top = pad_h // 2
+        left = pad_w // 2
+        bottom = top + scaled_h
+        right = left + scaled_w
+        # Ensure indices valid
+        top = max(0, min(top, H))
+        left = max(0, min(left, W))
+        bottom = max(top, min(bottom, H))
+        right = max(left, min(right, W))
+        if bottom - top <= 0 or right - left <= 0:
+            # fallback: direct resize
+            out = F.interpolate(masks.view(-1, 1, H, W), size=(target_h, target_w),
+                                mode='bilinear', align_corners=False)
+            return out.view(N, C, target_h, target_w)
+        cropped = masks[:, :, top:bottom, left:right]
+        out = F.interpolate(cropped.view(-1, 1, cropped.shape[-2], cropped.shape[-1]),
+                            size=(target_h, target_w), mode='bilinear', align_corners=False)
+        out = out.view(N, C, target_h, target_w)
+        # preserve integer/boolean masks by thresholding
+        if masks.dtype in (torch.uint8, torch.bool):
+            out = (out > 0.5).to(masks.dtype)
+        return out
+",False,Execution error: name 'torch' is not defined,"
+def scale_masks(masks, shape, padding=True):
+    import torch
+    import torch.nn.functional as F
+    def scale_masks(masks, shape, padding=True):
+        """"""
+        Brute-force per-channel resizing. Slower but straightforward.
+        """"""
+        if not isinstance(masks, torch.Tensor):
+            masks = torch.tensor(masks)
+        N, C, H, W = masks.shape
+        target_h, target_w = int(shape[0]), int(shape[1])
+        # flatten batch and channels to iterate
+        out_list = []
+        for n in range(N):
+            ch_list = []
+            for c in range(C):
+                m = masks[n, c:c+1]  # shape (1, H, W)
+                m = m.unsqueeze(0)   # (1,1,H,W)
+                if not padding:
+                    r = F.interpolate(m, size=(target_h, target_w), mode='bilinear', align_corners=False)
+                else:
+                    # estimate letterbox crop like common YOLO: model size corresponds to max side
+                    model_h, model_w = H, W
+                    gain = float(max(model_h, model_w)) / float(max(target_h, target_w))
+                    scaled_h = int(round(target_h * gain))
+                    scaled_w = int(round(target_w * gain))
+                    pad_h = max(model_h - scaled_h, 0)
+                    pad_w = max(model_w - scaled_w, 0)
+                    top = int(round(pad_h / 2.0))
+                    left = int(round(pad_w / 2.0))
+                    bottom = top + scaled_h
+                    right = left + scaled_w
+                    top = max(0, min(top, model_h))
+                    left = max(0, min(left, model_w))
+                    bottom = max(top, min(bottom, model_h))
+                    right = max(left, min(right, model_w))
+                    if bottom <= top or right <= left:
+                        r = F.interpolate(m, size=(target_h, target_w), mode='bilinear', align_corners=False)
+                    else:
+                        cropped = m[:, :, top:bottom, left:right]
+                        r = F.interpolate(cropped, size=(target_h, target_w), mode='bilinear', align_corners=False)
+                ch_list.append(r.squeeze(0))  # (1, H, W) -> (1, target_h, target_w)
+            # stack channels
+            stacked = torch.cat(ch_list, dim=0)  # (C, target_h, target_w)
+            out_list.append(stacked.unsqueeze(0))  # (1, C, ...)
+        result = torch.cat(out_list, dim=0)  # (N, C, target_h, target_w)
+        # restore input dtype for booleans/integers
+        if masks.dtype in (torch.uint8, torch.bool):
+            result = (result > 0.5).to(masks.dtype)
+        return result
+",False,Execution error: name 'torch' is not defined,"
+def scale_masks(masks, shape, padding=True):
+    import torch
+    import torch.nn.functional as F
+    def scale_masks(masks, shape, padding=True):
+        """"""
+        Use grid_sample with an affine transform to map the unpadded crop to the output grid.
+        """"""
+        if not isinstance(masks, torch.Tensor):
+            masks = torch.tensor(masks)
+        N, C, H, W = masks.shape
+        target_h, target_w = int(shape[0]), int(shape[1])
+        if not padding:
+            out = F.interpolate(masks.view(-1, 1, H, W), size=(target_h, target_w),
+                                mode='bilinear', align_corners=False)
+            return out.view(N, C, target_h, target_w)
+        # Compute uniform gain that fits original into model grid (letterbox)
+        gain_y = H / float(target_h)
+        gain_x = W / float(target_w)
+        gain = min(gain_y, gain_x)
+        scaled_h = target_h * gain
+        scaled_w = target_w * gain
+        pad_h = max(H - scaled_h, 0.0)
+        pad_w = max(W - scaled_w, 0.0)
+        top = pad_h / 2.0
+        left = pad_w / 2.0
+        # Define crop center and size in input (pixel coords)
+        crop_h = scaled_h
+        crop_w = scaled_w
+        center_y = top + crop_h / 2.0
+        center_x = left + crop_w / 2.0
+        # Convert to normalized coordinates in [-1,1] for grid_sample mapping
+        # scale components: how much of the input normalized domain is covered
+        scale_x = (crop_w / W)
+        scale_y = (crop_h / H)
+        trans_x = (2.0 * center_x / W) - 1.0
+        trans_y = (2.0 * center_y / H) - 1.0
+        # Build theta for affine_grid: shape (N, 2, 3)
+        theta = masks.new_zeros((N, 2, 3))
+        theta[:, 0, 0] = scale_x
+        theta[:, 1, 1] = scale_y
+        theta[:, 0, 2] = trans_x
+        theta[:, 1, 2] = trans_y
+        # Prepare input for grid_sample (N*C as batch)
+        inp = masks.view(N * C, 1, H, W)
+        # Repeat theta per channel
+        theta_rep = theta.unsqueeze(1).repeat(1, C, 1, 1).view(N * C, 2, 3)
+        grid = F.affine_grid(theta_rep, size=(N * C, 1, target_h, target_w), align_corners=False)
+        sampled = F.grid_sample(inp, grid, mode='bilinear', padding_mode='zeros', align_corners=False)
+        out = sampled.view(N, C, target_h, target_w)
+        if masks.dtype in (torch.uint8, torch.bool):
+            out = (out > 0.5).to(masks.dtype)
+        return out
+",False,Execution error: name 'torch' is not defined,"
+def scale_masks(masks, shape, padding=True):
+    import torch
+    import torch.nn.functional as F
+    def scale_masks(masks, shape, padding=True):
+        """"""
+        Fast path using nearest neighbor for discrete masks, bilinear otherwise.
+        Handles padding by computing integer crop from center.
+        """"""
+        if not isinstance(masks, torch.Tensor):
+            masks = torch.tensor(masks)
+        N, C, H, W = masks.shape
+        target_h, target_w = int(shape[0]), int(shape[1])
+        mode = 'nearest' if masks.dtype in (torch.bool, torch.uint8, torch.int8, torch.int16, torch.int32, torch.int64) else 'bilinear'
+        if not padding:
+            out = F.interpolate(masks.view(-1, 1, H, W), size=(target_h, target_w),
+                                mode=mode, align_corners=False if mode == 'bilinear' else None)
+            return out.view(N, C, target_h, target_w)
+        # Compute symmetric padding assuming model input fit original by scaling max side
+        model_h, model_w = H, W
+        max_orig = max(target_h, target_w)
+        gain = float(max(model_h, model_w)) / float(max_orig)
+        scaled_h = int(round(target_h * gain))
+        scaled_w = int(round(target_w * gain))
+        pad_h = model_h - scaled_h
+        pad_w = model_w - scaled_w
+        top = pad_h // 2
+        left = pad_w // 2
+        bottom = top + scaled_h
+        right = left + scaled_w
+        # Clamp
+        top = max(0, min(top, model_h))
+        left = max(0, min(left, model_w))
+        bottom = max(top, min(bottom, model_h))
+        right = max(left, min(right, model_w))
+        if bottom <= top or right <= left:
+            out = F.interpolate(masks.view(-1, 1, H, W), size=(target_h, target_w),
+                                mode=mode, align_corners=False if mode == 'bilinear' else None)
+            return out.view(N, C, target_h, target_w)
+        cropped = masks[:, :, top:bottom, left:right]
+        out = F.interpolate(cropped.view(-1, 1, cropped.shape[-2], cropped.shape[-1]),
+                            size=(target_h, target_w), mode=mode, align_corners=False if mode == 'bilinear' else None)
+        out = out.view(N, C, target_h, target_w)
+        return out
+",False,Execution error: name 'torch' is not defined
+RWPB/138,"import numpy as np
+def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+    # Convert the angle from degrees to radians
+    angle = angle / 180 * np.pi
+    # Define the rotation matrix for rotating around the y-axis
+    R = np.array([
+        [np.cos(angle), 0, np.sin(angle)],  # X' = X*cos(theta) + Z*sin(theta)
+        [0, 1, 0],                          # Y' = Y (no change)
+        [-np.sin(angle), 0, np.cos(angle)]  # Z' = -X*sin(theta) + Z*cos(theta)
+    ])
+    # Apply the rotation matrix to each normal vector in the normal map
+    # Reshape the normal map from (H, W, 3) to (H*W, 3) for matrix multiplication, then reshape back to (H, W, 3)
+    return np.dot(normal_map.reshape(-1, 3), R.T).reshape(normal_map.shape)
+",False,Execution error: name 'np' is not defined,"
+def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+    import numpy as np
+    def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+        """"""
+        Vectorized rotation around Y-axis using rotation matrix and renormalization.
+        """"""
+        if not isinstance(normal_map, np.ndarray):
+            normal_map = np.array(normal_map, dtype=np.float64)
+        nm = normal_map.astype(np.float64)
+        if nm.ndim != 3 or nm.shape[2] != 3:
+            raise ValueError(""normal_map must have shape (H, W, 3)"")
+        theta = np.deg2rad(angle)
+        c = np.cos(theta)
+        s = np.sin(theta)
+        # Rotation matrix for rotation about Y: [ [c,0,s],[0,1,0],[-s,0,c] ]
+        R = np.array([[c, 0.0, s],
+                      [0.0, 1.0, 0.0],
+                      [-s, 0.0, c]], dtype=nm.dtype)
+        # apply rotation: use einsum for clarity
+        rotated = np.einsum('ij,...j->...i', R, nm)
+        # renormalize to unit length to avoid numerical drift
+        norms = np.linalg.norm(rotated, axis=2, keepdims=True)
+        eps = 1e-12
+        norms = np.maximum(norms, eps)
+        rotated = rotated / norms
+        return rotated
+",False,Execution error: name 'np' is not defined,"
+def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+    import numpy as np
+    def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+        """"""
+        Rotate using quaternion rotation about Y axis (vectorized).
+        """"""
+        if not isinstance(normal_map, np.ndarray):
+            normal_map = np.array(normal_map, dtype=np.float64)
+        nm = normal_map.astype(np.float64)
+        if nm.ndim != 3 or nm.shape[2] != 3:
+            raise ValueError(""normal_map must have shape (H, W, 3)"")
+        theta = np.deg2rad(angle)
+        half = theta / 2.0
+        w = np.cos(half)
+        sin_half = np.sin(half)
+        # quaternion for axis (0,1,0)
+        qx = 0.0
+        qy = sin_half
+        qz = 0.0
+        q0 = w
+        # apply quaternion rotation: v' = v + 2*q_vec x (q_vec x v + q0*v)
+        v = nm
+        qvec = np.array([qx, qy, qz], dtype=nm.dtype)
+        # compute q_vec x v
+        # broadcasting: (H,W,3)
+        qv = np.cross(qvec, v)
+        inner = qv + q0 * v
+        rotated = v + 2.0 * np.cross(qvec, inner)
+        # normalize to mitigate numerical issues
+        norms = np.linalg.norm(rotated, axis=2, keepdims=True)
+        norms[norms == 0] = 1.0
+        rotated = rotated / norms
+        return rotated
+",False,Execution error: name 'np' is not defined,"
+def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+    import numpy as np
+    def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+        """"""
+        Rotate by shifting azimuth (spherical approach). Detects common [0,1] encoding and converts.
+        """"""
+        if not isinstance(normal_map, np.ndarray):
+            normal_map = np.array(normal_map, dtype=np.float64)
+        nm = normal_map.astype(np.float64)
+        if nm.ndim != 3 or nm.shape[2] != 3:
+            raise ValueError(""normal_map must have shape (H, W, 3)"")
+        # Detect if normals are in [0,1] (common texture encoding). If so, convert to [-1,1].
+        vmin = nm.min()
+        vmax = nm.max()
+        encoded = (vmin >= 0.0 and vmax <= 1.0)
+        if encoded:
+            nm = nm * 2.0 - 1.0
+        x = nm[..., 0]
+        y = nm[..., 1]
+        z = nm[..., 2]
+        # Compute azimuth and radius in the XZ plane
+        az = np.arctan2(z, x)
+        r = np.hypot(x, z)
+        theta = np.deg2rad(angle)
+        az2 = az + theta
+        x2 = r * np.cos(az2)
+        z2 = r * np.sin(az2)
+        rotated = np.empty_like(nm)
+        rotated[..., 0] = x2
+        rotated[..., 1] = y
+        rotated[..., 2] = z2
+        # Renormalize to unit length to ensure valid normals
+        norms = np.linalg.norm(rotated, axis=2, keepdims=True)
+        eps = 1e-12
+        norms = np.maximum(norms, eps)
+        rotated = rotated / norms
+        # If originally encoded, map back to [0,1]
+        if encoded:
+            rotated = (rotated + 1.0) * 0.5
+        return rotated
+",False,Execution error: name 'np' is not defined,"
+def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+    import numpy as np
+    def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+        """"""
+        Straightforward Python-loop implementation applying rotation per-pixel.
+        """"""
+        if not isinstance(normal_map, np.ndarray):
+            normal_map = np.array(normal_map, dtype=np.float64)
+        nm = normal_map.astype(np.float64)
+        if nm.ndim != 3 or nm.shape[2] != 3:
+            raise ValueError(""normal_map must have shape (H, W, 3)"")
+        h, w, _ = nm.shape
+        theta = np.deg2rad(angle)
+        c = np.cos(theta)
+        s = np.sin(theta)
+        out = np.empty_like(nm)
+        for i in range(h):
+            for j in range(w):
+                vx, vy, vz = nm[i, j]
+                # Rotation about Y:
+                x2 = c * vx + s * vz
+                y2 = vy
+                z2 = -s * vx + c * vz
+                # normalize
+                norm = (x2 * x2 + y2 * y2 + z2 * z2) ** 0.5
+                if norm == 0:
+                    out[i, j] = np.array([0.0, 1.0, 0.0])
+                else:
+                    out[i, j] = np.array([x2 / norm, y2 / norm, z2 / norm])
+        return out
+",False,Execution error: name 'np' is not defined,"
+def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+    import numpy as np
+    def rotate_normalmap_by_angle(normal_map: np.ndarray, angle: float):
+        """"""
+        Reshape + matrix multiplication approach. Keeps original magnitude of vectors if desired,
+        then optionally re-normalizes to unit normals.
+        """"""
+        if not isinstance(normal_map, np.ndarray):
+            normal_map = np.array(normal_map, dtype=np.float64)
+        nm = normal_map.astype(np.float64)
+        if nm.ndim != 3 or nm.shape[2] != 3:
+            raise ValueError(""normal_map must have shape (H, W, 3)"")
+        h, w, _ = nm.shape
+        flat = nm.reshape(-1, 3)
+        theta = np.deg2rad(angle)
+        c = np.cos(theta)
+        s = np.sin(theta)
+        R = np.array([[c, 0.0, s],
+                      [0.0, 1.0, 0.0],
+                      [-s, 0.0, c]], dtype=flat.dtype)
+        # Use dot: rotated_flat = flat @ R.T
+        rotated_flat = flat.dot(R.T)
+        # Re-normalize to unit vectors
+        norms = np.linalg.norm(rotated_flat, axis=1, keepdims=True)
+        eps = 1e-12
+        norms = np.maximum(norms, eps)
+        rotated_flat = rotated_flat / norms
+        rotated = rotated_flat.reshape(h, w, 3)
+        return rotated
+",False,Execution error: name 'np' is not defined
+RWPB/96,"import numpy as np
+def movmean(arr, n_avg):
+    sums = np.cumsum(arr, dtype=float)
+    sums[n_avg:] -= sums[:-n_avg]
+    return sums[n_avg - 1 :] / n_avg
+",False,Execution error: name 'movmean' is not defined,"
+def movmean(arr, n_avg):
+    import numpy as np
+    def movmean(arr, n_avg):
+        arr = np.asarray(arr)
+        if n_avg <= 0 or n_avg > arr.size or arr.ndim != 1:
+            return np.array([])
+        kernel = np.ones(n_avg, dtype=float) / float(n_avg)
+        return np.convolve(arr, kernel, mode='valid')
+",False,Execution error: name 'movmean' is not defined,"
+def movmean(arr, n_avg):
+    import numpy as np
+    def movmean(arr, n_avg):
+        arr = np.asarray(arr)
+        if n_avg <= 0 or n_avg > arr.size or arr.ndim != 1:
+            return np.array([])
+        c = np.empty(arr.size + 1, dtype=float)
+        c[0] = 0.0
+        c[1:] = np.cumsum(arr, dtype=float)
+        mov = (c[n_avg:] - c[:-n_avg]) / float(n_avg)
+        return mov
+",False,Execution error: name 'movmean' is not defined,"
+def movmean(arr, n_avg):
+    import numpy as np
+    def movmean(arr, n_avg):
+        arr = np.asarray(arr)
+        if n_avg <= 0 or n_avg > arr.size or arr.ndim != 1:
+            return np.array([])
+        L = arr.size
+        out_len = L - n_avg + 1
+        res = np.empty(out_len, dtype=float)
+        s = float(np.sum(arr[:n_avg]))
+        res[0] = s / n_avg
+        for i in range(1, out_len):
+            s += float(arr[i + n_avg - 1]) - float(arr[i - 1])
+            res[i] = s / n_avg
+        return res
+",False,Execution error: name 'movmean' is not defined,"
+def movmean(arr, n_avg):
+    import numpy as np
+    from numpy.lib.stride_tricks import as_strided
+    def movmean(arr, n_avg):
+        arr = np.asarray(arr)
+        if n_avg <= 0 or n_avg > arr.size or arr.ndim != 1:
+            return np.array([])
+        L = arr.size
+        out_len = L - n_avg + 1
+        stride = arr.strides[0]
+        windows = as_strided(arr, shape=(out_len, n_avg), strides=(stride, stride))
+        return windows.mean(axis=1)
+",False,Execution error: name 'movmean' is not defined,"
+def movmean(arr, n_avg):
+    import numpy as np
+    def movmean(arr, n_avg):
+        arr = np.asarray(arr)
+        if n_avg <= 0 or n_avg > arr.size or arr.ndim != 1:
+            return np.array([])
+        try:
+            from numpy.lib.stride_tricks import sliding_window_view
+            windows = sliding_window_view(arr, window_shape=n_avg)
+            return windows.mean(axis=1)
+        except Exception:
+            kernel = np.ones(n_avg, dtype=float) / float(n_avg)
+            return np.convolve(arr, kernel, mode='valid')
+",False,Execution error: name 'movmean' is not defined

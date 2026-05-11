@@ -19,29 +19,3 @@ task_id,base_code_label,variant_1_label,variant_1_probability,variant_2_label,va
 71,original,enumerate loop; set conversion; membership test; any/all usage; early return; guard clause; input validation; boundary case handling; tuple unpacking; list conversion; in-place mutation; dictionary lookup; state variable; flattened conditional,0.28,early return;guard clause;flattened conditional;set conversion;list comprehension;generator expression;any/all usage;dictionary lookup;helper function extraction;tuple unpacking;membership test;list conversion;in-place mutation;input validation;boundary case handling;empty input handling,0.22,set conversion;any/all usage;membership test;guard clause;early return;flattened conditional;enumerate loop;tuple unpacking;dictionary lookup;boundary case handling;empty input handling;behavior change,0.2,set conversion;dict comprehension;any/all usage;early return;guard clause;boundary case handling;empty input handling;in-place mutation;enumerate loop;temporary variable,0.18,guard clause; flattened conditional; set conversion; list conversion; tuple unpacking; state variable; any/all usage; dictionary lookup; membership test; in-place mutation; boundary case handling,0.12
 72,original,try-except wrapper; input validation; error suppression; list comprehension; temporary variable; in-place mutation; regex usage; for loop,0.25,helper function extraction;state variable;dictionary lookup;membership test;list comprehension;in-place mutation;for loop;try-except wrapper;type check;empty input handling;error suppression;behavior change;regex usage,0.2,try-except wrapper; type check; accumulator list; for loop; in-place mutation; temporary variable; f-string; standard library helper; error suppression; behavior change; boundary case handling,0.18,type check; try-except wrapper; guard clause; combined condition; list comprehension; index-based loop; in-place mutation; accumulator set; accumulator list; regex usage; error suppression,0.22,helper function extraction;regex usage;try-except wrapper;error suppression;guard clause;empty input handling;loop rewrite;accumulator list;in-place mutation;index-based loop,0.15
 73,original,helper function extraction; state variable; temporary variable; while loop; boundary case handling; behavior change; builtin function,0.28,helper function extraction;recursion with base case;loop rewrite;guard clause;state variable;temporary variable;boundary case handling,0.22,formatting only; state variable; temporary variable; loop rewrite; helper function inlining; early return; boundary case handling; behavior change,0.2,,0.18,,0.12
-74,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-75,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-76,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-77,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-78,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-79,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-80,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-81,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-82,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-83,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-84,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-85,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-86,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-87,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-88,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-89,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-90,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-91,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-92,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-93,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-94,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-95,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-96,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-97,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-98,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
-99,original,original,0.0,original,0.0,original,0.0,original,0.0,original,0.0
