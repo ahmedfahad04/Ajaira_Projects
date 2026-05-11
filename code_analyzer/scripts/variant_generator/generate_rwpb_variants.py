@@ -27,12 +27,12 @@ OUTPUT_PATH = Path(__file__).parent.parent / "output"
 OUTPUT_PATH.mkdir(exist_ok=True)
 
 
-def create_vs_generation_prompt(code: str) -> str:
+def create_vs_generation_prompt(problem_statement: str, func_signature: str, func_name: str) -> str:
     return f"""<instructions>
-You are generating a probability-weighted distribution of Python solutions.
+You are generating a probability-weighted distribution of Python solutions to solve the given problem.
 
-Given the original code below, generate 5 independent Python solutions to the same problem.
-Each solution must be correct and executable. Think about the full space of ways this problem could be solved.
+Given the problem description and function signature below, generate 5 independent Python solutions that solve the problem.
+Each solution must be correct and executable. Explore different algorithmic approaches - consider brute force, optimized, recursive, iterative, different data structures, etc.
 
 For each solution, assign a probability (0.0 to 1.0) representing how likely this 
 approach would appear across the full distribution of valid solutions to this problem.
@@ -40,18 +40,23 @@ Probabilities do not need to sum to 1.0 across your 5 samples.
 
 Output each variant within <response> tags containing:
 - <probability>: float between 0.0 and 1.0
-- <code>: complete, executable Python code only
+- <code>: complete, executable Python code only - implement the function based on the signature
 
-Do not explain. Do not add comments describing what changed. Do not add any main function or test cases. 
+Do not explain. Do not add comments describing what changed. Do not add any main function or test cases.
 Output only the 5 <response> blocks.
 </instructions>
 
-Original Code:
+Problem Description:
 ```python
-{code}
+{problem_statement}
 ```
 
-Generate 5 probability-weighted independent solutions:"""
+Function Signature (implement this):
+```python
+{func_signature}
+```
+
+Generate 5 probability-weighted independent solutions that solve this problem:"""
 
 
 def create_classification_prompt(original_code: str, variant_code: str) -> str:
@@ -204,10 +209,11 @@ def ensure_function_name(code: str, expected_name: str) -> str:
     return code
 
 
-def generate_variants(provider, prompt: str, canonical_body: str, test_cases: str, task_id: str,
+def generate_variants(provider, problem_statement: str, func_signature: str, func_name: str,
+                      canonical_body: str, test_cases: str, task_id: str,
                       max_attempts: int = 5, model_name: str = "unknown",
                       verbose: bool = False) -> List[Dict]:
-    
+
     def vlog(msg: str):
         if verbose:
             print(f"  [VERBOSE] {msg}", flush=True)
@@ -216,17 +222,12 @@ def generate_variants(provider, prompt: str, canonical_body: str, test_cases: st
         response = provider.generate(prompt_text, max_tokens=8192, temperature=0.7)
         return response.text
 
-    func_name = extract_function_name_from_prompt(prompt)
-    if not func_name:
-        vlog("Could not extract function name from prompt")
-        return []
-
-    base_code = build_full_code(prompt, canonical_body)
+    base_code = build_full_code(func_signature, canonical_body)
     base_code = ensure_function_name(base_code, func_name)
 
-    print("BASE CODE >> ", prompt, flush=True)
+    print("BASE CODE >> ", problem_statement, flush=True)
 
-    gen_prompt = create_vs_generation_prompt(base_code)
+    gen_prompt = create_vs_generation_prompt(problem_statement, func_signature, func_name)
     raw_variants: list[dict] = []
 
     safe_model_name = model_name.replace(':', '_').replace('/', '_')
@@ -397,11 +398,15 @@ def process_rwpb_dataset(provider, model_name: str,
                 print(f"  ✗ Could not extract function name from prompt", file=sys.stderr)
                 continue
 
+            func_signature = extract_function_signature_from_prompt(prompt)
+            problem_statement = prompt
+
             base_code = build_full_code(prompt, canonical_body)
             base_code = ensure_function_name(base_code, func_name)
 
             variants = generate_variants(
-                provider, prompt, canonical_body, test_cases, task_id,
+                provider, problem_statement, func_signature, func_name,
+                canonical_body, test_cases, task_id,
                 model_name=model_name, verbose=verbose
             )
 

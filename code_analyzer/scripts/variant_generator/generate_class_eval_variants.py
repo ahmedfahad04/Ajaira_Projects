@@ -2,8 +2,8 @@
 
 '''
 Usage:
-    # Ollama (default - llama3.1:8b or qwen2.5-coder:7b, deepseek-r1:8b, starcoder2:7b recommended for best results)
-    python generate_class_eval_variants.py --provider ollama --model starcoder2:7b --start-id 0 --total 3
+    # Ollama (default - llama3.1:8b or qwen2.5-coder:7b, gemma4:e4b, deepseek-r1:8b, starcoder2:7b recommended for best results)
+    python generate_class_eval_variants.py --provider ollama --model qwen2.5-coder:7b --start-id 0 --total 3
 
     # Claude (process from ID 5, all remaining samples)
     python generate_class_eval_variants.py --provider claude --start-id 5
@@ -33,31 +33,36 @@ OUTPUT_PATH.mkdir(exist_ok=True)
 
 
 # NEW IMPLEMENTATION FOR CLASSIFICATION-ENABLED VARIANT GENERATION (no test feedback loop, just generate + classify in one pass)
-def create_vs_generation_prompt(code: str) -> str:
+def create_vs_generation_prompt(problem_statement: str, class_skeleton: str, class_name: str) -> str:
     return f"""<instructions>
-You are generating a probability-weighted distribution of Python solutions.
+You are generating a probability-weighted distribution of Python solutions to solve the given problem.
 
-Given the original code below, generate 5 independent Python solutions to the same problem.
-Each solution must be correct and executable. Think about the full space of ways this problem could be solved.
+Given the problem description and class skeleton below, generate 5 independent Python solutions that implement the class.
+Each solution must be correct and executable. Explore different algorithmic approaches - consider different implementations, data structures, etc.
 
-For each solution, assign a probability (0.0 to 1.0) representing how likely this 
+For each solution, assign a probability (0.0 to 1.0) representing how likely this
 approach would appear across the full distribution of valid solutions to this problem.
 Probabilities do not need to sum to 1.0 across your 5 samples.
 
 Output each variant within <response> tags containing:
 - <probability>: float between 0.0 and 1.0
-- <code>: complete, executable Python code only
+- <code>: complete, executable Python code only - implement the class based on the skeleton
 
-Do not explain. Do not add comments describing what changed. Do not add any main function or test cases. 
+Do not explain. Do not add comments describing what changed. Do not add any main function or test cases.
 Output only the 5 <response> blocks.
 </instructions>
 
-Original Code:
+Problem Description:
 ```python
-{code}
+{problem_statement}
 ```
 
-Generate 5 probability-weighted independent solutions:"""
+Class Skeleton (implement this):
+```python
+{class_skeleton}
+```
+
+Generate 5 probability-weighted independent solutions that solve this problem:"""
 
 
 def create_classification_prompt(original_code: str, variant_code: str) -> str:
@@ -218,9 +223,10 @@ def extract_variants_from_response(response_text: str) -> List[Dict[str, str]]:
     return variants[:5]
 
 
-def generate_variants(code: str, provider, test_code: str, task_id: str,
-                      class_name: str = None, max_attempts: int = 5,
-                      model_name: str = "unknown", verbose: bool = False) -> List[Dict]:
+def generate_variants(problem_statement: str, class_skeleton: str, class_name: str,
+                      code: str, provider, test_code: str, task_id: str,
+                      max_attempts: int = 5, model_name: str = "unknown",
+                      verbose: bool = False) -> List[Dict]:
     """
     Two-step VS pipeline:
       Step 1 – one LLM call to generate 5 probability-weighted code variants.
@@ -237,7 +243,7 @@ def generate_variants(code: str, provider, test_code: str, task_id: str,
         return response.text
 
     # ── Step 1: Generate variants ──────────────────────────────────────────
-    gen_prompt = create_vs_generation_prompt(code)
+    gen_prompt = create_vs_generation_prompt(problem_statement, class_skeleton, class_name)
     # print("Generating variants with prompt:\n", gen_prompt)
     raw_variants: list[dict] = []
 
@@ -415,9 +421,14 @@ def process_class_eval_dataset(provider, model_name: str,
 
         base_code = str(row['solution_code'])
         test_code = str(row['test']).strip() if 'test' in row.index else ""
+        skeleton = str(row['skeleton']).strip() if 'skeleton' in row.index and pd.notna(row.get('skeleton')) else ""
+        class_desc = str(row['class_description']).strip() if 'class_description' in row.index and pd.notna(row.get('class_description')) else ""
 
         if not base_code or base_code == 'nan':
             continue
+
+        problem_statement = class_desc if class_desc and class_desc != 'nan' else ""
+        class_skeleton = skeleton if skeleton and skeleton != 'nan' else ""
 
         processed += 1
         print(f"[{processed}/{len(class_eval)}] Processing task {task_id}...")
@@ -426,7 +437,8 @@ def process_class_eval_dataset(provider, model_name: str,
             class_name = str(row['class_name']).strip() if 'class_name' in row.index else None
 
             variants = generate_variants(
-                base_code, provider, test_code, task_id, class_name,
+                problem_statement, class_skeleton, class_name,
+                base_code, provider, test_code, task_id,
                 model_name=model_name, verbose=verbose
             )
 

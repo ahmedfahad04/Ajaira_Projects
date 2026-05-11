@@ -29,12 +29,12 @@ OUTPUT_PATH = Path(__file__).parent.parent / "output"
 OUTPUT_PATH.mkdir(exist_ok=True)
 
 
-def create_vs_generation_prompt(code: str) -> str:
+def create_vs_generation_prompt(problem_statement: str, func_signature: str, func_name: str) -> str:
     return f"""<instructions>
-You are generating a probability-weighted distribution of Python solutions.
+You are generating a probability-weighted distribution of Python solutions to solve the given problem.
 
-Given the original code below, generate 5 independent Python solutions to the same problem.
-Each solution must be correct and executable. Think about the full space of ways this problem could be solved.
+Given the problem description and function signature below, generate 5 independent Python solutions that solve the problem.
+Each solution must be correct and executable. Explore different algorithmic approaches - consider brute force, optimized, recursive, iterative, different data structures, etc.
 
 For each solution, assign a probability (0.0 to 1.0) representing how likely this 
 approach would appear across the full distribution of valid solutions to this problem.
@@ -42,18 +42,23 @@ Probabilities do not need to sum to 1.0 across your 5 samples.
 
 Output each variant within <response> tags containing:
 - <probability>: float between 0.0 and 1.0
-- <code>: complete, executable Python code only
+- <code>: complete, executable Python code only - implement the function based on the signature
 
-Do not explain. Do not add comments describing what changed. Do not add any main function or test cases. 
+Do not explain. Do not add comments describing what changed. Do not add any main function or test cases.
 Output only the 5 <response> blocks.
 </instructions>
 
-Original Code:
+Problem Description:
 ```python
-{code}
+{problem_statement}
 ```
 
-Generate 5 probability-weighted independent solutions:"""
+Function Signature (implement this):
+```python
+{func_signature}
+```
+
+Generate 5 probability-weighted independent solutions that solve this problem:"""
 
 
 def create_classification_prompt(original_code: str, variant_code: str) -> str:
@@ -165,8 +170,21 @@ def ensure_function_name_in_code(variant_code: str, expected_func_name: str) -> 
     return variant_code
 
 
-def generate_variants(code: str, provider, test_code: str, task_id: str,
-                      method_name: str = None, prompt_str: str = None,
+def extract_function_signature_from_prompt(prompt: str) -> str:
+    if not prompt:
+        return None
+    lines = prompt.split('\n')
+    for line in lines:
+        if line.strip().startswith('def '):
+            sig = line.rstrip()
+            if sig.endswith(':'):
+                sig = sig[:-1]
+            return sig
+    return None
+
+
+def generate_variants(problem_statement: str, func_signature: str, func_name: str,
+                      code: str, provider, test_code: str, task_id: str,
                       max_attempts: int = 5, model_name: str = "unknown",
                       verbose: bool = False) -> List[Dict]:
     def vlog(msg: str):
@@ -177,7 +195,7 @@ def generate_variants(code: str, provider, test_code: str, task_id: str,
         response = provider.generate(prompt, max_tokens=8192, temperature=0.7)
         return response.text
 
-    gen_prompt = create_vs_generation_prompt(code)
+    gen_prompt = create_vs_generation_prompt(problem_statement, func_signature, func_name)
     raw_variants: list[dict] = []
 
     safe_model_name = model_name.replace(':', '_').replace('/', '_')
@@ -396,13 +414,17 @@ def process_human_eval_dataset(provider, model_name: str,
         if not base_code or base_code == 'nan':
             continue
 
+        problem_statement = prompt_str if prompt_str and prompt_str != 'nan' else ""
+        func_signature = extract_function_signature_from_prompt(prompt_str) if prompt_str and prompt_str != 'nan' else f"def {method_name}():"
+
         processed += 1
         print(f"[{processed}/{len(valid_codes)}] Processing task {task_id}...")
 
         try:
             variants = generate_variants(
+                problem_statement, func_signature, method_name,
                 base_code, provider, test_code, task_id,
-                method_name, prompt_str, model_name=model_name, verbose=verbose
+                model_name=model_name, verbose=verbose
             )
 
             base_passed, base_msg = test_variant(base_code, test_code, task_id, method_name, prompt_str)
