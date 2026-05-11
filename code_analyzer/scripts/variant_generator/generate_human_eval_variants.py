@@ -10,6 +10,9 @@ python generate_human_eval_variants.py --provider claude --start-id 5
 
 # Process first 10 samples
 python generate_human_eval_variants.py --provider gemini --model gemini-2.0-flash --total 10
+
+# With custom dataset and tracking tag
+python generate_human_eval_variants.py --provider ollama --model llama3 --dataset-name mbpp_508 --tracking-tag one
 '''
 
 import argparse
@@ -186,7 +189,8 @@ def extract_function_signature_from_prompt(prompt: str) -> str:
 def generate_variants(problem_statement: str, func_signature: str, func_name: str,
                       code: str, provider, test_code: str, task_id: str,
                       max_attempts: int = 5, model_name: str = "unknown",
-                      verbose: bool = False) -> List[Dict]:
+                      verbose: bool = False, dataset_name: str = "human_eval_164",
+                      tracking_tag: str = None) -> List[Dict]:
     def vlog(msg: str):
         if verbose:
             print(f"  [VERBOSE] {msg}", flush=True)
@@ -199,7 +203,8 @@ def generate_variants(problem_statement: str, func_signature: str, func_name: st
     raw_variants: list[dict] = []
 
     safe_model_name = model_name.replace(':', '_').replace('/', '_')
-    raw_responses_dir = OUTPUT_PATH / "raw_llm_responses" / safe_model_name
+    tracking_suffix = f"_{tracking_tag}" if tracking_tag else ""
+    raw_responses_dir = OUTPUT_PATH / "raw_llm_responses" / f"{dataset_name}_{safe_model_name}{tracking_suffix}"
     raw_responses_dir.mkdir(parents=True, exist_ok=True)
 
     for attempt in range(max_attempts):
@@ -245,7 +250,7 @@ def generate_variants(problem_statement: str, func_signature: str, func_name: st
             labels = "unknown"
             vlog(f"  → Classification failed: {e}")
 
-        passed, msg = test_variant(variant_code, test_code, task_id, method_name, prompt_str)
+        passed, msg = test_variant(variant_code, test_code, task_id, func_name, problem_statement)
         vlog(f"  → Test {'PASSED' if passed else 'FAILED'}: {msg}")
 
         variants.append({
@@ -370,13 +375,15 @@ def test_variant(variant_code: str, test_code: str, task_id: str, method_name: s
 
 def process_human_eval_dataset(provider, model_name: str,
                                output_path: Path = None, verbose: bool = False,
-                               start_id: int = None, total: int = None):
+                               start_id: int = None, total: int = None,
+                               dataset_name: str = "human_eval_164",
+                               tracking_tag: str = None) -> None:
     if output_path is None:
         output_path = OUTPUT_PATH
 
     output_path.mkdir(parents=True, exist_ok=True)
 
-    human_eval = pd.read_csv(DATASET_PATH / "human_eval_164.csv")
+    human_eval = pd.read_csv(DATASET_PATH / f"{dataset_name}.csv")
     code_results = []
     label_results = []
 
@@ -395,10 +402,18 @@ def process_human_eval_dataset(provider, model_name: str,
     else:
         range_info += f", all remaining ({len(valid_codes)} samples)"
 
-    provider_name = provider.__class__.__name__.replace("Provider", "")
+    safe_model_name = model_name.replace(':', '_').replace('/', '_')
+    provider_name = provider.__class__.__name__.replace("Provider", "").lower()
+    tracking_suffix = f"_{tracking_tag}" if tracking_tag else ""
+    file_prefix = f"{dataset_name}_{provider_name}_{safe_model_name}{tracking_suffix}"
+
     print(f"\n{'='*70}")
-    print(f"Processing human_eval_164.csv with provider: {provider_name}{range_info}")
+    print(f"Processing {dataset_name}.csv with provider: {provider_name}{range_info}")
     print(f"Total dataset rows: {total_rows}, Valid codes: {len(valid_codes)}")
+    print(f"Output stored at: {output_path}")
+    print(f"Output file prefix: {file_prefix}")
+    if tracking_tag:
+        print(f"Tracking tag: {tracking_tag}")
     if verbose:
         print(f"Verbose mode: ON")
     print(f"{'='*70}\n")
@@ -424,7 +439,8 @@ def process_human_eval_dataset(provider, model_name: str,
             variants = generate_variants(
                 problem_statement, func_signature, method_name,
                 base_code, provider, test_code, task_id,
-                model_name=model_name, verbose=verbose
+                model_name=model_name, verbose=verbose,
+                dataset_name=dataset_name, tracking_tag=tracking_tag
             )
 
             base_passed, base_msg = test_variant(base_code, test_code, task_id, method_name, prompt_str)
@@ -459,16 +475,12 @@ def process_human_eval_dataset(provider, model_name: str,
             print(f"  ✗ Error: {e}", file=sys.stderr)
             continue
 
-    safe_model_name = model_name.replace(':', '_').replace('/', '_')
-    provider_name = provider.__class__.__name__.replace("Provider", "").lower()
-    file_prefix = f"{provider_name}_{safe_model_name}"
-
     code_df = pd.DataFrame(code_results)
-    code_file = output_path / f"human_eval_variants_code_{file_prefix}.csv"
+    code_file = output_path / f"variants_code_{file_prefix}.csv"
     code_df.to_csv(code_file, index=False)
 
     label_df = pd.DataFrame(label_results)
-    label_file = output_path / f"human_eval_variants_labels_{file_prefix}.csv"
+    label_file = output_path / f"variants_labels_{file_prefix}.csv"
     label_df.to_csv(label_file, index=False)
 
     print(f"\n{'='*70}")
@@ -485,11 +497,15 @@ if __name__ == "__main__":
     parser.add_argument("--model", default="llama3",
                         help="Model name (for ollama) or provider-specific model id")
     parser.add_argument("--start-id", type=int, default=None,
-                        help="Starting task ID number (default: process from start)")
+                         help="Starting task ID number (default: process from start)")
     parser.add_argument("--total", type=int, default=None,
-                        help="Total number of samples to process (default: all)")
+                         help="Total number of samples to process (default: all)")
+    parser.add_argument("--dataset-name", type=str, default="human_eval_164",
+                         help="Dataset CSV filename without extension (default: human_eval_164)")
+    parser.add_argument("--tracking-tag", type=str, default=None,
+                         help="Tracking tag to append to output folder name (e.g., 'one' or 'two')")
     parser.add_argument("output_path", nargs="?", default=None,
-                        help="Output directory path")
+                         help="Output directory path")
     parser.add_argument("--verbose", action="store_true",
                         help="Print detailed per-step logs (requests, responses, test results)")
     args = parser.parse_args()
@@ -499,4 +515,5 @@ if __name__ == "__main__":
 
     out = Path(args.output_path) if args.output_path else OUTPUT_PATH
     process_human_eval_dataset(provider, args.model, out, verbose=args.verbose,
-                               start_id=args.start_id, total=args.total)
+                               start_id=args.start_id, total=args.total,
+                               dataset_name=args.dataset_name, tracking_tag=args.tracking_tag)
