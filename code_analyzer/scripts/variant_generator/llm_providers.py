@@ -24,7 +24,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-env_path = "/home/sakib/Documents/PROJECTS/RoboWar_Thesis_P2/.env"
+env_path = "/home/sakib/Documents/PROJECTS/Ajaira_Projects/code_analyzer/.env"
 load_dotenv(env_path)
 
 @dataclass
