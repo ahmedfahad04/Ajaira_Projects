@@ -380,9 +380,36 @@ def test_variant(variant_code: str, test_code: str, task_id: str, class_name: st
         return False, f"Exception: {str(e)[:100]}"
 
 
+def load_indices(indices_arg: str = None, index_file: str = None) -> set:
+    """Load indices from comma-separated string or file."""
+    indices = set()
+    if indices_arg:
+        for part in indices_arg.split(','):
+            part = part.strip()
+            if part:
+                try:
+                    indices.add(int(part))
+                except ValueError:
+                    pass
+    if index_file:
+        index_path = Path(index_file)
+        if index_path.exists():
+            content = index_path.read_text()
+            for line in content.split(','):
+                for part in line.split():
+                    part = part.strip()
+                    if part:
+                        try:
+                            indices.add(int(part))
+                        except ValueError:
+                            pass
+    return indices
+
+
 def process_class_eval_dataset(provider, model_name: str,
                                 output_path: Path = None, verbose: bool = False,
                                 start_id: int = None, total: int = None,
+                                indices: str = None, index_file: str = None,
                                 dataset_name: str = "classEval",
                                 tracking_tag: str = None) -> None:
     if output_path is None:
@@ -396,16 +423,21 @@ def process_class_eval_dataset(provider, model_name: str,
 
     total_rows = len(class_eval)
 
-    if start_id is not None:
+    target_indices = load_indices(indices, index_file)
+
+    if target_indices:
+        class_eval = class_eval[class_eval['task_id'].isin(target_indices)]
+        range_info = f" from indices: {sorted(target_indices)}"
+    elif start_id is not None:
         class_eval = class_eval[class_eval['task_id'] >= start_id]
         range_info = f" from ID {start_id}"
     else:
         range_info = " from start"
 
-    if total is not None:
+    if target_indices is None and total is not None:
         class_eval = class_eval.iloc[:total]
         range_info += f", total {total} samples"
-    else:
+    elif not target_indices:
         range_info += f", all remaining ({len(class_eval)} samples)"
 
     safe_model_name = model_name.replace(':', '_').replace('/', '_')
@@ -512,6 +544,10 @@ if __name__ == "__main__":
                          help="Starting task ID number (default: process from start)")
     parser.add_argument("--total", type=int, default=None,
                          help="Total number of samples to process (default: all)")
+    parser.add_argument("--indices", type=str, default=None,
+                         help="Comma-separated list of task IDs to process (e.g., --indices 0,5,10)")
+    parser.add_argument("--index-file", type=str, default=None,
+                         help="Path to file containing task IDs (one per line or comma-separated)")
     parser.add_argument("--dataset-name", type=str, default="classEval",
                          help="Dataset CSV filename without extension (default: classEval)")
     parser.add_argument("--tracking-tag", type=str, default=None,
@@ -528,4 +564,5 @@ if __name__ == "__main__":
     out = Path(args.output_path) if args.output_path else OUTPUT_PATH
     process_class_eval_dataset(provider, args.model, out, verbose=args.verbose,
                                start_id=args.start_id, total=args.total,
+                               indices=args.indices, index_file=args.index_file,
                                dataset_name=args.dataset_name, tracking_tag=args.tracking_tag)

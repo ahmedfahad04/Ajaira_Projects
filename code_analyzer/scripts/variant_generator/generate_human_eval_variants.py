@@ -32,6 +32,32 @@ OUTPUT_PATH = Path(__file__).parent.parent / "output"
 OUTPUT_PATH.mkdir(exist_ok=True)
 
 
+def load_indices(indices_arg: str = None, index_file: str = None) -> set:
+    """Load indices from comma-separated string or file."""
+    indices = set()
+    if indices_arg:
+        for part in indices_arg.split(','):
+            part = part.strip()
+            if part:
+                try:
+                    indices.add(int(part))
+                except ValueError:
+                    pass
+    if index_file:
+        index_path = Path(index_file)
+        if index_path.exists():
+            content = index_path.read_text()
+            for line in content.split(','):
+                for part in line.split():
+                    part = part.strip()
+                    if part:
+                        try:
+                            indices.add(int(part))
+                        except ValueError:
+                            pass
+    return indices
+
+
 def create_vs_generation_prompt(problem_statement: str, func_signature: str, func_name: str) -> str:
     return f"""<instructions>
 You are generating a probability-weighted distribution of Python solutions to solve the given problem.
@@ -376,6 +402,7 @@ def test_variant(variant_code: str, test_code: str, task_id: str, method_name: s
 def process_human_eval_dataset(provider, model_name: str,
                                output_path: Path = None, verbose: bool = False,
                                start_id: int = None, total: int = None,
+                               indices: str = None, index_file: str = None,
                                dataset_name: str = "human_eval_164",
                                tracking_tag: str = None) -> None:
     if output_path is None:
@@ -390,16 +417,21 @@ def process_human_eval_dataset(provider, model_name: str,
     total_rows = len(human_eval)
     valid_codes = human_eval.dropna(subset=['solution_code'])
 
-    if start_id is not None:
+    target_indices = load_indices(indices, index_file)
+
+    if target_indices:
+        valid_codes = valid_codes[valid_codes['task_id'].isin(target_indices)]
+        range_info = f" from indices: {sorted(target_indices)}"
+    elif start_id is not None:
         valid_codes = valid_codes[valid_codes['task_id'] >= start_id]
         range_info = f" from ID {start_id}"
     else:
         range_info = " from start"
 
-    if total is not None:
+    if target_indices is None and total is not None:
         valid_codes = valid_codes.iloc[:total]
         range_info += f", total {total} samples"
-    else:
+    elif not target_indices:
         range_info += f", all remaining ({len(valid_codes)} samples)"
 
     safe_model_name = model_name.replace(':', '_').replace('/', '_')
@@ -500,6 +532,10 @@ if __name__ == "__main__":
                          help="Starting task ID number (default: process from start)")
     parser.add_argument("--total", type=int, default=None,
                          help="Total number of samples to process (default: all)")
+    parser.add_argument("--indices", type=str, default=None,
+                         help="Comma-separated list of task IDs to process (e.g., --indices 0,5,10)")
+    parser.add_argument("--index-file", type=str, default=None,
+                         help="Path to file containing task IDs (one per line or comma-separated)")
     parser.add_argument("--dataset-name", type=str, default="human_eval_164",
                          help="Dataset CSV filename without extension (default: human_eval_164)")
     parser.add_argument("--tracking-tag", type=str, default=None,
@@ -516,4 +552,5 @@ if __name__ == "__main__":
     out = Path(args.output_path) if args.output_path else OUTPUT_PATH
     process_human_eval_dataset(provider, args.model, out, verbose=args.verbose,
                                start_id=args.start_id, total=args.total,
+                               indices=args.indices, index_file=args.index_file,
                                dataset_name=args.dataset_name, tracking_tag=args.tracking_tag)
