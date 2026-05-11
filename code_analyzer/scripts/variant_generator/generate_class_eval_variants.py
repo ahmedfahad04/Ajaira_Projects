@@ -225,14 +225,14 @@ def extract_variants_from_response(response_text: str) -> List[Dict[str, str]]:
 
 def generate_variants(problem_statement: str, class_skeleton: str, class_name: str,
                       code: str, provider, test_code: str, task_id: str,
-                      max_attempts: int = 5, model_name: str = "unknown",
-                      verbose: bool = False, dataset_name: str = "classEval",
-                      tracking_tag: str = None) -> List[Dict]:
+                      model_name: str = "unknown", verbose: bool = False,
+                      dataset_name: str = "classEval", tracking_tag: str = None,
+                      do_classify: bool = True, do_test: bool = True,
+                      variants_output_dir: Path = None) -> List[Dict]:
     """
-    Two-step VS pipeline:
-      Step 1 – one LLM call to generate 5 probability-weighted code variants.
-      Step 2 – one LLM call per variant to classify it independently.
-    No test-feedback loop; test results are still recorded for analysis.
+    Generate 5 probability-weighted code variants.
+    Optionally classify each variant and/or run tests.
+    Save variants as separate Python files.
     """
 
     def vlog(msg: str):
@@ -243,64 +243,70 @@ def generate_variants(problem_statement: str, class_skeleton: str, class_name: s
         response = provider.generate(prompt, max_tokens=8192, temperature=0.8)
         return response.text
 
-    # ── Step 1: Generate variants ──────────────────────────────────────────
+    # Generate variants - single response with 5 variants
     gen_prompt = create_vs_generation_prompt(problem_statement, class_skeleton, class_name)
-    # print("Generating variants with prompt:\n", gen_prompt)
-    raw_variants: list[dict] = []
 
     safe_model_name = model_name.replace(':', '_').replace('/', '_')
     tracking_suffix = f"_{tracking_tag}" if tracking_tag else ""
     raw_responses_dir = OUTPUT_PATH / "raw_llm_responses" / f"{dataset_name}_{safe_model_name}{tracking_suffix}"
     raw_responses_dir.mkdir(parents=True, exist_ok=True)
 
-    for attempt in range(max_attempts):
-        vlog(f"Generation attempt {attempt+1}/{max_attempts}")
-        try:
-            raw = llm_call(gen_prompt)
-            vlog(f"Response received ({len(raw)} chars)")
-            if verbose:
-                print(f"  [VERBOSE] Raw response:\n{'─'*60}\n{raw}\n{'─'*60}", flush=True)
+    vlog("Generating 5 variants...")
+    try:
+        raw = llm_call(gen_prompt)
+        vlog(f"Response received ({len(raw)} chars)")
+        if verbose:
+            print(f"  [VERBOSE] Raw response:\n{'─'*60}\n{raw}\n{'─'*60}", flush=True)
 
-            response_file = raw_responses_dir / f"{task_id}_gen_attempt{attempt+1}.txt"
-            response_file.write_text(raw)
+        response_file = raw_responses_dir / f"{task_id}_gen.txt"
+        response_file.write_text(raw)
 
-            new_variants = parse_variants(raw)
-            vlog(f"Parsed {len(new_variants)} variants")
-            raw_variants.extend(new_variants)
-
-            if len(raw_variants) >= 5:
-                break
-
-        except Exception as e:
-            print(f"  Generation attempt {attempt+1} failed: {e}", file=sys.stderr)
-            continue
+        raw_variants = parse_variants(raw)
+        vlog(f"Parsed {len(raw_variants)} variants")
+    except Exception as e:
+        print(f"  Generation failed: {e}", file=sys.stderr)
+        raw_variants = []
 
     raw_variants = raw_variants[:5]
 
-    # ── Step 2: Classify + test each variant ──────────────────────────────
+    # Ensure variants directory exists
+    if variants_output_dir:
+        variants_output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Process each variant
     variants: List[Dict] = []
 
-    for i, var in enumerate(raw_variants[:5]):
+    for i, var in enumerate(raw_variants):
         variant_code = var['code']
-        probability  = var.get('probability', 0.0)
+        probability = var.get('probability', 0.0)
 
-        # Classification
-        vlog(f"Classifying variant {i+1}")
-        try:
-            cls_prompt = create_classification_prompt(code, variant_code)
-            cls_raw = llm_call(cls_prompt)
-            labels = cls_raw.strip()
-            vlog(f"  → Labels: {labels}")
+        # Save variant as Python file
+        if variants_output_dir:
+            variant_file = variants_output_dir / f"{task_id}_variant{i+1}.py"
+            variant_file.write_text(variant_code)
+            vlog(f"Saved variant {i+1} to {variant_file.name}")
 
-            cls_response_file = raw_responses_dir / f"{task_id}_variant{i+1}_classification.txt"
-            cls_response_file.write_text(f"{variant_code}\n\n# Classification response:\n# {cls_raw.replace(chr(10), chr(10) + '# ')}")
-        except Exception as e:
-            labels = "unknown"
-            vlog(f"  → Classification failed: {e}")
+        # Classification (if enabled)
+        labels = "unknown"
+        if do_classify:
+            vlog(f"Classifying variant {i+1}")
+            try:
+                cls_prompt = create_classification_prompt(code, variant_code)
+                cls_raw = llm_call(cls_prompt)
+                labels = cls_raw.strip()
+                vlog(f"  → Labels: {labels}")
 
-        # Test execution (recorded but does NOT gate inclusion)
-        passed, msg = test_variant(variant_code, test_code, task_id, class_name)
-        vlog(f"  → Test {'PASSED' if passed else 'FAILED'}: {msg}")
+                cls_response_file = raw_responses_dir / f"{task_id}_variant{i+1}_classification.txt"
+                cls_response_file.write_text(f"{variant_code}\n\n# Classification response:\n# {cls_raw.replace(chr(10), chr(10) + '# ')}")
+            except Exception as e:
+                vlog(f"  → Classification failed: {e}")
+
+        # Test execution (if enabled)
+        passed = False
+        msg = "skipped"
+        if do_test:
+            passed, msg = test_variant(variant_code, test_code, task_id, class_name)
+            vlog(f"  → Test {'PASSED' if passed else 'FAILED'}: {msg}")
 
         variants.append({
             'code':        variant_code,
@@ -317,7 +323,7 @@ def generate_variants(problem_statement: str, class_skeleton: str, class_name: s
             'code':        code,
             'label':       'original',
             'probability': 0.0,
-            'test_passed': True,
+            'test_passed': False if do_test else None,
             'test_msg':    'fallback',
         })
 
@@ -411,7 +417,9 @@ def process_class_eval_dataset(provider, model_name: str,
                                 start_id: int = None, total: int = None,
                                 indices: str = None, index_file: str = None,
                                 dataset_name: str = "classEval",
-                                tracking_tag: str = None) -> None:
+                                tracking_tag: str = None,
+                                do_classify: bool = True, do_test: bool = True,
+                                save_variants: bool = True) -> None:
     if output_path is None:
         output_path = OUTPUT_PATH
 
@@ -445,6 +453,11 @@ def process_class_eval_dataset(provider, model_name: str,
     tracking_suffix = f"_{tracking_tag}" if tracking_tag else ""
     file_prefix = f"{dataset_name}_{provider_name}_{safe_model_name}{tracking_suffix}"
 
+    variants_output_dir = None
+    if save_variants:
+        variants_output_dir = output_path / "variants" / f"{dataset_name}_{safe_model_name}{tracking_suffix}"
+        variants_output_dir.mkdir(parents=True, exist_ok=True)
+
     print(f"\n{'='*70}")
     print(f"Processing {dataset_name}.csv with provider: {provider_name}{range_info}")
     print(f"Total dataset rows: {total_rows}")
@@ -452,6 +465,9 @@ def process_class_eval_dataset(provider, model_name: str,
     print(f"Output file prefix: {file_prefix}")
     if tracking_tag:
         print(f"Tracking tag: {tracking_tag}")
+    print(f"Classification: {'ON' if do_classify else 'OFF'}")
+    print(f"Tests: {'ON' if do_test else 'OFF'}")
+    print(f"Save variants as .py: {'ON' if save_variants else 'OFF'}")
     if verbose:
         print(f"Verbose mode: ON")
     print(f"{'='*70}\n")
@@ -484,7 +500,9 @@ def process_class_eval_dataset(provider, model_name: str,
                 problem_statement, class_skeleton, class_name,
                 base_code, provider, test_code, task_id,
                 model_name=model_name, verbose=verbose,
-                dataset_name=dataset_name, tracking_tag=tracking_tag
+                dataset_name=dataset_name, tracking_tag=tracking_tag,
+                do_classify=do_classify, do_test=do_test,
+                variants_output_dir=variants_output_dir
             )
 
             base_passed, base_msg = test_variant(base_code, test_code, task_id, class_name)
@@ -555,7 +573,13 @@ if __name__ == "__main__":
     parser.add_argument("output_path", nargs="?", default=None,
                          help="Output directory path")
     parser.add_argument("--verbose", action="store_true",
-                        help="Print detailed per-step logs (requests, responses, test results)")
+                         help="Print detailed per-step logs (requests, responses, test results)")
+    parser.add_argument("--no-classify", action="store_true",
+                         help="Skip classification step (generate variants only)")
+    parser.add_argument("--no-test", action="store_true",
+                         help="Skip test execution")
+    parser.add_argument("--no-save-variants", action="store_true",
+                         help="Do not save variants as individual Python files")
     args = parser.parse_args()
 
     provider = LLMProviderFactory.create(args.provider, model=args.model)
@@ -565,4 +589,6 @@ if __name__ == "__main__":
     process_class_eval_dataset(provider, args.model, out, verbose=args.verbose,
                                start_id=args.start_id, total=args.total,
                                indices=args.indices, index_file=args.index_file,
-                               dataset_name=args.dataset_name, tracking_tag=args.tracking_tag)
+                               dataset_name=args.dataset_name, tracking_tag=args.tracking_tag,
+                               do_classify=not args.no_classify, do_test=not args.no_test,
+                               save_variants=not args.no_save_variants)

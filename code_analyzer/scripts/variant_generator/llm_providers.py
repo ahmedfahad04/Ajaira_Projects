@@ -536,6 +536,64 @@ class AISuiteProvider(LLMProvider):
             return False
 
 
+class NVIDIAProvider(LLMProvider):
+    """NVIDIA NIM API implementation using OpenAI client."""
+    
+    def __init__(self, api_key: Optional[str] = None, model: str = "meta/llama-3.3-70b-instruct", **kwargs):
+        super().__init__(api_key)
+        self._model = model
+        self.api_key = api_key or os.getenv("NVIDIA_API_KEY")
+        if not self.api_key:
+            raise ValueError("NVIDIA_API_KEY not provided")
+        try:
+            from openai import OpenAI
+            self._client = OpenAI(
+                base_url="https://integrate.api.nvidia.com/v1",
+                api_key=self.api_key
+            )
+        except ImportError:
+            raise ImportError("Install: pip install openai")
+    
+    def generate(
+        self,
+        prompt: str,
+        system_prompt: str = "",
+        max_tokens: int = 2048,
+        temperature: float = 0.1,
+    ) -> LLMResponse:
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        
+        response = self._client.chat.completions.create(
+            model=self._model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        
+        return LLMResponse(
+            text=response.choices[0].message.content,
+            input_tokens=response.usage.prompt_tokens if response.usage else 0,
+            output_tokens=response.usage.completion_tokens if response.usage else 0,
+        )
+    
+    def count_tokens(self, text: str) -> int:
+        return len(text) // 4
+    
+    def validate_connection(self) -> bool:
+        try:
+            self._client.chat.completions.create(
+                model=self._model,
+                messages=[{"role": "user", "content": "test"}],
+                max_tokens=10,
+            )
+            return True
+        except Exception:
+            return False
+
+
 class CopilotProvider(LLMProvider):
     """Copilot API local server implementation."""
     
@@ -615,6 +673,7 @@ class LLMProviderFactory:
         "aisuite": AISuiteProvider,
         "ollama": OllamaProvider,
         "copilot": CopilotProvider,
+        "nvidia": NVIDIAProvider,
     }
     
     @classmethod
