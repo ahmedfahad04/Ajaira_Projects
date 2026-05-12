@@ -1,0 +1,235 @@
+task_id,base_code,base_code_test_passed,base_code_test_msg,variant_1,variant_1_test_passed,variant_1_test_msg,variant_2,variant_2_test_passed,variant_2_test_msg,variant_3,variant_3_test_passed,variant_3_test_msg,variant_4,variant_4_test_passed,variant_4_test_msg,variant_5,variant_5_test_passed,variant_5_test_msg
+17,"    note_map = {'o': 4, 'o|': 2, '.|': 1}
+    return [note_map[x] for x in music_string.split(' ') if x]
+",False,skipped,"from typing import List
+
+def parse_music(music_string: str) -> List[int]:
+    notes = {'o': 4, 'o|': 2, '.|': 1}
+    result = []
+    current_note = ''
+    for char in music_string:
+        if char == ' ':
+            if current_note:
+                result.append(notes.get(current_note, 0))
+                current_note = ''
+        else:
+            current_note += char
+            if current_note in notes:
+                result.append(notes.get(current_note, 0))
+                current_note = ''
+    return result",,skipped,"from typing import List
+
+def parse_music(music_string: str) -> List[int]:
+    notes = {'o': 4, 'o|': 2, '.|': 1}
+    result = []
+    for note in music_string.split():
+        if note in notes:
+            result.append(notes.get(note, 0))
+    return result",,skipped,"from typing import List
+
+def parse_music(music_string: str) -> List[int]:
+    result = []
+    note_mapping = {'o': 4, 'o|': 2, '.|': 1}
+    note = ''
+    for char in music_string:
+        if char == ' ':
+            if note:
+                result.append(note_mapping.get(note, 0))
+                note = ''
+        else:
+            note += char
+    if note:
+        result.append(note_mapping.get(note, 0))
+    return result",,skipped,"from typing import List
+
+def parse_music(music_string: str) -> List[int]:
+    notes = {'o': 4, 'o|': 2, '.|': 1}
+    result = []
+    while music_string:
+        for note in notes:
+            if music_string.startswith(note):
+                result.append(notes[note])
+                music_string = music_string[len(note):].lstrip()
+                break
+        else:
+            music_string = music_string[1:].lstrip()
+    return result",,skipped,"from typing import List
+
+def parse_music(music_string: str) -> List[int]:
+    notes = {'o': 4, 'o|': 2, '.|': 1}
+    result = []
+    music_string = music_string.replace(' ', '')
+    while music_string:
+        found = False
+        for note in notes:
+            if music_string.startswith(note):
+                result.append(notes[note])
+                music_string = music_string[len(note):]
+                found = True
+                break
+        if not found:
+            music_string = music_string[1:]
+    return result",,skipped
+50,"    return """".join([chr(((ord(ch) - 5 - ord(""a"")) % 26) + ord(""a"")) for ch in s])
+",False,skipped,"def encode_shift(s: str):
+    result = """"
+    for char in s:
+        if char.isalpha():
+            ascii_offset = ord('a') if char.islower() else ord('A')
+            result += chr((ord(char) - ascii_offset + 5) % 26 + ascii_offset)
+        else:
+            result += char
+    return result",,skipped,"def encode_shift(s: str):
+    encoded_chars = []
+    for char in s:
+        if char.isalpha():
+            shift = 5
+            char_code = ord(char)
+            base_code = ord('a') if char.islower() else ord('A')
+            encoded_char_code = (char_code - base_code + shift) % 26 + base_code
+            encoded_chars.append(chr(encoded_char_code))
+        else:
+            encoded_chars.append(char)
+    return ''.join(encoded_chars)",,skipped,"def encode_shift(s: str):
+    alphabet = 'abcdefghijklmnopqrstuvwxyz'
+    shifted_alphabet = alphabet[5:] + alphabet[:5]
+    table = str.maketrans(alphabet + alphabet.upper(), shifted_alphabet + shifted_alphabet.upper())
+    return s.translate(table)",,skipped,"def encode_shift(s: str):
+    encoded_string = """"
+    for char in s:
+        if char.isalpha():
+            base_offset = ord('a') if char.islower() else ord('A')
+            encoded_char = chr((ord(char) - base_offset + 5) % 26 + base_offset)
+            encoded_string += encoded_char
+        else:
+            encoded_string += char
+    return encoded_string",,skipped,"def encode_shift(s: str):
+    encoded_chars = [chr(((ord(char) - ord('a') + 5) % 26) + ord('a')) if char.islower() 
+                     else chr(((ord(char) - ord('A') + 5) % 26) + ord('A')) if char.isupper() 
+                     else char 
+                     for char in s]
+    return ''.join(encoded_chars)",,skipped
+105,"    dic = {
+        1: ""One"",
+        2: ""Two"",
+        3: ""Three"",
+        4: ""Four"",
+        5: ""Five"",
+        6: ""Six"",
+        7: ""Seven"",
+        8: ""Eight"",
+        9: ""Nine"",
+    }
+    sorted_arr = sorted(arr, reverse=True)
+    new_arr = []
+    for var in sorted_arr:
+        try:
+            new_arr.append(dic[var])
+        except:
+            pass
+    return new_arr
+",False,skipped,"def by_length(arr):
+    digits = {1: ""One"", 2: ""Two"", 3: ""Three"", 4: ""Four"", 5: ""Five"", 6: ""Six"", 7: ""Seven"", 8: ""Eight"", 9: ""Nine""}
+    return [digits[i] for i in sorted([x for x in arr if 1 <= x <= 9], reverse=True)]",,skipped,"def by_length(arr):
+    digits = [""One"", ""Two"", ""Three"", ""Four"", ""Five"", ""Six"", ""Seven"", ""Eight"", ""Nine""]
+    result = []
+    for x in sorted([x for x in arr if 1 <= x <= 9], reverse=True):
+        result.append(digits[x-1])
+    return result",,skipped,"def by_length(arr):
+    digits = {str(i): x for i, x in enumerate([""One"", ""Two"", ""Three"", ""Four"", ""Five"", ""Six"", ""Seven"", ""Eight"", ""Nine""], 1)}
+    return [digits[str(i)] for i in sorted([x for x in arr if 1 <= x <= 9], reverse=True)]",,skipped,"def by_length(arr):
+    digits = [""One"", ""Two"", ""Three"", ""Four"", ""Five"", ""Six"", ""Seven"", ""Eight"", ""Nine""]
+    filtered = [x for x in arr if 1 <= x <= 9]
+    filtered.sort(reverse=True)
+    return [digits[i-1] for i in filtered]",,skipped,"def by_length(arr):
+    digits = [""One"", ""Two"", ""Three"", ""Four"", ""Five"", ""Six"", ""Seven"", ""Eight"", ""Nine""]
+    filtered = list(filter(lambda x: 1 <= x <= 9, arr))
+    filtered.sort(reverse=True)
+    return [digits[i-1] for i in filtered]",,skipped
+114,"    max_sum = 0
+    s = 0
+    for num in nums:
+        s += -num
+        if (s < 0):
+            s = 0
+        max_sum = max(s, max_sum)
+    if max_sum == 0:
+        max_sum = max(-i for i in nums)
+    min_sum = -max_sum
+    return min_sum
+",False,skipped,"def minSubArraySum(nums):
+    min_sum = float('inf')
+    current_sum = 0
+    for num in nums:
+        current_sum = min(num, current_sum + num)
+        min_sum = min(min_sum, current_sum)
+    return min_sum",,skipped,"def minSubArraySum(nums):
+    min_sum = float('inf')
+    for i in range(len(nums)):
+        current_sum = 0
+        for j in range(i, len(nums)):
+            current_sum += nums[j]
+            min_sum = min(min_sum, current_sum)
+    return min_sum",,skipped,"def minSubArraySum(nums):
+    def helper(i):
+        if i == len(nums):
+            return float('inf')
+        return min(nums[i] + helper(i+1), nums[i])
+    return helper(0)",,skipped,"def minSubArraySum(nums):
+    min_sum = float('inf')
+    stack = []
+    for num in nums:
+        if stack and stack[-1] > 0:
+            stack[-1] += num
+        else:
+            stack.append(num)
+        min_sum = min(min_sum, stack[-1])
+    return min_sum",,skipped,"def minSubArraySum(nums):
+    min_sum = float('inf')
+    prefix_sum = 0
+    min_prefix_sum = 0
+    for num in nums:
+        prefix_sum += num
+        min_sum = min(min_sum, prefix_sum - min_prefix_sum)
+        min_prefix_sum = min(min_prefix_sum, prefix_sum)
+    return min_sum",,skipped
+148,"    planet_names = (""Mercury"", ""Venus"", ""Earth"", ""Mars"", ""Jupiter"", ""Saturn"", ""Uranus"", ""Neptune"")
+    if planet1 not in planet_names or planet2 not in planet_names or planet1 == planet2:
+        return ()
+    planet1_index = planet_names.index(planet1)
+    planet2_index = planet_names.index(planet2)
+    if planet1_index < planet2_index:
+        return (planet_names[planet1_index + 1: planet2_index])
+    else:
+        return (planet_names[planet2_index + 1 : planet1_index])
+",False,skipped,"def bf(planet1, planet2):
+    planets = [""Mercury"", ""Venus"", ""Earth"", ""Mars"", ""Jupiter"", ""Saturn"", ""Uranus"", ""Neptune""]
+    if planet1 not in planets or planet2 not in planets:
+        return ()
+    idx1, idx2 = planets.index(planet1), planets.index(planet2)
+    if idx1 > idx2:
+        idx1, idx2 = idx2, idx1
+    return tuple(planets[idx1+1:idx2])",,skipped,"def bf(planet1, planet2):
+    planets = [""Mercury"", ""Venus"", ""Earth"", ""Mars"", ""Jupiter"", ""Saturn"", ""Uranus"", ""Neptune""]
+    if planet1 not in planets or planet2 not in planets:
+        return ()
+    idx1, idx2 = sorted([planets.index(planet1), planets.index(planet2)])
+    return tuple(planets[idx1+1:idx2])",,skipped,"def bf(planet1, planet2):
+    planets = [""Mercury"", ""Venus"", ""Earth"", ""Mars"", ""Jupiter"", ""Saturn"", ""Uranus"", ""Neptune""]
+    if planet1 not in planets or planet2 not in planets:
+        return ()
+    idx1, idx2 = planets.index(planet1), planets.index(planet2)
+    if idx1 < idx2:
+        return tuple(planets[idx1+1:idx2])
+    else:
+        return tuple(planets[idx2+1:idx1])",,skipped,"def bf(planet1, planet2):
+    planets = [""Mercury"", ""Venus"", ""Earth"", ""Mars"", ""Jupiter"", ""Saturn"", ""Uranus"", ""Neptune""]
+    if planet1 not in planets or planet2 not in planets:
+        return ()
+    idx1, idx2 = min(planets.index(planet1), planets.index(planet2)), max(planets.index(planet1), planets.index(planet2))
+    return tuple(planets[idx1+1:idx2])",,skipped,"def bf(planet1, planet2):
+    planets = [""Mercury"", ""Venus"", ""Earth"", ""Mars"", ""Jupiter"", ""Saturn"", ""Uranus"", ""Neptune""]
+    if planet1 not in planets or planet2 not in planets:
+        return ()
+    idx1, idx2 = [planets.index(i) for i in sorted([planet1, planet2])]
+    return tuple(planets[idx1+1:idx2])",,skipped

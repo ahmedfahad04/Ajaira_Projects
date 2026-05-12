@@ -1,0 +1,3 @@
+task_id,base_code_label,variant_1_label,variant_1_probability,variant_2_label,variant_2_probability,variant_3_label,variant_3_probability,variant_4_label,variant_4_probability,variant_5_label,variant_5_probability
+8,original,unknown,0.25,unknown,0.2,unknown,0.15,unknown,0.3,unknown,0.1
+67,original,unknown,0.25,unknown,0.2,unknown,0.15,unknown,0.3,unknown,0.1

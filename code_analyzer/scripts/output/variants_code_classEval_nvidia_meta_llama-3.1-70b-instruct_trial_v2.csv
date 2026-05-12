@@ -1,0 +1,337 @@
+task_id,base_code,base_code_test_passed,base_code_test_msg,variant_1,variant_1_test_passed,variant_1_test_msg,variant_2,variant_2_test_passed,variant_2_test_msg,variant_3,variant_3_test_passed,variant_3_test_msg,variant_4,variant_4_test_passed,variant_4_test_msg,variant_5,variant_5_test_passed,variant_5_test_msg
+8,"class BankAccount:
+    def __init__(self, balance=0):
+        self.balance = balance
+
+    def deposit(self, amount):
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        self.balance += amount
+        return self.balance
+
+    def withdraw(self, amount):
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        if amount > self.balance:
+            raise ValueError(""Insufficient balance."")
+        self.balance -= amount
+        return self.balance
+
+    def view_balance(self):
+        return self.balance
+
+    def transfer(self, other_account, amount):
+        self.withdraw(amount)
+        other_account.deposit(amount)",True,"Tests: 22, Failures: 0, Errors: 0","class BankAccount:
+    """""" This is a class as a bank account system, which supports deposit money, withdraw money, view balance, and transfer money. """"""
+    def __init__(self, balance=0):
+        """""" Initializes a bank account object with an attribute balance, default value is 0. """"""
+        self.balance = balance
+
+    def deposit(self, amount):
+        """""" Deposits a certain amount into the account, increasing the account balance, return the current account balance. If amount is negative, raise a ValueError(""Invalid amount""). :param amount: int """"""
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        self.balance += amount
+        return self.balance
+
+    def withdraw(self, amount):
+        """""" Withdraws a certain amount from the account, decreasing the account balance, return the current account balance. If amount is negative, raise a ValueError(""Invalid amount""). If the withdrawal amount is greater than the account balance, raise a ValueError(""Insufficient balance.""). :param amount: int """"""
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        if amount > self.balance:
+            raise ValueError(""Insufficient balance."")
+        self.balance -= amount
+        return self.balance
+
+    def view_balance(self):
+        """""" Return the account balance. """"""
+        return self.balance
+
+    def transfer(self, other_account, amount):
+        """""" Transfers a certain amount from the current account to another account. :param other_account: BankAccount :param amount: int """"""
+        self.withdraw(amount)
+        other_account.deposit(amount)",False,skipped,"class BankAccount:
+    """""" This is a class as a bank account system, which supports deposit money, withdraw money, view balance, and transfer money. """"""
+    def __init__(self, balance=0):
+        """""" Initializes a bank account object with an attribute balance, default value is 0. """"""
+        self.balance = balance
+
+    def deposit(self, amount):
+        """""" Deposits a certain amount into the account, increasing the account balance, return the current account balance. If amount is negative, raise a ValueError(""Invalid amount""). :param amount: int """"""
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        self.balance += amount
+        return self.balance
+
+    def _validate_amount(self, amount):
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        if amount > self.balance:
+            raise ValueError(""Insufficient balance."")
+
+    def withdraw(self, amount):
+        """""" Withdraws a certain amount from the account, decreasing the account balance, return the current account balance. If amount is negative, raise a ValueError(""Invalid amount""). If the withdrawal amount is greater than the account balance, raise a ValueError(""Insufficient balance.""). :param amount: int """"""
+        self._validate_amount(amount)
+        self.balance -= amount
+        return self.balance
+
+    def view_balance(self):
+        """""" Return the account balance. """"""
+        return self.balance
+
+    def transfer(self, other_account, amount):
+        """""" Transfers a certain amount from the current account to another account. :param other_account: BankAccount :param amount: int """"""
+        self.withdraw(amount)
+        other_account.deposit(amount)",False,skipped,"class BankAccount:
+    """""" This is a class as a bank account system, which supports deposit money, withdraw money, view balance, and transfer money. """"""
+    def __init__(self, balance=0):
+        """""" Initializes a bank account object with an attribute balance, default value is 0. """"""
+        self.balance = balance
+
+    def deposit(self, amount):
+        """""" Deposits a certain amount into the account, increasing the account balance, return the current account balance. If amount is negative, raise a ValueError(""Invalid amount""). :param amount: int """"""
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        self.balance += amount
+        return self.balance
+
+    def _update_balance(self, amount):
+        if amount > 0:
+            self.balance += amount
+        else:
+            self.balance -= abs(amount)
+        return self.balance
+
+    def withdraw(self, amount):
+        """""" Withdraws a certain amount from the account, decreasing the account balance, return the current account balance. If amount is negative, raise a ValueError(""Invalid amount""). If the withdrawal amount is greater than the account balance, raise a ValueError(""Insufficient balance.""). :param amount: int """"""
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        if amount > self.balance:
+            raise ValueError(""Insufficient balance."")
+        return self._update_balance(-amount)
+
+    def view_balance(self):
+        """""" Return the account balance. """"""
+        return self.balance
+
+    def transfer(self, other_account, amount):
+        """""" Transfers a certain amount from the current account to another account. :param other_account: BankAccount :param amount: int """"""
+        self.withdraw(amount)
+        other_account.deposit(amount)",False,skipped,"class BankAccount:
+    """""" This is a class as a bank account system, which supports deposit money, withdraw money, view balance, and transfer money. """"""
+    def __init__(self, balance=0):
+        """""" Initializes a bank account object with an attribute balance, default value is 0. """"""
+        self.balance = balance
+
+    def deposit(self, amount):
+        """""" Deposits a certain amount into the account, increasing the account balance, return the current account balance. If amount is negative, raise a ValueError(""Invalid amount""). :param amount: int """"""
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        self.balance += amount
+        return self.balance
+
+    def _perform_transaction(self, amount):
+        if amount < 0 and abs(amount) > self.balance:
+            raise ValueError(""Insufficient balance."")
+        if amount < 0:
+            self.balance -= abs(amount)
+        else:
+            self.balance += amount
+        return self.balance
+
+    def withdraw(self, amount):
+        """""" Withdraws a certain amount from the account, decreasing the account balance, return the current account balance. If amount is negative, raise a ValueError(""Invalid amount""). If the withdrawal amount is greater than the account balance, raise a ValueError(""Insufficient balance.""). :param amount: int """"""
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        return self._perform_transaction(-amount)
+
+    def view_balance(self):
+        """""" Return the account balance. """"""
+        return self.balance
+
+    def transfer(self, other_account, amount):
+        """""" Transfers a certain amount from the current account to another account. :param other_account: BankAccount :param amount: int """"""
+        self.withdraw(amount)
+        other_account.deposit(amount)",False,skipped,"class BankAccount:
+    """""" This is a class as a bank account system, which supports deposit money, withdraw money, view balance, and transfer money. """"""
+    def __init__(self, balance=0):
+        """""" Initializes a bank account object with an attribute balance, default value is 0. """"""
+        self.balance = balance
+
+    def _validate_transaction(self, amount):
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        if amount > self.balance:
+            raise ValueError(""Insufficient balance."")
+
+    def deposit(self, amount):
+        """""" Deposits a certain amount into the account, increasing the account balance, return the current account balance. If amount is negative, raise a ValueError(""Invalid amount""). :param amount: int """"""
+        if amount < 0:
+            raise ValueError(""Invalid amount"")
+        self.balance += amount
+        return self.balance
+
+    def withdraw(self, amount):
+        """""" Withdraws a certain amount from the account, decreasing the account balance, return the current account balance. If amount is negative, raise a ValueError(""Invalid amount""). If the withdrawal amount is greater than the account balance, raise a ValueError(""Insufficient balance.""). :param amount: int """"""
+        self._validate_transaction(amount)
+        self.balance -= amount
+        return self.balance
+
+    def view_balance(self):
+        """""" Return the account balance. """"""
+        return self.balance
+
+    def transfer(self, other_account, amount):
+        """""" Transfers a certain amount from the current account to another account. :param other_account: BankAccount :param amount: int """"""
+        self.withdraw(amount)
+        other_account.deposit(amount)",False,skipped
+67,"class Order:
+
+    def __init__(self):
+        self.menu = []
+        # menu = [{""dish"": dish name, ""price"": price, ""count"": count}, ...]
+        self.selected_dishes = []
+        # selected_dish = {""dish"": dish name, ""count"": count, price: price}
+        self.sales = {}
+        # 
+
+
+    def add_dish(self, dish):
+        for menu_dish in self.menu:
+            if dish[""dish""] == menu_dish[""dish""]:
+                if menu_dish[""count""] < dish[""count""]:
+                    return False
+                else:
+                    menu_dish[""count""] -= dish[""count""]
+                    break
+        self.selected_dishes.append(dish)
+        return True
+
+    def calculate_total(self):
+        total = 0
+        for dish in self.selected_dishes:
+            total += dish[""price""] * dish[""count""] * self.sales[dish[""dish""]]
+        return total
+
+    def checkout(self):
+        if len(self.selected_dishes) == 0:
+            return False
+        total = self.calculate_total()
+        self.selected_dishes = []
+        return total",True,"Tests: 17, Failures: 0, Errors: 0","class Order:
+    def __init__(self):
+        self.menu = []
+        self.selected_dishes = []
+        self.sales = {}
+
+    def add_dish(self, dish):
+        for item in self.menu:
+            if item[""dish""] == dish[""dish""] and item[""price""] == dish[""price""] and item[""count""] >= dish[""count""]:
+                item[""count""] -= dish[""count""]
+                self.selected_dishes.append({""dish"": dish[""dish""], ""count"": dish[""count""], ""price"": dish[""price""]})
+                return True
+        return False
+
+    def calculate_total(self):
+        total = 0
+        for dish in self.selected_dishes:
+            if dish[""dish""] in self.sales:
+                total += dish[""count""] * dish[""price""] * self.sales[dish[""dish""]]
+        return total
+
+    def checkout(self):
+        if self.selected_dishes:
+            return self.calculate_total()
+        return False",False,skipped,"class Order:
+    def __init__(self):
+        self.menu = []
+        self.selected_dishes = []
+        self.sales = {}
+
+    def add_dish(self, dish):
+        for item in self.menu:
+            if item[""dish""] == dish[""dish""] and item[""price""] == dish[""price""] and item[""count""] >= dish[""count""]:
+                item[""count""] -= dish[""count""]
+                self.selected_dishes.append({""dish"": dish[""dish""], ""count"": dish[""count""], ""price"": dish[""price""]})
+                return True
+        return False
+
+    def calculate_total(self):
+        total = sum(dish[""count""] * dish[""price""] * self.sales.get(dish[""dish""], 1) for dish in self.selected_dishes)
+        return total
+
+    def checkout(self):
+        if self.selected_dishes:
+            return self.calculate_total()
+        return False",False,skipped,"class Order:
+    def __init__(self):
+        self.menu = []
+        self.selected_dishes = []
+        self.sales = {}
+
+    def add_dish(self, dish):
+        for i, item in enumerate(self.menu):
+            if item[""dish""] == dish[""dish""] and item[""price""] == dish[""price""] and item[""count""] >= dish[""count""]:
+                self.menu[i][""count""] -= dish[""count""]
+                self.selected_dishes.append({""dish"": dish[""dish""], ""count"": dish[""count""], ""price"": dish[""price""]})
+                return True
+        return False
+
+    def calculate_total(self):
+        total = sum(dish[""count""] * dish[""price""] * self.sales.get(dish[""dish""], 1) for dish in self.selected_dishes)
+        return total
+
+    def checkout(self):
+        if self.selected_dishes:
+            return self.calculate_total()
+        return False",False,skipped,"class Order:
+    def __init__(self):
+        self.menu = []
+        self.selected_dishes = []
+        self.sales = {}
+
+    def add_dish(self, dish):
+        for item in self.menu:
+            if item[""dish""] == dish[""dish""] and item[""price""] == dish[""price""] and item[""count""] >= dish[""count""]:
+                item[""count""] -= dish[""count""]
+                self.selected_dishes.append({""dish"": dish[""dish""], ""count"": dish[""count""], ""price"": dish[""price""]})
+                return True
+        return False
+
+    def calculate_total(self):
+        total = 0
+        for dish in self.selected_dishes:
+            sales = self.sales.get(dish[""dish""], 1)
+            total += dish[""count""] * dish[""price""] * sales
+        return total
+
+    def checkout(self):
+        if self.selected_dishes:
+            return self.calculate_total()
+        return False",False,skipped,"class Order:
+    def __init__(self):
+        self.menu = []
+        self.selected_dishes = []
+        self.sales = {}
+
+    def add_dish(self, dish):
+        for item in self.menu:
+            if item[""dish""] == dish[""dish""] and item[""price""] == dish[""price""] and item[""count""] >= dish[""count""]:
+                item[""count""] -= dish[""count""]
+                self.selected_dishes.append({""dish"": dish[""dish""], ""count"": dish[""count""], ""price"": dish[""price""]})
+                return True
+        return False
+
+    def calculate_total(self):
+        total = sum(self.calculate_dish_total(dish) for dish in self.selected_dishes)
+        return total
+
+    def calculate_dish_total(self, dish):
+        sales = self.sales.get(dish[""dish""], 1)
+        return dish[""count""] * dish[""price""] * sales
+
+    def checkout(self):
+        if self.selected_dishes:
+            return self.calculate_total()
+        return False",False,skipped

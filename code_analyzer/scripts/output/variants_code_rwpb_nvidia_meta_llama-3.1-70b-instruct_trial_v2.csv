@@ -1,0 +1,159 @@
+task_id,base_code,base_code_test_passed,base_code_test_msg,variant_1,variant_1_test_passed,variant_1_test_msg,variant_2,variant_2_test_passed,variant_2_test_msg,variant_3,variant_3_test_passed,variant_3_test_msg,variant_4,variant_4_test_passed,variant_4_test_msg,variant_5,variant_5_test_passed,variant_5_test_msg
+RWPB/8,"import numpy as np
+import torch
+def cvimg2torch(img):
+    img = img.astype(float) / 255.0
+    img = img.transpose(2, 0, 1) # NHWC -> NCHW
+    img = np.expand_dims(img, 0)
+    img = torch.from_numpy(img).float()
+    return img
+",False,skipped,"
+def cvimg2torch(img):
+    def cvimg2torch(img):
+        import torch
+        return torch.from_numpy(img.transpose(2, 0, 1).astype('float32'))
+",,skipped,"
+def cvimg2torch(img):
+    def cvimg2torch(img):
+        import torch
+        import numpy as np
+        img = np.array(img)
+        return torch.tensor(img.transpose(2, 0, 1), dtype=torch.float32)
+",,skipped,"
+def cvimg2torch(img):
+    def cvimg2torch(img):
+        import torch
+        import numpy as np
+        img = np.ascontiguousarray(img.transpose(2, 0, 1))
+        return torch.from_numpy(img.astype('float32'))
+",,skipped,"
+def cvimg2torch(img):
+    def cvimg2torch(img):
+        import torch
+        import numpy as np
+        img = np.moveaxis(img, -1, 0)
+        return torch.from_numpy(img.astype('float32'))
+",,skipped,"
+def cvimg2torch(img):
+    def cvimg2torch(img):
+        import torch
+        import numpy as np
+        img = np.array(img)
+        img = np.rollaxis(img, 2)
+        return torch.tensor(img.astype('float32'))
+",,skipped
+RWPB/134,"
+def select_best_resolution(original_size, possible_resolutions):
+    original_width, original_height = original_size
+    best_fit = None
+    max_effective_resolution = 0
+    min_wasted_resolution = float('inf')
+    for width, height in possible_resolutions:
+        scale = min(width / original_width, height / original_height)
+        downscaled_width, downscaled_height = int(original_width * scale), int(original_height * scale)
+        effective_resolution = min(downscaled_width * downscaled_height, original_width * original_height)
+        wasted_resolution = (width * height) - effective_resolution
+        if effective_resolution > max_effective_resolution or (effective_resolution == max_effective_resolution and wasted_resolution < min_wasted_resolution):
+            max_effective_resolution = effective_resolution
+            min_wasted_resolution = wasted_resolution
+            best_fit = (width, height)
+    return best_fit
+",False,skipped,"
+def select_best_resolution(original_size, possible_resolutions):
+    def select_best_resolution(original_size, possible_resolutions):
+        best_resolution = None
+        min_diff = float('inf')
+        for resolution in possible_resolutions:
+            width_diff = abs(resolution[0] - original_size[0])
+            height_diff = abs(resolution[1] - original_size[1])
+            diff = width_diff + height_diff
+            if diff < min_diff:
+                min_diff = diff
+                best_resolution = resolution
+        return best_resolution
+",,skipped,"
+def select_best_resolution(original_size, possible_resolutions):
+    def select_best_resolution(original_size, possible_resolutions):
+        return min(possible_resolutions, key=lambda x: abs(x[0] - original_size[0]) + abs(x[1] - original_size[1]))
+",,skipped,"
+def select_best_resolution(original_size, possible_resolutions):
+    def select_best_resolution(original_size, possible_resolutions):
+        best_resolution = None
+        best_aspect_ratio_diff = float('inf')
+        for resolution in possible_resolutions:
+            aspect_ratio = resolution[0] / resolution[1]
+            original_aspect_ratio = original_size[0] / original_size[1]
+            aspect_ratio_diff = abs(aspect_ratio - original_aspect_ratio)
+            if aspect_ratio_diff < best_aspect_ratio_diff:
+                best_aspect_ratio_diff = aspect_ratio_diff
+                best_resolution = resolution
+        return best_resolution
+",,skipped,"
+def select_best_resolution(original_size, possible_resolutions):
+    def select_best_resolution(original_size, possible_resolutions):
+        best_resolution = None
+        max_ratio = 0
+        for resolution in possible_resolutions:
+            width_ratio = resolution[0] / original_size[0]
+            height_ratio = resolution[1] / original_size[1]
+            ratio = min(width_ratio, height_ratio)
+            if ratio > max_ratio:
+                max_ratio = ratio
+                best_resolution = resolution
+        return best_resolution
+",,skipped,"
+def select_best_resolution(original_size, possible_resolutions):
+    def select_best_resolution(original_size, possible_resolutions):
+        return max(possible_resolutions, key=lambda x: min(x[0] / original_size[0], x[1] / original_size[1]))
+",,skipped
+RWPB/18,"import numpy as np
+def last_before(val, arr):
+    assert np.all(np.diff(arr) >= 0)
+    return np.searchsorted(arr, val) - 1
+",False,skipped,"
+def last_before(val, arr):
+    import numpy as np
+    def last_before(val, arr):
+        idx = np.searchsorted(arr, val, side='right') - 1
+        if idx >= 0 and arr[idx] <= val:
+            return idx
+        return -1
+",,skipped,"
+def last_before(val, arr):
+    import numpy as np
+    def last_before(val, arr):
+        for i in range(len(arr) - 1, -1, -1):
+            if arr[i] <= val:
+                return i
+        return -1
+",,skipped,"
+def last_before(val, arr):
+    import numpy as np
+    def last_before(val, arr):
+        left, right = 0, len(arr) - 1
+        while left <= right:
+            mid = (left + right) // 2
+            if arr[mid] <= val:
+                if mid == len(arr) - 1 or arr[mid + 1] > val:
+                    return mid
+                left = mid + 1
+            else:
+                right = mid - 1
+        return -1
+",,skipped,"
+def last_before(val, arr):
+    import numpy as np
+    def last_before(val, arr):
+        for i, x in enumerate(reversed(arr)):
+            if x <= val:
+                return len(arr) - i - 1
+        return -1
+",,skipped,"
+def last_before(val, arr):
+    import numpy as np
+    def last_before(val, arr):
+        try:
+            return len(arr) - 1 - np.argmax(arr[::-1] > val)
+        except ValueError:
+            return -1
+",,skipped
