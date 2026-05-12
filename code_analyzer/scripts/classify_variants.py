@@ -143,19 +143,49 @@ def get_rwpb_base_code(task_id: int, dataset_path: Path) -> Optional[str]:
 
 
 def extract_task_id_and_variant(filename: str) -> tuple:
-    """Extract task_id and variant number from filename like '0_variant1.py'."""
+    """Extract task_id and variant number from filename like '0_variant1.py' or 'RWPB_3_variant5.py'."""
     name = Path(filename).stem
     parts = name.rsplit('_variant', 1)
     
     if len(parts) == 2:
         try:
-            task_id = int(parts[0])
             variant_num = int(parts[1])
+            task_id_str = parts[0]
+            if task_id_str.startswith('RWPB_'):
+                task_id = int(task_id_str.split('_')[1])
+            else:
+                task_id = int(task_id_str)
             return task_id, variant_num
-        except ValueError:
+        except (ValueError, IndexError):
             pass
     
     return None, None
+
+
+def _save_intermediate_results(results: list, output_csv: Path, dataset_name: str):
+    """Save intermediate results incrementally to prevent data loss."""
+    if not results:
+        return
+    
+    df = pd.DataFrame(results)
+    
+    if df.empty:
+        return
+    
+    pivot_df = df.pivot(index='task_id', columns='variant', values='labels')
+    pivot_df.columns = [f'variant_{col}_label' for col in pivot_df.columns]
+    pivot_df = pivot_df.reset_index()
+    
+    for i in range(1, 6):
+        if f'variant_{i}_label' not in pivot_df.columns:
+            pivot_df[f'variant_{i}_label'] = ""
+    
+    variant_cols = sorted([c for c in pivot_df.columns if c.startswith('variant_')],
+                          key=lambda x: int(x.split('_')[1]))
+    final_cols = ['task_id'] + variant_cols
+    pivot_df = pivot_df[[c for c in final_cols if c in pivot_df.columns]]
+    
+    pivot_df.to_csv(output_csv, index=False)
 
 
 def classify_folder(
@@ -164,7 +194,9 @@ def classify_folder(
     dataset_name: str = "classEval",
     dataset_path: Path = None,
     output_csv: Path = None,
-    verbose: bool = False
+    verbose: bool = False,
+    limit: int = None,
+    start: int = None
 ) -> pd.DataFrame:
     """Classify all variants in a folder."""
     
@@ -183,48 +215,71 @@ def classify_folder(
         print(f"No .py files found in {folder_path}", file=sys.stderr)
         return pd.DataFrame()
     
-    print(f'Total .py files found: {len(py_files)}')
-    
-    results = []
-    task_ids = set()
-    
+    task_to_files = {}
     for py_file in py_files:
         task_id, variant_num = extract_task_id_and_variant(py_file.name)
-        
         if task_id is None:
             print(f"Skipping {py_file.name}: could not extract task_id", file=sys.stderr)
             continue
-
-        print(f"Processing {py_file.name} (task_id={task_id}, variant={variant_num})")
+        if task_id not in task_to_files:
+            task_to_files[task_id] = []
+        task_to_files[task_id].append((variant_num, py_file))
+    
+    sorted_task_ids = sorted(task_to_files.keys())
+    
+    if output_csv:
+        empty_df = pd.DataFrame(columns=['task_id'] + [f'variant_{i}_label' for i in range(1, 6)])
+        empty_df.to_csv(output_csv, index=False)
+        print(f"Initialized output file: {output_csv}")
+    
+    if start is not None:
+        sorted_task_ids = [tid for tid in sorted_task_ids if tid >= start]
+    
+    if limit:
+        sorted_task_ids = sorted_task_ids[:limit]
+    
+    print(f"Total tasks found: {len(task_to_files)}, processing: {len(sorted_task_ids)}")
+    print(f"Task IDs to process (sequential): {sorted_task_ids}")
+    
+    results = []
+    
+    for task_id in sorted_task_ids:
+        files = sorted(task_to_files[task_id], key=lambda x: x[0])
         
-        task_ids.add(task_id)
-        print(f"Task IDs found: {sorted(task_ids)}")
-
-        variant_code = py_file.read_text()
         base_code = get_base_code(dataset_name, task_id, dataset_path)
         
         if not base_code or base_code == 'nan':
             print(f"Warning: No base code found for task {task_id}", file=sys.stderr)
-            labels = "no_base_code"
-        else:
+            for variant_num, _ in files:
+                results.append({
+                    'task_id': task_id,
+                    'variant': variant_num,
+                    'labels': "no_base_code"
+                })
+            continue
+        
+        for variant_num, py_file in files:
             if verbose:
                 print(f"Classifying task {task_id} variant {variant_num}...")
             
             try:
-                print(f"Generating classification for task {task_id} variant {variant_num}...")
+                variant_code = py_file.read_text()
                 prompt = create_classification_prompt(base_code, variant_code)
                 response = provider.generate(prompt, max_tokens=1024, temperature=0.1)
                 labels = response.text.strip()
+                print(f"  -> Task {task_id} variant {variant_num}: {labels[:50]}...")
             except Exception as e:
                 print(f"Error classifying {py_file.name}: {e}", file=sys.stderr)
                 labels = "error"
-        
-        results.append({
-            'task_id': task_id,
-            'variant': variant_num,
-            'labels': labels
-        })
+            
+            results.append({
+                'task_id': task_id,
+                'variant': variant_num,
+                'labels': labels
+            })
 
+        if output_csv:
+            _save_intermediate_results(results, output_csv, dataset_name)
         print("\n --- \n")
     
     df = pd.DataFrame(results)
@@ -257,7 +312,9 @@ def classify_from_zip(
     provider,
     dataset_name: str = "classEval",
     dataset_path: Path = None,
-    verbose: bool = False
+    verbose: bool = False,
+    limit: int = None,
+    start: int = None
 ) -> pd.DataFrame:
     """Extract and classify from a zip file."""
     
@@ -284,7 +341,7 @@ def classify_from_zip(
                 py_files = list(folder.glob("*.py"))
                 if py_files:
                     output_csv = zip_path.parent / f"variants_labels_{folder.name}.csv"
-                    return classify_folder(folder, provider, dataset_name, dataset_path, output_csv, verbose)
+                    return classify_folder(folder, provider, dataset_name, dataset_path, output_csv, verbose, limit, start)
     
     return pd.DataFrame()
 
@@ -321,6 +378,10 @@ def main():
                         help="Path to dataset folder with CSVs")
     parser.add_argument("--verbose", action="store_true",
                         help="Print detailed logs")
+    parser.add_argument("--limit", type=int, default=None,
+                        help="Limit number of tasks to process (for testing)")
+    parser.add_argument("--start", type=int, default=None,
+                        help="Starting task ID to begin processing from")
     
     args = parser.parse_args()
     
@@ -339,9 +400,9 @@ def main():
     output_csv = Path(args.output) if args.output else None
     
     if input_path.is_file() and input_path.suffix == '.zip':
-        df = classify_from_zip(input_path, provider, dataset_name, dataset_path, args.verbose)
+        df = classify_from_zip(input_path, provider, dataset_name, dataset_path, args.verbose, args.limit, args.start)
     else:
-        df = classify_folder(input_path, provider, dataset_name, dataset_path, output_csv, args.verbose)
+        df = classify_folder(input_path, provider, dataset_name, dataset_path, output_csv, args.verbose, args.limit, args.start)
     
     print(f"Classified {len(df)} tasks" if not df.empty else "No results")
 
