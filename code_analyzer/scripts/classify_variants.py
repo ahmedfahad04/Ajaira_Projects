@@ -3,9 +3,19 @@
 Classify generated code variants by comparing with base implementation.
 Uses LLM to determine how each variant differs from the original.
 
+Supported datasets: classEval, human_eval_164, rwpb
+Supported providers: claude, gemini, nvidia, ollama, groq, etc.
+
 Usage:
-    python classify_variants.py --provider claude --input-folder /path/to/variants
-    python classify_variants.py --provider gemini --model gemini-2.0-flash --input-folder /path/to/variants
+    # Using NVIDIA NIM (recommended - free endpoint)
+    export NVIDIA_API_KEY="your-key-from-build.nvidia.com"
+    python scripts/classify_variants.py --provider nvidia --model deepseek-ai/deepseek-v4-flash \\
+        --input output/final/classEval_gpt-5-mini_generation_complete/classEval \\
+        --dataset-name classEval --output output/labels_classEval.csv
+
+    # Using other providers
+    python scripts/classify_variants.py --provider ollama --model llama3.1 \\
+        --input /path/to/variants --dataset-name classEval
 """
 
 import argparse
@@ -13,7 +23,7 @@ import csv
 import sys
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 import pandas as pd
 
@@ -83,7 +93,10 @@ Output ONLY a single line of semicolon-separated labels. No explanation."""
 
 
 def get_base_code(dataset_name: str, task_id: int, dataset_path: Path) -> Optional[str]:
-    """Load base code from dataset CSV."""
+    """Load base code from dataset CSV or JSON."""
+    if dataset_name == "rwpb":
+        return get_rwpb_base_code(task_id, dataset_path)
+    
     csv_file = dataset_path / f"{dataset_name}.csv"
     
     if not csv_file.exists():
@@ -101,6 +114,31 @@ def get_base_code(dataset_name: str, task_id: int, dataset_path: Path) -> Option
         return None
     except Exception as e:
         print(f"Error loading base code for task {task_id}: {e}", file=sys.stderr)
+        return None
+
+
+def get_rwpb_base_code(task_id: int, dataset_path: Path) -> Optional[str]:
+    """Load base code from rwpb JSON."""
+    json_path = dataset_path / "RWPB" / "rwpb.json"
+    
+    if not json_path.exists():
+        return None
+    
+    try:
+        import json
+        with open(json_path, 'r') as f:
+            data = json.load(f)
+        
+        for item in data:
+            item_task_id = str(item.get('task_id', '')).split('/')[-1]
+            try:
+                if int(item_task_id) == task_id:
+                    return item.get('canonical_solution', '') or item.get('solution', '')
+            except ValueError:
+                pass
+        return None
+    except Exception as e:
+        print(f"Error loading rwpb base code for task {task_id}: {e}", file=sys.stderr)
         return None
 
 
@@ -131,13 +169,21 @@ def classify_folder(
     """Classify all variants in a folder."""
     
     if dataset_path is None:
-        dataset_path = Path(__file__).parent.parent / "dataset"
+        base_path = Path(__file__).parent.parent
+        dataset_path = base_path / "dataset"
+        csv_path = dataset_path / f"{dataset_name}.csv"
+        if not csv_path.exists():
+            alt_path = base_path / "scripts" / "dataset"
+            if (alt_path / f"{dataset_name}.csv").exists() or (alt_path / "RWPB").exists():
+                dataset_path = alt_path
     
     py_files = list(folder_path.glob("*.py"))
     
     if not py_files:
         print(f"No .py files found in {folder_path}", file=sys.stderr)
         return pd.DataFrame()
+    
+    print(f'Total .py files found: {len(py_files)}')
     
     results = []
     task_ids = set()
@@ -148,9 +194,12 @@ def classify_folder(
         if task_id is None:
             print(f"Skipping {py_file.name}: could not extract task_id", file=sys.stderr)
             continue
+
+        print(f"Processing {py_file.name} (task_id={task_id}, variant={variant_num})")
         
         task_ids.add(task_id)
-        
+        print(f"Task IDs found: {sorted(task_ids)}")
+
         variant_code = py_file.read_text()
         base_code = get_base_code(dataset_name, task_id, dataset_path)
         
@@ -162,6 +211,7 @@ def classify_folder(
                 print(f"Classifying task {task_id} variant {variant_num}...")
             
             try:
+                print(f"Generating classification for task {task_id} variant {variant_num}...")
                 prompt = create_classification_prompt(base_code, variant_code)
                 response = provider.generate(prompt, max_tokens=1024, temperature=0.1)
                 labels = response.text.strip()
@@ -174,6 +224,8 @@ def classify_folder(
             'variant': variant_num,
             'labels': labels
         })
+
+        print("\n --- \n")
     
     df = pd.DataFrame(results)
     
@@ -210,7 +262,13 @@ def classify_from_zip(
     """Extract and classify from a zip file."""
     
     if dataset_path is None:
-        dataset_path = Path(__file__).parent.parent / "dataset"
+        base_path = Path(__file__).parent.parent
+        dataset_path = base_path / "dataset"
+        csv_path = dataset_path / f"{dataset_name}.csv"
+        if not csv_path.exists():
+            alt_path = base_path / "scripts" / "dataset"
+            if (alt_path / f"{dataset_name}.csv").exists() or (alt_path / "RWPB").exists():
+                dataset_path = alt_path
     
     import tempfile
     import shutil
@@ -252,7 +310,9 @@ def main():
     parser.add_argument("--model", default=None,
                         help="Model name (provider-specific)")
     parser.add_argument("--input", required=True,
-                        help="Input folder with .py variant files OR .zip file")
+                        help="Input folder/zip with variant .py files")
+    parser.add_argument("--input-folder", dest="input", # Alias for backward compatibility
+                        help="Input folder with .py variant files (alias for --input)")
     parser.add_argument("--output", default=None,
                         help="Output CSV path (optional)")
     parser.add_argument("--dataset-name", default=None,
