@@ -34,3 +34,36 @@ python scripts/classify_variants.py \
   --provider nvidia --model deepseek-ai/deepseek-v4-flash \
   --input output/final/rwpb_meta_llama-3.1-70b-instruct_trialv2_generation_complete/rwpb_meta_llama-3.1-70b-instruct_trial_v2 \
   --dataset-name rwpb --output output/final/labels_rwpb_llama70b.csv
+
+
+
+--
+<!-- ClassEVAL -->
+python scripts/classify_variants.py \
+  --provider gemini \
+  --model gemini-2.5-flash \
+  --input output/final/classEval_gpt-5-mini_generation_complete/classEval \
+  --dataset-name classEval \
+  --start 82 \
+  --verbose \
+  --output output/classify/labels_classEval_gpt5mini_part2.csv
+
+<!-- HumanEval -->
+
+python scripts/classify_variants.py \
+  --provider gemini \
+  --model gemini-2.5-flash \
+  --input output/final/human_eval_gpt-5-mini_generation_complete/human_eval_164 \
+  --dataset-name human_eval_164 \
+  --start 77 \
+  --verbose \
+  --output output/classify/labels_humaneval_gpt5mini_part2.csv
+
+python scripts/classify_variants.py \
+  --provider gemini \
+  --model gemini-2.5-flash \
+  --input output/final/rwpb_gpt-5-mini_generation_complete/rwpb_gpt-5-mini \
+  --dataset-name rwpb \
+  --start 52 \
+  --verbose \
+  --output output/classify/labels_rwpb_gpt5mini_part2.csv
