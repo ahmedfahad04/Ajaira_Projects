@@ -42,28 +42,28 @@ python scripts/classify_variants.py \
 python scripts/classify_variants.py \
   --provider gemini \
   --model gemini-2.5-flash \
-  --input output/final/classEval_gpt-5-mini_generation_complete/classEval \
+  --input output/final/classEval_meta_llama-3.1-70b-instruct_trialv2_generation_complete/classEval_meta_llama-3.1-70b-instruct_trial_v2 \
   --dataset-name classEval \
-  --start 82 \
+  --start 0 \
   --verbose \
-  --output output/classify/labels_classEval_gpt5mini_part2.csv
+  --output output/classify/labels_classEval_llama_70b_part1.csv
 
 <!-- HumanEval -->
 
 python scripts/classify_variants.py \
   --provider gemini \
   --model gemini-2.5-flash \
-  --input output/final/human_eval_gpt-5-mini_generation_complete/human_eval_164 \
+  --input output/final/human_eval_meta_llama-3.1-70b-instruct_trialv2_generation_complete/human_eval_164_meta_llama-3.1-70b-instruct_trial_v2 \
   --dataset-name human_eval_164 \
-  --start 77 \
+  --start 0 \
   --verbose \
-  --output output/classify/labels_humaneval_gpt5mini_part2.csv
+  --output output/classify/labels_humaneval_llama_70b_part1.csv
 
 python scripts/classify_variants.py \
   --provider gemini \
   --model gemini-2.5-flash \
-  --input output/final/rwpb_gpt-5-mini_generation_complete/rwpb_gpt-5-mini \
+  --input output/final/rwpb_meta_llama-3.1-70b-instruct_trialv2_generation_complete/rwpb_meta_llama-3.1-70b-instruct_trial_v2 \
   --dataset-name rwpb \
-  --start 52 \
+  --start 0 \
   --verbose \
-  --output output/classify/labels_rwpb_gpt5mini_part2.csv
+  --output output/classify/labels_rwpb_llama_70b_part1.csv
